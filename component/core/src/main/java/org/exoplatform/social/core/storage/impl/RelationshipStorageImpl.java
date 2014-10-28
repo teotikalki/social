@@ -17,6 +17,21 @@
 
 package org.exoplatform.social.core.storage.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.jcr.RepositoryException;
+
 import org.chromattic.api.query.Ordering;
 import org.chromattic.api.query.QueryBuilder;
 import org.chromattic.api.query.QueryResult;
@@ -47,19 +62,6 @@ import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.query.JCRProperties;
 import org.exoplatform.social.core.storage.query.WhereExpression;
 import org.exoplatform.social.core.storage.streams.StreamInvocationHelper;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -458,6 +460,9 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
         symmetricalRelationship.getParent().getParent().getRelationship().getRelationships()
             .put(symmetricalRelationship.getName(), symmetricalRelationship);
         
+        updateRelationshipStatistic(sender, true);
+        updateRelationshipStatistic(receiver, true);
+        
         StreamInvocationHelper.connect(relationship.getSender(), relationship.getReceiver());
         
         break;
@@ -488,6 +493,34 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
     ));
 
     return savedRelationship;
+  }
+  
+  /**
+   * Updates the relationship statistic for the given user. 
+   * 
+   * @param identityEntity the identity
+   * @param isIncreaseCount determines the increase or decrease
+   * @throws NodeNotFoundException
+   */
+  private void updateRelationshipStatistic(IdentityEntity identityEntity, boolean isIncreaseCount) {
+    int newValue = 0;
+    if (identityEntity.hasProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM)) {
+      String value = identityEntity.getProperties().get(IdentityEntity.RELATIONSHIP_NUMBER_PARAM);
+      newValue = Integer.valueOf(value);
+      if (isIncreaseCount) {
+        newValue++;
+      } else {
+        newValue--;
+      }
+    } else {
+      if (isIncreaseCount) {
+        newValue = 1;
+      }
+    }
+    
+    identityEntity.setProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM, String.valueOf(newValue));
+
+    
   }
 
   protected List<Relationship> _getSenderRelationships(
@@ -672,7 +705,10 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
       RelationshipEntity symmetricalRelationship = toDeleteRelationship.getReciprocal();
 
       IdentityEntity from = toDeleteRelationship.getFrom();
-      IdentityEntity to = toDeleteRelationship.getFrom();
+      IdentityEntity to = toDeleteRelationship.getTo();
+      
+      updateRelationshipStatistic(from, false);
+      updateRelationshipStatistic(to, false);
 
       _removeById(RelationshipEntity.class, symmetricalRelationship.getId());
       _removeById(RelationshipEntity.class, relationship.getId());
@@ -778,6 +814,12 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
     catch (NodeNotFoundException e) {
       return null;
     }
+  }
+  
+  @Override
+  public boolean hasRelationship(Identity identity1, Identity identity2, String relationshipPath) throws RelationshipStorageException {
+    //it implemented on CachedRelationshipStorage
+    throw new RelationshipStorageException(RelationshipStorageException.Type.FAILED_TO_GET_RELATIONSHIP_OF_THEM, "hasRelationship() unsupported!"); 
   }
 
   /**
@@ -1017,11 +1059,18 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
   public int getConnectionsCount(Identity identity) throws RelationshipStorageException {
 
     try {
-
       // TODO : use property to improve the perfs
-
       IdentityEntity identityEntity = _findById(IdentityEntity.class, identity.getId());
-      return identityEntity.getRelationship().getRelationships().size();
+      if (identityEntity.hasProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM)) {
+        String value = identityEntity.getProperties().get(IdentityEntity.RELATIONSHIP_NUMBER_PARAM);
+        return Integer.valueOf(value);
+      } else {
+        //
+        int totalSize = identityEntity.getRelationship().getRelationships().size();
+        identityEntity.setProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM, String.valueOf(totalSize));
+        getSession().save();
+        return totalSize;
+      }
     }
     catch (NodeNotFoundException e) {
       throw new RelationshipStorageException(RelationshipStorageException.Type.ILLEGAL_ARGUMENTS);
