@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.betwixt.expression.StringExpression;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.organization.User;
