@@ -583,7 +583,7 @@ public class IdentityManagerTest extends AbstractCoreTest {
       //
       identityManager.deleteIdentity(testIdentity);
       identityListAccess = identityManager.getIdentitiesByProfileFilter("organization", profileFilter, false);
-      assertEquals(5, identityListAccess.getSize());
+      assertEquals(6, identityListAccess.getSize());
     }
 
     //Test with excluded identity list
