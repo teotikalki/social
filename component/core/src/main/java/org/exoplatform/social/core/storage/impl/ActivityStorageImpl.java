@@ -869,7 +869,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         }
       }
       
-      getSession().save();
     }  
     catch (NodeNotFoundException e) {
       throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_COMMENT, e.getMessage(), e);
@@ -947,9 +946,8 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         _saveActivity(activity);
       }
       //persist and refresh JCR node to prevent NodeNotFoundException
-      StorageUtils.persist(true);
-
-      //
+      //StorageUtils.persist(true);
+      getSession().save();
       LOG.debug(String.format(
           "Activity %s by %s (%s) saved",
           activity.getTitle(),
@@ -2048,7 +2046,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       if (changedActivity.getTemplateParams() == null && activityEntity.getParams() != null) changedActivity.setTemplateParams(activityEntity.getParams().getParams());
       _saveActivity(changedActivity);
       processActivity(changedActivity);
-      //getSession().save();
     }
     catch (NodeNotFoundException e) {
       throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_ACTIVITY, e.getMessage());
