@@ -70,11 +70,11 @@
     <init-params>
       <value-param>
         <name>exo.social.activity.interval.persist.threshold</name>
-        <value>${exo.social.activity.interval.persist.threshold:240000}</value>
+        <value>${exo.social.activity.interval.persist.threshold:84000}</value>
       </value-param>
       <value-param>
         <name>exo.social.activity.limit.persist.threshold</name>
-        <value>${exo.social.activity.limit.persist.threshold:1000}</value>
+        <value>${exo.social.activity.limit.persist.threshold:500}</value>
       </value-param>
       <value-param>
         <name>connections-threshold-param</name>

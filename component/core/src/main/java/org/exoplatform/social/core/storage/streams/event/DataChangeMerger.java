@@ -194,11 +194,7 @@ public class DataChangeMerger {
    */
   public static Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>> transformToMap(DataChangeQueue<StreamChange<StreamKey, String>> changes) {
     Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>> map = new HashMap<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>>();
-    
-    Iterator<DataChange<StreamChange<StreamKey, String>>>  it = changes.iterator();
-    while(it.hasNext()) {
-      DataChange<StreamChange<StreamKey, String>> change = it.next();
-      //
+    for(DataChange<StreamChange<StreamKey, String>> change : changes) {
       if (change != null && change.target != null) {
         StreamKey key = change.target.getKey();
         if (key != null) {
