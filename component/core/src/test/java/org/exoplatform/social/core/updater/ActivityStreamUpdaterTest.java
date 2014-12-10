@@ -105,33 +105,40 @@ public class ActivityStreamUpdaterTest extends AbstractCoreTest {
   public void testFeedUpdater() throws Exception {
     final String activityTitle = "activity Title";
     
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 50; i++) {
       ExoSocialActivity activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + i);
+      activity.setUserId(rootIdentity.getId());
       activityStorage.saveActivity(rootIdentity, activity);
       tearDownActivityList.add(activity);
     }
     
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 50; i++) {
       ExoSocialActivity activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + i);
+      activity.setUserId(demoIdentity.getId());
       activityStorage.saveActivity(demoIdentity, activity);
       tearDownActivityList.add(activity);
     }
     
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 50; i++) {
       ExoSocialActivity activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + i);
+      activity.setUserId(maryIdentity.getId());
       activityStorage.saveActivity(maryIdentity, activity);
       tearDownActivityList.add(activity);
     }
     
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 50; i++) {
       ExoSocialActivity activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + i);
+      activity.setUserId(johnIdentity.getId());
       activityStorage.saveActivity(johnIdentity, activity);
       tearDownActivityList.add(activity);
     }
+    //
+    end();
+    begin();
     
     ValueParam param = new ValueParam();
     param.setName("limit");
@@ -143,13 +150,16 @@ public class ActivityStreamUpdaterTest extends AbstractCoreTest {
     
     assertNotNull(updaterPlugin);
     updaterPlugin.processUpgrade("1.2.x", "4.0");
+    //
+    end();
+    begin();
     
-    assertEquals(20, streamStorage.getNumberOfFeed(rootIdentity));
+    assertEquals(20, streamStorage.getFeed(rootIdentity, 0, 20).size());
     assertEquals(20, streamStorage.getNumberOfFeed(demoIdentity));
     assertEquals(20, streamStorage.getNumberOfFeed(maryIdentity));
     assertEquals(20, streamStorage.getNumberOfFeed(johnIdentity));
     
-    List<ExoSocialActivity> got = activityStorage.getActivityFeed(rootIdentity, 0, 100);
-    assertEquals(100, got.size());
+    List<ExoSocialActivity> got = activityStorage.getActivityFeed(rootIdentity, 0, 50);
+    assertEquals(50, got.size());
   }
 }

@@ -1331,6 +1331,8 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
       IdentityEntity identityEntity = identityStorage._findById(IdentityEntity.class, owner.getId());
       ActivityRefListEntity listRef = type.create(identityEntity);
       ActivityEntity activityEntity = getSession().findById(ActivityEntity.class, activity.getId());
+      if (activityEntity == null) return;
+      //
       boolean hideValue = getHidableMixinValue(activityEntity, HidableEntity.class, true);
       ActivityRef ref = listRef.getOrCreated(activityEntity, hideValue);
       ref.setActivityEntity(activityEntity);

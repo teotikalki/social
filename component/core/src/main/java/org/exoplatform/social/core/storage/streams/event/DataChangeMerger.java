@@ -183,8 +183,6 @@ public class DataChangeMerger {
       existing.setRevision(change.getRevision());
     }
     //
-    
-    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
   
   /**
@@ -197,7 +195,12 @@ public class DataChangeMerger {
     Iterator<DataChange<StreamChange<StreamKey, String>>> it = changes.iterator();
     DataChange<StreamChange<StreamKey, String>> change;
     while (it.hasNext()) {
-      change = it.next();
+      try {
+        change = it.next();
+      } catch (Throwable t) {
+        change = null;
+      }
+      
       if (change != null && change.target != null) {
         StreamKey key = change.target.getKey();
         if (key != null) {
@@ -209,8 +212,6 @@ public class DataChangeMerger {
           
           list.add(change);
         }
-      } else if (change == null) {
-        break;
       }
     }
     return map;
