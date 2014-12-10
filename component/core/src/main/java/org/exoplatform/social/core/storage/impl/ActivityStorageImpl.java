@@ -940,6 +940,8 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           StreamInvocationHelper.savePoster(owner, entity);
           //run asynchronous: JCR session doesn't share in multi threading, in Stream service.
           StreamInvocationHelper.save(owner, entity, mentioners.toArray(new String[0]));
+          //move getSession().save() to handle better case create new ref for unit testcase
+          getSession().save();
         }
       }
       else {
@@ -947,7 +949,9 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       }
       //persist and refresh JCR node to prevent NodeNotFoundException
       //StorageUtils.persist(true);
-      getSession().save();
+      //remove getSession().save() >> due to throw the exception wiki new page
+      //javax.jcr.InvalidItemStateException: [social] ADD PROPERTY
+      //org.exoplatform.social.core.storage.impl.ActivityStorageImpl.saveActivity(ActivityStorageImpl.java:950)
       LOG.debug(String.format(
           "Activity %s by %s (%s) saved",
           activity.getTitle(),
@@ -1044,8 +1048,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       //
       _removeById(ActivityEntity.class, activityId);
 
-      //
-      getSession().save();
       //
       LOG.debug(String.format(
           "Activity or comment %s by %s (%s) removed",

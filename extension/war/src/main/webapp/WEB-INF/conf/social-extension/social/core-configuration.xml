@@ -74,7 +74,7 @@
       </value-param>
       <value-param>
         <name>exo.social.activity.limit.persist.threshold</name>
-        <value>${exo.social.activity.limit.persist.threshold:500}</value>
+        <value>${exo.social.activity.limit.persist.threshold:1000}</value>
       </value-param>
       <value-param>
         <name>connections-threshold-param</name>

@@ -27,7 +27,6 @@ import org.exoplatform.social.core.storage.cache.model.key.StreamKey;
 import org.exoplatform.social.core.storage.impl.StorageUtils;
 import org.exoplatform.social.core.storage.streams.event.DataChange;
 import org.exoplatform.social.core.storage.streams.event.DataChangeMerger;
-import org.exoplatform.social.core.storage.streams.event.DataChangeQueue;
 import org.exoplatform.social.core.storage.streams.event.DataContext;
 import org.exoplatform.social.core.storage.streams.event.StreamChange;
 
@@ -63,7 +62,7 @@ public class ActivityPersister implements Persister {
   private void persistFixedSize(boolean forcePersist) {
     DataContext<StreamChange<StreamKey, String>> context = DataChangeMerger.getDataContext();
     if (persisterScheduler.shoudldPersist(context.getChangesSize()) || forcePersist) {
-      DataChangeQueue<StreamChange<StreamKey, String>> changes = context.popChanges();
+      List<DataChange<StreamChange<StreamKey, String>>> changes = context.popChanges();
       if (changes != null && changes.size() > 0) {
         try {
           logWatch.start();

@@ -178,18 +178,23 @@ public abstract class AbstractStorage {
   }
   
   protected <M> boolean getHidableMixinValue(Object o, Class<M> mixinType, boolean create) {
-    M m = _getMixin(o, mixinType, create);
-    //
-    if (m == null) return false;
-    //
-    if (m != null && mixinType.equals(HidableEntity.class)) {
-      HidableEntity hidableEntity = (HidableEntity) m;
-      if (hidableEntity.getHidden() == null) 
-        return false;
-      else 
-        return hidableEntity.getHidden().booleanValue();
+    try {
+      M m = _getMixin(o, mixinType, create);
+      //
+      if (m == null) return false;
+      //
+      if (m != null && mixinType.equals(HidableEntity.class)) {
+        HidableEntity hidableEntity = (HidableEntity) m;
+        if (hidableEntity.getHidden() == null) 
+          return false;
+        else 
+          return hidableEntity.getHidden().booleanValue();
+      }
+      return true;
+    } catch (Exception ex) {
+      return false;
     }
-    return true;
+    
   }
   
   protected <M> boolean getLockableMixinValue(Object o, Class<M> mixinType, boolean create) {

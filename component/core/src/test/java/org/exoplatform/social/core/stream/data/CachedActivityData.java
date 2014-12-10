@@ -514,8 +514,7 @@ public class CachedActivityData implements Persister {
   private void persistFixedSize(boolean forcePersist) {
     DataContext<StreamChange<StreamKey, String>> context = DataChangeMerger.getDataContext();
     if (context.getChangesSize() >= 200 || forcePersist) {
-      DataChangeQueue<StreamChange<StreamKey, String>> changes = context.popChanges();
-      
+      List<DataChange<StreamChange<StreamKey, String>>> changes = context.popChanges();
       if (changes != null && changes.size() > 0) {
         Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>>  map = DataChangeMerger.transformToMap(changes);
         //
