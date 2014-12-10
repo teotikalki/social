@@ -54,6 +54,7 @@ import org.exoplatform.social.core.storage.cache.selector.ScopeCacheSelector;
 import org.exoplatform.social.core.storage.impl.ActivityBuilderWhere;
 import org.exoplatform.social.core.storage.impl.ActivityStorageImpl;
 import org.exoplatform.social.core.storage.impl.StorageUtils;
+import org.exoplatform.social.core.storage.streams.StreamContext;
 import org.exoplatform.social.core.storage.streams.StreamHelper;
 
 /**
@@ -302,6 +303,9 @@ public class CachedActivityStorage implements ActivityStorage {
     exoActivityCache.put(activityKey, new ActivityData(activity));
     clearCache();
     updateCommentCountCaching(activity.getId(), true);
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
@@ -326,6 +330,8 @@ public class CachedActivityStorage implements ActivityStorage {
     ActivityKey key = new ActivityKey(a.getId());
     exoActivityCache.put(key, new ActivityData(a));
     clearCache();
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
     //
     return a;
   }
@@ -355,6 +361,9 @@ public class CachedActivityStorage implements ActivityStorage {
       exoActivityCache.put(key, ActivityData.REMOVED);
       clearCache();
     }
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
@@ -389,6 +398,9 @@ public class CachedActivityStorage implements ActivityStorage {
     StreamHelper.REMOVE.removeMentioners(removedList, newActivity);
     clearCommentsCache(activityId);
     updateCommentCountCaching(activityId, false);
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
@@ -1122,6 +1134,9 @@ public class CachedActivityStorage implements ActivityStorage {
     
     //
     clearCache();
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**

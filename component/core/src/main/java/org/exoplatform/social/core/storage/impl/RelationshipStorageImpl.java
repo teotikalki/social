@@ -1067,11 +1067,11 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
         //
         int totalSize = identityEntity.getRelationship().getRelationships().size();
         identityEntity.setProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM, String.valueOf(totalSize));
-        getSession().save();
         return totalSize;
       }
     }
     catch (NodeNotFoundException e) {
+      LOG.error(e.getMessage(), e);
       throw new RelationshipStorageException(RelationshipStorageException.Type.ILLEGAL_ARGUMENTS);
     }
   }
