@@ -192,14 +192,16 @@ public class DataChangeMerger {
    * @param changes
    * @return
    */
-  public static Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>> transformToMap(DataChangeQueue<StreamChange<StreamKey, String>> changes) {
+  public static Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>> transformToMap(final List<DataChange<StreamChange<StreamKey, String>>> changes) {
     Map<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>> map = new HashMap<StreamKey, List<DataChange<StreamChange<StreamKey, String>>>>();
-    for(DataChange<StreamChange<StreamKey, String>> change : changes) {
+    Iterator<DataChange<StreamChange<StreamKey, String>>> it = changes.iterator();
+    DataChange<StreamChange<StreamKey, String>> change;
+    while (it.hasNext()) {
+      change = it.next();
       if (change != null && change.target != null) {
         StreamKey key = change.target.getKey();
         if (key != null) {
           List<DataChange<StreamChange<StreamKey, String>>> list = map.get(key);
-          
           if (list == null) {
             list = new LinkedList<DataChange<StreamChange<StreamKey, String>>>();
             map.put(key, list);
@@ -207,9 +209,10 @@ public class DataChangeMerger {
           
           list.add(change);
         }
+      } else if (change == null) {
+        break;
       }
     }
-    
     return map;
   }
   

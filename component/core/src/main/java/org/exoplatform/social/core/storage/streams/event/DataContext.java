@@ -119,11 +119,12 @@ public final class DataContext<M> {
     }
   }
   
-  public DataChangeQueue<M> popChanges() {
+  public List<DataChange<M>> popChanges() {
     if (hasChanges()) {
       DataChangeQueue<M> tmp = changes;
       changes = new DataChangeQueue<M>();
-      return tmp;
+      //handle the exception: java.lang.NullPointerException java.util.LinkedList$ListItr.next(LinkedList.java:891)
+      return Collections.synchronizedList(tmp);
     } else {
       return null;
     }

@@ -178,12 +178,11 @@ public class ActivityStreamStorageTest extends AbstractCoreTest {
 
     ExoSocialActivity activity = new ExoSocialActivityImpl();
     activity.setTitle(activityTitle + " @demo ");
+    activity.setUserId(rootIdentity.getId());
     activityStorage.saveActivity(rootIdentity, activity);
+    tearDownActivityList.add(activity);
 
     assertNotNull("activity.getId() must not be null", activity.getId());
-
-    tearDownActivityList.addAll(activityStorage.getUserActivities(rootIdentity, 0, 1));
-    
     assertEquals(1, streamStorage.getNumberOfFeed(rootIdentity));
     
     assertEquals(1, streamStorage.getNumberOfFeed(demoIdentity));
@@ -192,7 +191,9 @@ public class ActivityStreamStorageTest extends AbstractCoreTest {
     {
       activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + " @mary ");
+      activity.setUserId(maryIdentity.getId());
       activityStorage.saveActivity(maryIdentity, activity);
+      tearDownActivityList.add(activity);
       
       assertEquals(1, streamStorage.getNumberOfFeed(maryIdentity));
       assertEquals(1, streamStorage.getNumberOfMyActivities(maryIdentity));
@@ -201,7 +202,9 @@ public class ActivityStreamStorageTest extends AbstractCoreTest {
     {
       activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + " @mary @john");
+      activity.setUserId(maryIdentity.getId());
       activityStorage.saveActivity(maryIdentity, activity);
+      tearDownActivityList.add(activity);
       
       assertEquals(2, streamStorage.getNumberOfFeed(maryIdentity));
       assertEquals(2, streamStorage.getNumberOfMyActivities(maryIdentity));
@@ -209,9 +212,6 @@ public class ActivityStreamStorageTest extends AbstractCoreTest {
       assertEquals(1, streamStorage.getNumberOfFeed(johnIdentity));
       assertEquals(1, streamStorage.getNumberOfMyActivities(johnIdentity));
     }
-    
-    tearDownActivityList.addAll(activityStorage.getUserActivities(maryIdentity, 0, 10));
-
   }
   
   public void testAddMentioners() throws ActivityStorageException {

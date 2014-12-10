@@ -66,7 +66,6 @@ import org.junit.runners.Suite.SuiteClasses;
   ActivityStorageImplTestCase.class,
   CachedActivityStorageTestCase.class,
   ActivityStreamUpdaterTest.class,
-  LazyActivityStorageTest.class,
   SpaceLastVisitedTest.class,
   IdentityStorageImplTestCase.class,
   IdentityStorageTest.class,
@@ -88,8 +87,8 @@ import org.junit.runners.Suite.SuiteClasses;
   ProfileUpdatesPublisherTest.class,
   LinkProviderTest.class,
   PeopleSearchConnectorTestCase.class,
-  SpaceSearchConnectorTestCase.class
-  
+  SpaceSearchConnectorTestCase.class,
+  LazyActivityStorageTest.class
   })
 @ConfigTestCase(AbstractCoreTest.class)
 public class InitContainerTestSuite extends BaseExoContainerTestSuite {

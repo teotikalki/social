@@ -40,6 +40,7 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.core.storage.api.ActivityStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
+import org.exoplatform.social.core.storage.impl.StorageUtils;
 import org.exoplatform.social.core.storage.streams.event.DataChangeMerger;
 import org.exoplatform.social.core.test.AbstractCoreTest;
 import org.exoplatform.social.core.test.MaxQueryNumber;
@@ -308,21 +309,22 @@ public class ActivityStorageTest extends AbstractCoreTest {
    */
   @MaxQueryNumber(6998)
   public void testGetActivities() throws ActivityStorageException {
+    checkCleanData();
     final int totalNumber = 20;
     final String activityTitle = "activity title";
     //John posts activity to root's activity stream
     for (int i = 0; i < totalNumber; i++) {
       ExoSocialActivity activity = new ExoSocialActivityImpl();
       activity.setTitle(activityTitle + i);
-
+      activity.setUserId(rootIdentity.getId());
       activityStorage.saveActivity(rootIdentity, activity);
       tearDownActivityList.add(activity);
     }
 
     //Till now Root's activity stream has 10 activities posted by John
-    assertEquals("John must have zero activity", 0, activityStorage.getUserActivities(johnIdentity, 0, 100).size());
+    assertEquals("John must have zero activity", 0, activityStorage.getUserActivities(johnIdentity, 0, 20).size());
     assertEquals("Root must have " + totalNumber + " activities", totalNumber,
-        activityStorage.getUserActivities(rootIdentity, 0, 100).size());
+        activityStorage.getUserActivities(rootIdentity, 0, 20).size());
 
     //Root posts activities to his stream
     for (int i = 0; i < totalNumber; i++) {
@@ -1120,7 +1122,6 @@ public class ActivityStorageTest extends AbstractCoreTest {
   public void testGetActivitiesAfterRemoveSpace() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
-    tearDownSpaceList.add(space);
     Identity spaceIdentity = this.identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space.getPrettyName(), false);
     
     int totalNumber = 10;
@@ -2174,7 +2175,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     this.createActivities(2, johnIdentity);
     this.createActivities(2, rootIdentity);
 
-    List<ExoSocialActivity> maryActivities = activityStorage.getActivitiesOfIdentity(maryIdentity,0,10);
+    List<ExoSocialActivity> maryActivities = activityStorage.getActivityFeed(maryIdentity,0,10);
     assertNotNull("maryActivities must not be null", maryActivities);
     assertEquals("maryActivities.size() must return: 3", 3, maryActivities.size());
 

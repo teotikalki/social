@@ -677,7 +677,7 @@ public abstract class ActivityBuilderWhere implements BuilderWhereExpression<JCR
             where.or();
             where.startGroup();
             where.equals(ActivityEntity.poster, poster.getId());
-            where.and().equals(ActivityEntity.isComment, true);
+            where.and().equals(ActivityEntity.isComment, Boolean.FALSE);
             where.endGroup();
           }
           where.endGroup();

@@ -1296,6 +1296,7 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
       ActivityRefListEntity listRef = type.create(identityEntity);
       // keep last migration
       ExoSocialActivity entity = activities.get(activities.size() - 1);
+      
       if (entity != null) {
         Long value = entity.getUpdated() != null ? entity.getUpdated().getTime() : entity.getPostedTime();
         listRef.setLastMigration(value.longValue());
@@ -1306,6 +1307,9 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
         if (a == null) continue;
         //
         ActivityEntity activityEntity = getSession().findById(ActivityEntity.class, a.getId());
+        //
+        if (activityEntity == null) continue;
+        
         boolean hideValue = getHidableMixinValue(activityEntity, HidableEntity.class, true);
 
         // migration 3.5.x => 4.x, lastUpdated of Activity is NULL, then use
