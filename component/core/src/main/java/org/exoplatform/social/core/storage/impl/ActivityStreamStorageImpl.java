@@ -30,6 +30,7 @@ import org.chromattic.api.ChromatticException;
 import org.chromattic.api.query.Query;
 import org.chromattic.api.query.QueryBuilder;
 import org.chromattic.api.query.QueryResult;
+
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -704,6 +705,11 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
           //has on sender stream
           if (isExistingActivityRef(receiverEntity, entity, ActivityRefType.CONNECTION)) continue;
           
+          //exclude activity of space
+          // for SOC-4525
+          if (entity.getPath().contains(SPACE_NODETYPE_PATH)) {
+            continue;
+          }
           //
           createConnectionsRefs(receiver, entity);
         }
@@ -719,6 +725,10 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
           //has on receiver stream
           if (isExistingActivityRef(senderEntity, entity, ActivityRefType.CONNECTION)) continue;
           
+          // for SOC-4525
+          if (entity.getPath().contains(SPACE_NODETYPE_PATH)) {
+            continue;
+          }
           //
           createConnectionsRefs(sender, entity);
         }
@@ -897,43 +907,60 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
       int nb = 0;
       ActivityRefIterator it = list.iterator();
       _skip(it, offset);
+      int size = refList.getNumber()>0? refList.getNumber(): 0;
+      boolean sizeIsZero = (size==0)?true:false;
       while (it.hasNext()) {
-        ActivityRef current = it.next();
-        ActivityEntity entity = current.getActivityEntity();
-        // take care in the case, current.getActivityEntity() = null the same
-        // SpaceRef, need to remove it out
-        if (entity == null) {
-          current.getDay().getActivityRefs().remove(current.getName());
-          continue;
-        }
-        //if it has been removed on memory, don't get it.
-        String activityId = entity.getId();
-        
-        boolean isDeletedInMemory = DataChangeMerger.isDeleted(owner, activityId, type);
-        if(isDeletedInMemory) {
-          continue;
-        }
+        if(sizeIsZero) size ++;
+        try {
+          ActivityRef current = it.next();
+          // take care in the case, current.getActivityEntity() = null the same
+          // SpaceRef, need to remove it out
+          if (current.getActivityEntity() == null) {
+            current.getDay().getActivityRefs().remove(current.getName());
+            continue;
+          }
 
-        ExoSocialActivity a = getStorage().getActivity(activityId);
-        if (a == null) {
-          continue;
-        }
-        
-        if (!got.contains(a)) {
-          if (!a.isHidden()) {
-            got.add(a);
-            if (++nb == limit) {
-              break;
+          ExoSocialActivity a = getStorage().getActivity(current.getActivityEntity().getId());
+          
+          //SOC-4525 : exclude all space activities that owner is not member
+          if (SpaceIdentityProvider.NAME.equals(a.getActivityStream().getType().toString())) {
+            Space space = getSpaceStorage().getSpaceByPrettyName(a.getStreamOwner());
+            if(null == space){
+              IdentityEntity spaceIdentity = current.getActivityEntity().getIdentity();
+              LOG.info("SPACE PATH:" + spaceIdentity.getPath());
+              space = getSpaceStorage().getSpaceByPrettyName(spaceIdentity.getName());
+              if(space!=null){
+                LOG.info("SPACE was renamed before: " + space.getPrettyName());
+              }
+            }
+            if (ActivityRefType.CONNECTION.equals(type) || (space != null && ! ArrayUtils.contains(space.getMembers(), owner.getRemoteId()))) {
+              LOG.info("Cleanup leak activities " + current.getName() + " of space: " + space.getPrettyName());
+              current.getDay().getActivityRefs().remove(current.getName());
+              size--;
+              continue;
             }
           }
-        } else {
-          //remove if we have duplicate activity on stream.
-          //some of cases on PLF 3.5.x migration has duplicated Activity
-          current.getDay().getActivityRefs().remove(current.getName());
-        }
-        
-        
+          
+          if (!got.contains(a)) {
+            if (!a.isHidden()) {
+              got.add(a);
+              if (++nb == limit) {
+                break;
+              }
+            }
+          } else {
+            //remove if we have duplicate activity on stream.
+            //some of cases on PLF 3.5.x migration has duplicated Activity
+            current.getDay().getActivityRefs().remove(current.getName());
+          }
+        } catch (Exception e) {
+          LOG.warn("Exception while loading activities for user: " + owner.getRemoteId());
+        } 
       }
+      
+      //re-update size
+      refList.setNumber(size);
+      
     } catch (NodeNotFoundException e) {
       LOG.warn("Failed to activities!");
     }
