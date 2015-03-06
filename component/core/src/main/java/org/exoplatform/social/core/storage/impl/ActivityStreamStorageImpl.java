@@ -933,11 +933,14 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
                 LOG.info("SPACE was renamed before: " + space.getPrettyName());
               }
             }
-            if (ActivityRefType.CONNECTION.equals(type) || (space != null && ! ArrayUtils.contains(space.getMembers(), owner.getRemoteId()))) {
-              LOG.info("Cleanup leak activities " + current.getName() + " of space: " + space.getPrettyName());
-              current.getDay().getActivityRefs().remove(current.getName());
-              size--;
-              continue;
+            if (ActivityRefType.CONNECTION.equals(type) || ActivityRefType.FEED.equals(type)) {
+              if (space != null && !ArrayUtils.contains(space.getMembers(), owner.getRemoteId())) {
+                LOG.info("Cleanup leak activities " + current.getName() + " of space: " + space.getPrettyName());
+                current.getDay().getActivityRefs().remove(current.getName());
+                getSession().save();
+                size--;
+                continue;
+              }
             }
           }
           
