@@ -722,7 +722,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     assertEquals(1, activities.size());
     
     activities = activityStorage.getActivityFeed(maryIdentity, 0, 10);
-    assertEquals(0, activities.size());
+    assertEquals(1, activities.size());
     
     //
     tearDownActivityList.add(demoActivity);
@@ -767,7 +767,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     List<ExoSocialActivity> johnConnectionActivities = activityStorage.getActivitiesOfConnections(johnIdentity, 0, 10);
     assertNotNull("johnConnectionActivities must not be null", johnConnectionActivities);
 
-    assertEquals("johnConnectionActivities.size() must return: 0", 0, johnConnectionActivities.size());
+    assertEquals("johnConnectionActivities.size() must return: 1", 1, johnConnectionActivities.size());
     
     List<ExoSocialActivity> demoConnectionActivities = activityStorage.getActivitiesOfConnections(demoIdentity, 0, 10);
     assertNotNull("demoConnectionActivities must not be null", demoConnectionActivities);
@@ -776,7 +776,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     List<ExoSocialActivity> maryConnectionActivities = activityStorage.getActivitiesOfConnections(maryIdentity, 0, 10);
     assertNotNull("maryConnectionActivities must not be null", maryConnectionActivities);
 
-    assertEquals("maryConnectionActivities.size() must return: 0", 0, maryConnectionActivities.size());
+    assertEquals("maryConnectionActivities.size() must return: 1", 1, maryConnectionActivities.size());
 
     
     for (Relationship rel : relationships) {
@@ -1336,7 +1336,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfNewerOnUserActivities(Identity, Long)}
    */
-  @MaxQueryNumber(736)
+  @MaxQueryNumber(760)
   public void testGetNumberOfNewerOnUserActivitiesByTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -1923,7 +1923,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws ActivityStorageException
    */
-  @MaxQueryNumber(882)
+  @MaxQueryNumber(900)
   public void testGetActivitiesByPagingWithoutCreatingComments() throws ActivityStorageException {
     checkCleanData();
     final int totalActivityCount = 9;
@@ -2048,7 +2048,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnUserActivities(Identity, Long, int)}
    */
-  @MaxQueryNumber(736)
+  @MaxQueryNumber(760)
   public void testGetNewerOnUserActivitiesWithTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -2077,7 +2077,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnUserActivities(Identity, Long, int)}
    */
-  @MaxQueryNumber(736)
+  @MaxQueryNumber(760)
   public void testGetOlderOnUserActivitiesWithTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -2105,7 +2105,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(1330)
+  @MaxQueryNumber(1340)
   public void testGetNewerOnActivityFeedWithTimestamp() throws Exception {
     checkCleanData();
     createActivities(3, demoIdentity);
@@ -2135,7 +2135,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(764)
+  @MaxQueryNumber(780)
   public void testGetOlderOnActivityFeedWithTimestamp() throws Exception {
     checkCleanData();
     createActivities(5, demoIdentity);
