@@ -338,6 +338,7 @@ public class PeopleRestService implements ResourceContainer{
       // public information
       peopleInfo.setFullName(identity.getProfile().getFullName());
       peopleInfo.setPosition(StringEscapeUtils.unescapeHtml(identity.getProfile().getPosition()));
+      peopleInfo.setDeleted(identity.isDeleted());
       Profile userProfile = identity.getProfile();
       String avatarURL = userProfile.getAvatarUrl();
       if (avatarURL == null) {
@@ -348,7 +349,7 @@ public class PeopleRestService implements ResourceContainer{
       
       String userType = ConversationState.getCurrent().getIdentity().getUserId();
       boolean isAnonymous = IdentityConstants.ANONIM.equals(userType) 
-          || securityContext.getUserPrincipal() == null;
+          || securityContext.getUserPrincipal() == null || !userType.equals(currentIdentity.getRemoteId());
       
       if (!isAnonymous) { // private information
         peopleInfo.setProfileUrl(LinkProvider.getUserActivityUri(identity.getRemoteId()));
@@ -823,6 +824,7 @@ public class PeopleRestService implements ResourceContainer{
     private String relationshipType;
     private String fullName;
     private String position;
+    private Boolean isDeleted;
 
     
     public PeopleInfo() {
@@ -886,6 +888,14 @@ public class PeopleRestService implements ResourceContainer{
 
     public void setPosition(String position) {
       this.position = position;
+    }
+
+    public Boolean getDeleted() {
+          return isDeleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+          isDeleted = deleted;
     }
   }
   
