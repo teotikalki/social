@@ -17,7 +17,6 @@
 package org.exoplatform.social.core.storage.cache;
 
 import java.io.Serializable;
-import java.util.List;
 
 import org.exoplatform.commons.cache.future.Loader;
 import org.exoplatform.services.cache.ExoCache;
@@ -54,9 +53,24 @@ public class FutureStreamExoCache<T, K extends Serializable, V extends AbstractS
     V v = cache.get(key);
     if (v == null) return null;
     //find better way to handle
-    int size = (int)(offset + limit);
-    //if the sublist's size < limit, return NULL for continue Loader
-    return v.size() >= size ? v : null;
+    int newSize = (int)(offset + limit);
+    //Fixed the use case:
+    //precondition: there are more than 20 activities
+    //1. loads AS
+    //2. clear caching by jconsole
+    //3. load more by scroll end of the page
+    //4. refresh AS
+    //Expected: expected shows 20 activities in first page.
+    if (v.size() < newSize) return null;
+    
+    int i =0;
+    for(i = (int)offset; i < limit && i < v.size(); i++) {
+      if (v.getList().get(i) == null) {
+        return null;
+      }
+    }
+    //return (v.size() >= newSize && (v.getList().get((int)offset) != null || v.getList().get(newSize - 1) != null)) ? v : null;
+    return v;
   }
 
   @Override

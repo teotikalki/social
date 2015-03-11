@@ -251,7 +251,7 @@ public class UIActivitiesLoader extends UIContainer {
         boolean hasMore = totalNumberOfStream() > (index + length);
         setHasMore(hasMore);
         
-        return hasMore ? new ArrayList<ExoSocialActivity>(Arrays.asList(activities)).subList(0, length) : new ArrayList<ExoSocialActivity>(Arrays.asList(activities)) ;
+        return new ArrayList<ExoSocialActivity>(Arrays.asList(activities)) ;
       }
     }
     return null;

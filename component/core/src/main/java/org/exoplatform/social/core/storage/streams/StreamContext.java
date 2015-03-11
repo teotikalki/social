@@ -271,10 +271,6 @@ public class StreamContext implements Startable {
     if (data != null) {
       data.increase();
       LOG.debug("postId, " + posterId.toString() + ", " + data.build().intValue());
-    } else {
-      data = new IntegerData(1); 
-      LOG.debug("new cache: postId, " + posterId.toString() + ", " + data.build().intValue());
-      countCache.put(key, data);
     }
   }
   
