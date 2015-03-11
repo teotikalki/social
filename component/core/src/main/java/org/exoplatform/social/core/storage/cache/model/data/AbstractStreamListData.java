@@ -166,6 +166,15 @@ public abstract class AbstractStreamListData<K, V> implements Serializable {
   }
   
   /**
+   * Inserts(override mode) the value in the specified position
+   * @param index
+   * @param value
+   */
+  public void insertAt(int index, V value) {
+    this.list.set(index, value);
+  }
+  
+  /**
    * Returns true if this list contains the specified element.
    * 
    * @param value

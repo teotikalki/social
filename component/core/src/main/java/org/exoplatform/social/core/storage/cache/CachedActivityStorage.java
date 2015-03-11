@@ -269,7 +269,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getUserActivities(owner, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, (int)offset, (int)limit);
           }
         },
         key, offset, limit);
@@ -563,7 +563,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivityFeed(ownerIdentity, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
         key, offset, limit);
@@ -592,21 +592,35 @@ public class CachedActivityStorage implements ActivityStorage {
 
   }
   
-   /**
+  /**
    * Build the ids from the activity list.
    *
    * @return remoteId
    * @param activities activities
    * 
    */
-  private ListActivityStreamData buildStreamDataIds(StreamKey key, List<ExoSocialActivity> activities) {
+  private ListActivityStreamData buildStreamDataIds(StreamKey key, List<ExoSocialActivity> activities, int offset, int limit) {
 
     ListActivityStreamData data = this.exoStreamCache.get(key);
     if (data == null) {
       data = new ListActivityStreamData(key);
       this.exoStreamCache.put(key, data);
     }
-    
+    //Fixed the use case:
+    //1. Refresh AS
+    //2. clear caching by jconsole
+    //3. load more by scroll end of the page
+    //4. refresh AS
+    //Expected: expected shows 20 activities in first page. 
+    if (data.size() == 0 && offset > 0) {
+      for (int i = 0; i < offset; i++) {
+        data.insertLast(null);
+      }
+    }
+    //checks the data contains NULL value inside for offset + limit
+    //detail in 
+    boolean isOverride = data.size() >= (offset + limit); 
+    int index = 0;
     //
     for(int i = 0, len = activities.size(); i < len; i++) {
       ExoSocialActivity a = activities.get(i);
@@ -614,9 +628,15 @@ public class CachedActivityStorage implements ActivityStorage {
       if (a == null || a.isHidden()) {
         continue;
       }
-      //
-      if (!data.contains(a.getId())) {
-        data.insertLast(a.getId());
+      if (isOverride) {
+        data.insertAt(offset + index, a.getId());
+        index++;
+      } else {
+        //
+        if (!data.contains(a.getId())) {
+          data.insertLast(a.getId());
+        }
+
       }
     }
     return data;
@@ -747,7 +767,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivitiesOfConnections(ownerIdentity, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
         key, offset, limit);
@@ -892,7 +912,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getUserSpacesActivities(ownerIdentity, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
         key, offset, limit);
@@ -1276,7 +1296,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getSpaceActivities(ownerIdentity, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
         key, offset, limit);
@@ -1594,7 +1614,7 @@ public class CachedActivityStorage implements ActivityStorage {
         new ServiceContext<ListActivityStreamData>() {
           public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivities(owner, viewer, offset, limit);
-            return buildStreamDataIds(key, got);
+            return buildStreamDataIds(key, got, (int)offset, (int)limit);
           }
         },
         key, offset, limit);
