@@ -461,6 +461,8 @@ public class StreamHelper {
         for (Identity key : spaceMembers) {
           removeFromStream(key.getId(), activity, ActivityType.FEED);
           removeFromStream(key.getId(), activity, ActivityType.SPACE);
+          removeFromStream(key.getId(), activity, ActivityType.SPACES);
+          removeFromStream(key.getId(), activity, ActivityType.USER);
         }
       }
       
