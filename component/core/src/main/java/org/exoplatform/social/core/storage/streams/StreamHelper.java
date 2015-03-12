@@ -257,19 +257,17 @@ public class StreamHelper {
      
       if (isSpaceOwner) {
         moveSpaceMembersAndStreamOwner(streamOwnerId, activity);
-      } else {
-        Identity commenter = getIdentityStorage().findIdentityById(commenterId);
-        Identity streamOwner = getIdentityStorage().findIdentityById(streamOwnerId);
-        if (getRelationshipStorage().getRelationship(commenter, streamOwner) == null) {
-          movePosterStream(commenterId, activity);
-        } else {
-          movePosterStream(commenterId, activity);
-          moveViewer(commenterId, activity);
-          if (!commenterId.equals(streamOwnerId)) {
-            moveViewer(streamOwnerId, activity);
-          }
-          moveConnection(commenterId, activity);
+        if (!streamOwnerId.equals(activity.getPosterId())) {
+          moveTopStream(activity.getPosterId(), activity, ActivityType.USER);
         }
+      } else {
+        movePosterStream(commenterId, activity);
+        moveViewer(commenterId, activity);
+        if (!commenterId.equals(streamOwnerId)) {
+          moveViewer(streamOwnerId, activity);
+          movePosterStream(streamOwnerId, activity);
+        }
+        moveConnection(streamOwnerId, activity);
       }
     }
     /**
