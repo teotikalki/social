@@ -307,7 +307,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     List<ExoSocialActivity> list = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
     
     //only show activity (not comment) posted by demo
-    assertEquals(0, list.size());
+    assertEquals(1, list.size());
     
     //john view root'as --> only show activity (not comment) posted by root
     list = activityStorage.getActivities(rootIdentity, johnIdentity, 0, 10);
@@ -338,7 +338,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     
     List<ExoSocialActivity> list = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
     //only show demo's activity when John is viewer
-    assertEquals(1, list.size());
+    assertEquals(2, list.size());
     
     tearDownActivityList.addAll(list);
     relationshipManager.unregisterListener(publisher);
