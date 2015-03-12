@@ -175,6 +175,38 @@ public class ActivityStorageTest extends AbstractCoreTest {
   }
   
   /**
+   * SOC-4751 | Activity Stream is not updated on tab "My Activities"
+   * @throws Exception
+   */
+  public void testCommentActivities() throws Exception {
+    //demo posts 2 activities
+    createActivities(5, demoIdentity);
+    List<ExoSocialActivity> activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
+    ExoSocialActivity activity = activities.get(2);
+    assertEquals("activity title 2", activity.getTitle());
+    
+    //john comments on activity2
+    ExoSocialActivity comment = new ExoSocialActivityImpl();
+    comment.setTitle("john comment");
+    comment.setUserId(johnIdentity.getId());
+    activityManager.saveComment(activity, comment);
+    
+    //activity2 should be moved to the first place
+    //on feed
+    activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
+    activity = activities.get(0);
+    assertEquals("activity title 2", activity.getTitle());
+    //on my activities
+    activities = activityStorage.getUserActivities(demoIdentity, 0, 10);
+    activity = activities.get(0);
+    assertEquals("activity title 2", activity.getTitle());
+    //on viewer activities
+    activities = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
+    activity = activities.get(0);
+    assertEquals("activity title 2", activity.getTitle());
+  }
+  
+  /**
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#saveActivity(org.exoplatform.social.core.identity.model.Identity, org.exoplatform.social.core.activity.model.ExoSocialActivity)}
    */
   @MaxQueryNumber(290)
