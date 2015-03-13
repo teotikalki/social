@@ -133,6 +133,11 @@ public class StreamHelper {
       List<String> mentioners = StorageUtils.getIdentityIds(activity.getMentionedIds());
       putMentioners(mentioners, activity);
     }
+    
+    public static void addLike(String likerId, ExoSocialActivity activity) {
+      putFeedAndUser(likerId, activity);
+      putViewer(likerId, activity);
+    }
 
     /**
      * Puts the activity to poster's stream
@@ -244,7 +249,9 @@ public class StreamHelper {
       }
       
       LOG.debug("moveToTop:: identity : " + posterId + " activity: " + activity.getTitle() + " stream: " + type.toString());
-      data.putAtTop(activity.getId(), posterId);
+      if (!data.contains(activity.getId())) {
+        data.putAtTop(activity.getId(), posterId);
+      }
     }
   }
   
@@ -268,38 +275,6 @@ public class StreamHelper {
           movePosterStream(streamOwnerId, activity);
         }
         moveConnection(streamOwnerId, activity);
-      }
-    }
-    /**
-     * Handles to like the activity
-     * @param likerId
-     * @param activity
-     */
-    public static void addLike(String likerId, ExoSocialActivity activity) {
-      String posterId = activity.getPosterId();
-      String streamOwnerId = activity.getActivityStream().getId();
-      
-     boolean isSpaceOwner = isSpaceActivity(activity.getActivityStream().getType().toString());
-     
-      if (isSpaceOwner) {
-        moveSpaceMembersAndStreamOwner(streamOwnerId, activity);
-      } else {
-        Identity liker = getIdentityStorage().findIdentityById(likerId);
-        Identity streamOwner = getIdentityStorage().findIdentityById(streamOwnerId);
-        if (getRelationshipStorage().getRelationship(liker, streamOwner) == null) {
-          movePosterStream(likerId, activity);
-        } else {
-          movePosterStream(posterId, activity);
-          moveViewer(posterId, activity);
-          if (!posterId.equals(streamOwnerId)) {
-            moveViewer(streamOwnerId, activity);
-          }
-          moveConnection(posterId, activity);
-        }
-      }
-      
-      if (!posterId.equals(likerId)) {
-        moveTopStream(posterId, activity, ActivityType.USER);
       }
     }
     

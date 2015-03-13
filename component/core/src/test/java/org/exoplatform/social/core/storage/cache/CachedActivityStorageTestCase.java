@@ -313,7 +313,7 @@ public class CachedActivityStorageTestCase extends AbstractCoreTest {
     activityManager.saveLike(gotActivity, identity2);
     
     assertEquals(1, cacheService.getActivityCache().getCacheSize());
-    assertEquals(5, cacheService.getStreamCache().getCacheSize());
+    assertEquals(6, cacheService.getStreamCache().getCacheSize());
     
     id2Activities = activityStorage.getUserActivities(identity2, 0, 5);
     assertEquals(1, id2Activities.size());

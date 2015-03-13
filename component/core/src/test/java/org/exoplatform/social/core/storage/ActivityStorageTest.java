@@ -179,19 +179,19 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    */
   public void testCommentActivities() throws Exception {
-    //demo posts 2 activities
+    //demo posts 5 activities
     createActivities(5, demoIdentity);
     List<ExoSocialActivity> activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
     ExoSocialActivity activity = activities.get(2);
     assertEquals("activity title 2", activity.getTitle());
     
-    //john comments on activity2
+    //john comments on activity at position 2
     ExoSocialActivity comment = new ExoSocialActivityImpl();
     comment.setTitle("john comment");
     comment.setUserId(johnIdentity.getId());
     activityManager.saveComment(activity, comment);
     
-    //activity2 should be moved to the first place
+    //activity should be moved to the first place
     //on feed
     activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
     activity = activities.get(0);
@@ -204,6 +204,43 @@ public class ActivityStorageTest extends AbstractCoreTest {
     activities = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
     activity = activities.get(0);
     assertEquals("activity title 2", activity.getTitle());
+  }
+  
+  /**
+   * SOC-4753 | Activity is pushed to the top of AS when user likes it
+   * @throws Exception
+   */
+  public void testLikeActivities() throws Exception {
+    //demo posts 5 activities
+    createActivities(5, demoIdentity);
+    List<ExoSocialActivity> activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
+    ExoSocialActivity activity = activities.get(2);
+    assertEquals("activity title 2", activity.getTitle());
+    
+    //john like activity at position 2
+    activityManager.saveLike(activity, johnIdentity);
+    
+    //activity should not change his position
+    //on feed
+    activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
+    activity = activities.get(2);
+    assertEquals("activity title 2", activity.getTitle());
+    //on my activities
+    activities = activityStorage.getUserActivities(demoIdentity, 0, 10);
+    activity = activities.get(2);
+    assertEquals("activity title 2", activity.getTitle());
+    //on viewer activities
+    activities = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
+    activity = activities.get(2);
+    assertEquals("activity title 2", activity.getTitle());
+    
+    //this activity should appears on stream of john
+    activities = activityStorage.getActivityFeed(johnIdentity, 0, 10);
+    assertEquals(1, activities.size());
+    activities = activityStorage.getUserActivities(johnIdentity, 0, 10);
+    assertEquals(1, activities.size());
+    activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
+    assertEquals(1, activities.size());
   }
   
   /**
