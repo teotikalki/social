@@ -208,8 +208,8 @@ public class ActivityManagerImpl implements ActivityManager {
     if (ArrayUtils.contains(identityIds, identity.getId())) {
       identityIds = (String[]) ArrayUtils.removeElement(identityIds, identity.getId());
       activity.setLikeIdentityIds(identityIds);
-      updateActivity(activity);
       StreamHelper.REMOVE.removeLike(identity.getId(), activity);
+      updateActivity(activity);
     } else {
       LOG.warn("activity is not liked by identity: " + identity);
     }

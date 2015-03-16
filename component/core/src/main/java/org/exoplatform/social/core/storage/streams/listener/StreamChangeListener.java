@@ -24,6 +24,7 @@ import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.storage.api.ActivityStorage;
 import org.exoplatform.social.core.storage.api.ActivityStreamStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
+import org.exoplatform.social.core.storage.cache.CachedActivityStorage;
 import org.exoplatform.social.core.storage.cache.model.key.ActivityType;
 import org.exoplatform.social.core.storage.cache.model.key.StreamKey;
 import org.exoplatform.social.core.storage.impl.ActivityStorageImpl;
@@ -83,6 +84,8 @@ public class StreamChangeListener implements DataChangeListener<StreamChange<Str
       streamStorage.removeActivityRef(identity, activityId, refType);
     }
     
+    //clear the activity's id in the cache in case of remove reference
+    CommonsUtils.getService(CachedActivityStorage.class).removeActivityFromStreamCache(activityId, target.getKey());
   }
 
   public void onUpdate(StreamChange<StreamKey, String> target) {
