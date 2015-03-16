@@ -313,6 +313,8 @@ public class StreamHelper {
       for (String identityId : identityIds) {
         moveTopStream(identityId, activity, ActivityType.FEED);
         moveTopStream(identityId, activity, ActivityType.USER);
+        //Mentioned activity must be displayed on "My Activities" stream as required in STREAM_FILTER_01 
+        moveTopStream(identityId, activity, ActivityType.VIEWER);
       }
     }
     
@@ -491,6 +493,8 @@ public class StreamHelper {
 
       for (String identityId : identityIds) {
         removeFromStream(identityId, activity, ActivityType.USER);
+        //As the mentioned activity is displayed on the viewer activity stream, we need also remove it 
+        removeFromStream(identityId, activity, ActivityType.VIEWER);
         Identity removedIdentity = getIdentityStorage().findIdentityById(identityId);
         //just remove feed when don't have relationshi with poster
         if (getRelationshipStorage().getRelationship(removedIdentity, poster) == null) {

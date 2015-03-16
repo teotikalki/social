@@ -40,7 +40,6 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.core.storage.api.ActivityStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
-import org.exoplatform.social.core.storage.impl.StorageUtils;
 import org.exoplatform.social.core.storage.streams.event.DataChangeMerger;
 import org.exoplatform.social.core.test.AbstractCoreTest;
 import org.exoplatform.social.core.test.MaxQueryNumber;
@@ -241,6 +240,67 @@ public class ActivityStorageTest extends AbstractCoreTest {
     assertEquals(1, activities.size());
     activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
     assertEquals(1, activities.size());
+  }
+  
+  /**
+   * SOC-4754 | Activity is not removed from AS when remove comment, like or mentions
+   * @throws Exception
+   */
+  public void testRemoveLikeActivities() throws Exception {
+    //demo posts 3 activities
+    createActivities(3, demoIdentity);
+    List<ExoSocialActivity> activities = activityStorage.getActivityFeed(demoIdentity, 0, 10);
+    ExoSocialActivity activity0 = activities.get(0);
+    ExoSocialActivity activity1 = activities.get(1);
+    ExoSocialActivity activity2 = activities.get(2);
+    
+    //john like activity0
+    activityManager.saveLike(activity0, johnIdentity);
+    //john comments on activity1
+    ExoSocialActivity comment1 = new ExoSocialActivityImpl();
+    comment1.setTitle("john comment");
+    comment1.setUserId(johnIdentity.getId());
+    activityManager.saveComment(activity1, comment1);
+    //demo comment on activity2 and mention to john
+    ExoSocialActivity comment2 = new ExoSocialActivityImpl();
+    comment2.setTitle("demo mentio to @john");
+    comment2.setUserId(demoIdentity.getId());
+    activityManager.saveComment(activity2, comment2);
+    
+    //theses 3 activities should appears on stream of john
+    activities = activityStorage.getActivityFeed(johnIdentity, 0, 10);
+    assertEquals(3, activities.size());
+    activities = activityStorage.getUserActivities(johnIdentity, 0, 10);
+    assertEquals(3, activities.size());
+    activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
+    assertEquals(3, activities.size());
+    
+    //john unlike activity0
+    activityManager.deleteLike(activity0, johnIdentity);
+    activities = activityStorage.getActivityFeed(johnIdentity, 0, 10);
+    assertEquals(2, activities.size());
+    activities = activityStorage.getUserActivities(johnIdentity, 0, 10);
+    assertEquals(2, activities.size());
+    activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
+    assertEquals(2, activities.size());
+    
+    //john delete comment on activity1
+    activityManager.deleteComment(activity1, comment1);
+    activities = activityStorage.getActivityFeed(johnIdentity, 0, 10);
+    assertEquals(1, activities.size());
+    activities = activityStorage.getUserActivities(johnIdentity, 0, 10);
+    assertEquals(1, activities.size());
+    activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
+    assertEquals(1, activities.size());
+    
+    //demo delete comment on activity2 where john is mentioned
+    activityManager.deleteComment(activity2, comment2);
+    activities = activityStorage.getActivityFeed(johnIdentity, 0, 10);
+    assertEquals(0, activities.size());
+    activities = activityStorage.getUserActivities(johnIdentity, 0, 10);
+    assertEquals(0, activities.size());
+    activities = activityStorage.getActivities(johnIdentity, demoIdentity, 0, 10);
+    assertEquals(0, activities.size());
   }
   
   /**

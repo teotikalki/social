@@ -2000,4 +2000,14 @@ public class CachedActivityStorage implements ActivityStorage {
     
   }
   
+  /**
+   * When activity ref is removed from jcr, we remove also it from caching list
+   * 
+   * @param activityId id of activity need to remove the reference from stream
+   * @param key a cache's key that represents a list of activity related to an user on a specific stream
+   */
+  public void removeActivityFromStreamCache(String activityId, StreamKey key) {
+    ListActivityStreamData streamData = this.exoStreamCache.get(key);
+    streamData.getList().remove(activityId);
+  }
 }
