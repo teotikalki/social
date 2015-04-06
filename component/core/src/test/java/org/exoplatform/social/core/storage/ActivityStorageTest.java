@@ -681,7 +681,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#testGetActivitiesRelationshipByFeed(Identity, int, int)}
    */
-  @MaxQueryNumber(700)
+  @MaxQueryNumber(760)
   public void testGetActivitiesRelationshipByFeed() throws Exception {
     RelationshipManager relationshipManager = this.getRelationshipManager();
     
@@ -2104,7 +2104,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(1322)
+  @MaxQueryNumber(1324)
   public void testGetNewerOnActivityFeedWithTimestamp() throws Exception {
     checkCleanData();
     createActivities(3, demoIdentity);
