@@ -44,6 +44,7 @@ var UIActivity = {
       return;
     }
     UIActivity.commentLinkId = 'CommentLink' + UIActivity.activityId;
+    UIActivity.shareActivityLinkId = 'ShareActivityLink' + UIActivity.activityId;
     //UIActivity.likeLinkId = 'LikeLink'  + UIActivity.activityId;
     UIActivity.commentFormBlockId = 'CommentFormBlock' + UIActivity.activityId;
     UIActivity.commentTextareId = 'CommentTextarea' + UIActivity.activityId;
@@ -64,6 +65,7 @@ var UIActivity = {
   },
   init: function() {
     UIActivity.commentLinkEl = $("#"+UIActivity.commentLinkId);
+    UIActivity.shareActivityLinkEl = $("#"+UIActivity.shareActivityLinkId);
     UIActivity.commentFormBlockEl = $("#" + UIActivity.commentFormBlockId);
     UIActivity.commentTextareaEl = $("#" + UIActivity.commentTextareId);
     UIActivity.commentButtonEl = $("#" + UIActivity.commentButtonId).show();
@@ -90,6 +92,33 @@ var UIActivity = {
       commentLinkEl.off('click').on('click', function (evt) {
         var currentActivityId = $(this).attr('id').replace('CommentLink', '');
         var inputContainer = $('#InputContainer' + currentActivityId).fadeToggle('fast', function () {
+          var thiz = $(this);
+          if(thiz.css('display') === 'block') {
+            var blockInput = thiz.parents('.uiActivityStream:first').find('.inputContainerShow');
+            if(blockInput.length > 0) {
+              blockInput.removeClass('inputContainerShow').hide();
+            }
+            thiz.addClass('inputContainerShow');
+            thiz.find('div.replaceTextArea:first').focus();
+
+            var ctTop = ($(window).height()- thiz.height())/2;
+            var nTop = thiz.offset().top - ctTop - 20;
+            nTop = (nTop > 0) ? nTop : 0;
+            
+            $('html, body').animate({scrollTop:nTop}, 'slow');
+          } else {
+            thiz.removeClass('inputContainerShow')
+          }
+        });
+      });
+    }
+    
+    
+    var shareActivityLinkEl = $("#" + UIActivity.shareActivityLinkId);
+    if (shareActivityLinkEl.length > 0) {
+      shareActivityLinkEl.off('click').on('click', function (evt) {
+        var currentActivityId = $(this).attr('id').replace('ShareActivityLink', '');
+        var shareActivityContainer = $('#ShareActivityContainer' + currentActivityId).fadeToggle('fast', function () {
           var thiz = $(this);
           if(thiz.css('display') === 'block') {
             var blockInput = thiz.parents('.uiActivityStream:first').find('.inputContainerShow');

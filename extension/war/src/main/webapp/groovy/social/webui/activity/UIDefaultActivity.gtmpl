@@ -27,6 +27,7 @@
   import org.exoplatform.social.core.space.model.Space;
   import org.exoplatform.social.webui.Utils;
   import org.exoplatform.social.core.service.LinkProvider;
+  import org.exoplatform.webui.form.UIFormRadioBoxInput;
 
   def pcontext = Util.getPortalRequestContext();
   def labelActivityHasBeenDeleted = _ctx.appRes("UIActivity.label.Activity_Has_Been_Deleted");
@@ -40,6 +41,8 @@
 
   def jsManager = pcontext.getJavascriptManager().require("SHARED/uiForm");
 
+  def labelShareActivity = _ctx.appRes("UIActivity.label.ShareActivity");
+  def labelUnShareActivity = _ctx.appRes("UIActivity.label.UnShareActivity");
   def labelComment = _ctx.appRes("UIActivity.label.Comment");
   def labelLike = _ctx.appRes("UIActivity.label.Like");
   def labelUnlike = _ctx.appRes("UIActivity.label.Unlike");
@@ -157,6 +160,7 @@
     ownerName = ownerIdentity.profile.fullName;     
   }
   def currentTime = System.currentTimeMillis();
+  uicomponent.initShareOptions();
 %>
 
 <div class="activityStream uiDefaultActivity" id="activityContainer${activity.id}">
@@ -204,6 +208,11 @@
 								 def commentLink = "";
 							  %> 				 
 					<ul class="pull-right statusAction">
+					  <li>
+              <a class="$commentLink" id="ShareActivityLink${activity.id}" href="javascript:void(0);">
+                <i class="uiIconComment uiIconLightGray"></i>&nbsp;10 <!-- $allCommentSize -->
+              </a> 
+            </li>
 						<li>
 							<a class="$commentLink" id="CommentLink${activity.id}" href="javascript:void(0);">
 								<i class="uiIconComment uiIconLightGray"></i>&nbsp;$allCommentSize
@@ -223,7 +232,25 @@
 						</li>
 					  <% }%>					  			
 					</ul>	
-			</div><!--end actionBar-->					
+			</div><!--end actionBar-->		
+			
+			<!-- Share Activity Block -->
+			<div class="inputContainer" id="ShareActivityContainer${activity.id}">
+        <div class="shareActivityFormBox" id="ShareActivityFormBlock${activity.id}">
+          <div class="commmentLeft">
+            <!-- Share target Option -->
+            <div class="shareActivityInput"><% uicomponent.renderChild(UIFormRadioBoxInput.class);%></div>
+          </div><!--end shareActivityLeft--> 
+          <div class="shareActivityRight">
+            <div class="shareActivityInputBox ">
+              <button class="btn pull-right btn-primary" onclick="<%= uicomponent.event("UnShareActivity") %>" id="UnShareActivityButton${activity.id}">$labelUnShareActivity</button>
+              <button class="btn pull-right btn-primary" onclick="<%= uicomponent.event("ShareActivity") %>" id="ShareActivityButton${activity.id}">$labelShareActivity</button>
+            </div>
+          </div><!--end shareActivityRight-->        
+        </div> <!--end shareActivityItem-->       
+      </div><!--end shareActivityBox--> 
+			<!--  -->
+						
 			<% if (identityLikesNum > 0 || uicomponent.isLiked()) {%>				
 			<div class="listLikedBox $listPeopleBGClass">		
 				  <div class="listPeopleContent">
