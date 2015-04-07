@@ -50,13 +50,14 @@ import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.core.UIApplication;
+import org.exoplatform.webui.core.UIComponent;
 import org.exoplatform.webui.core.lifecycle.WebuiBindingContext;
-import org.exoplatform.webui.core.model.SelectItemOption;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.form.UIForm;
-import org.exoplatform.webui.form.UIFormRadioBoxInput;
+import org.exoplatform.webui.form.UIFormInputWithActions;
 import org.exoplatform.webui.form.UIFormTextAreaInput;
+import org.exoplatform.webui.form.input.UICheckBoxInput;
 
 /**
  * Base UI Activity for other custom activity ui to extend for displaying.
@@ -115,18 +116,24 @@ public class BaseUIActivity extends UIForm {
   }
 
   protected void initShareOptions() throws Exception {
-    List<SelectItemOption<String>> shareOptions = new ArrayList<SelectItemOption<String>>(2);
     ResourceBundle resApp = WebuiRequestContext.getCurrentInstance().getApplicationResourceBundle();
-    shareOptions.add(new SelectItemOption<String>(resApp.getString("UIActivity.label.MyConnections"), "MyConnections"));
+    UIFormInputWithActions uiFIWA = new UIFormInputWithActions("ShareOptions" + activity.getId());
+    uiFIWA.addChild(buildCheckBox("MyConnections", resApp.getString("UIActivity.label.MyConnections"), false));
+    
     SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
     ListAccess<Space> spaces = spaceService.getAccessibleSpacesWithListAccess(Utils.getViewerIdentity().getRemoteId());
     for (Space space : spaces.load(0, 10)) { // temp; need to check
-      shareOptions.add(new SelectItemOption<String>(space.getDisplayName(), space.getPrettyName()));
+      uiFIWA.addChild(buildCheckBox(space.getDisplayName(), space.getPrettyName(), false));
     }
-    UIFormRadioBoxInput uiRadioShareOption = new UIFormRadioBoxInput("ShareOptionsRadio" + activity.getId(), null, shareOptions);
-    addUIFormInput(uiRadioShareOption);
+    addChild(uiFIWA);
   }
 
+  private UICheckBoxInput buildCheckBox(String name, String label, boolean isChecked) {
+    UICheckBoxInput uiCBI = new UICheckBoxInput(name, null, isChecked);
+    uiCBI.setLabel(label);
+    return uiCBI;
+  }
+  
   public RealtimeListAccess<ExoSocialActivity> getActivityCommentsListAccess() {
     return activityCommentsListAccess;
   }
@@ -812,22 +819,17 @@ public class BaseUIActivity extends UIForm {
       WebuiRequestContext requestContext = event.getRequestContext();
       
       //
-      UIFormRadioBoxInput uiFRBI = (UIFormRadioBoxInput)baseUIActivity
-          .getChildById("ShareOptionsRadio" + baseUIActivity.activity.getId());
-      String shareTo = uiFRBI.getValue();
-      
-      //
-      
-      requestContext.addUIComponentToUpdateByAjax(baseUIActivity);
-      baseUIActivity.getParent().broadcast(event, event.getExecutionPhase());
-    }
-  }
-  
-  public static class UnShareActivityActionListener extends EventListener<BaseUIActivity> {
-    @Override
-    public void execute(Event<BaseUIActivity> event) throws Exception {
-      BaseUIActivity baseUIActivity = event.getSource();
-      WebuiRequestContext requestContext = event.getRequestContext();
+      UIFormInputWithActions uiIWA = (UIFormInputWithActions)baseUIActivity
+          .getChildById("ShareOptions" + baseUIActivity.activity.getId());
+      List<UIComponent> checkBoxList = uiIWA.getChildren();
+      List<String> shareTos = new ArrayList<String>();
+      for (UIComponent uiC : checkBoxList) {
+        UICheckBoxInput uiCBI = (UICheckBoxInput)uiC;
+        if (uiCBI.getValue()) {
+          System.out.println("\n share to: " + uiCBI.getId());
+          shareTos.add(uiCBI.getId());    
+        }
+      }
       
       //
       

@@ -27,7 +27,7 @@
   import org.exoplatform.social.core.space.model.Space;
   import org.exoplatform.social.webui.Utils;
   import org.exoplatform.social.core.service.LinkProvider;
-  import org.exoplatform.webui.form.UIFormRadioBoxInput;
+  import org.exoplatform.webui.form.UIFormInputWithActions;
 
   def pcontext = Util.getPortalRequestContext();
   def labelActivityHasBeenDeleted = _ctx.appRes("UIActivity.label.Activity_Has_Been_Deleted");
@@ -239,11 +239,10 @@
         <div class="shareActivityFormBox" id="ShareActivityFormBlock${activity.id}">
           <div class="commmentLeft">
             <!-- Share target Option -->
-            <div class="shareActivityInput"><% uicomponent.renderChild(UIFormRadioBoxInput.class);%></div>
+            <div class="shareActivityInput"><% uicomponent.renderChild(UIFormInputWithActions.class);%></div>
           </div><!--end shareActivityLeft--> 
           <div class="shareActivityRight">
             <div class="shareActivityInputBox ">
-              <button class="btn pull-right btn-primary" onclick="<%= uicomponent.event("UnShareActivity") %>" id="UnShareActivityButton${activity.id}">$labelUnShareActivity</button>
               <button class="btn pull-right btn-primary" onclick="<%= uicomponent.event("ShareActivity") %>" id="ShareActivityButton${activity.id}">$labelShareActivity</button>
             </div>
           </div><!--end shareActivityRight-->        
