@@ -475,8 +475,6 @@ public class ActivityManagerImpl implements ActivityManager {
 
   public void shareActivity(ExoSocialActivity activity, Identity sharer, boolean isConnectionShare, List<String> spaceIds) {
     if (isConnectionShare) { //share to connections
-      activity.setNumberOfSharer(1);
-      updateActivity(activity);
     }
     activityStorage.shareActivity(sharer, activity);
   }

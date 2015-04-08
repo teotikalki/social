@@ -161,6 +161,16 @@ public abstract class ActivityEntity implements NamedEntity {
   @Owner
   public abstract ShareListEntity getSharerList();
   public abstract void setSharerList(ShareListEntity shareListEntity);
+  
+  /**
+   * The number of sharer.
+   */
+  @Property(name = "soc:numberOfSharer")
+  @DefaultValue({"0"})
+  public abstract int getNumberOfSharer();
+  public abstract void setNumberOfSharer(int nbSharer);
+  public static final PropertyLiteralExpression<String> numberOfSharer = new PropertyLiteralExpression<String>(String.class,
+                                                                                                               "soc:numberOfSharer");
 
   /**
    * The list of identity Ids who like the activity.

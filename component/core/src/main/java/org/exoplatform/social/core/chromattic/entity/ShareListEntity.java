@@ -48,5 +48,14 @@ public abstract class ShareListEntity {
   @Create
   public abstract SharerEntity createSharer(String name);
 
-  
+  public SharerEntity getOrCreateShareEntity(String name) {
+    if (getSharerList() != null) {
+      for (SharerEntity sharerEntity : getSharerList()) {
+        if (sharerEntity.getName().equals(name)) {
+          return sharerEntity;
+        }
+      }
+    }
+    return createSharer(name);
+  }
 }

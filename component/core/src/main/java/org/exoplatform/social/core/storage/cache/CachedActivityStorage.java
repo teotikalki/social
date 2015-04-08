@@ -2013,6 +2013,7 @@ public class CachedActivityStorage implements ActivityStorage {
 
   @Override
   public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
-    storage.shareActivity(sharer, activity);    
+    storage.shareActivity(sharer, activity);
+    clearActivityCached(activity.getId());
   }
 }

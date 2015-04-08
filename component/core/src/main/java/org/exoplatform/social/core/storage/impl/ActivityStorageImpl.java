@@ -469,7 +469,18 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activity.setPriority(activityEntity.getPriority());
     activity.isComment(isComment);
     activity.setPosterId(posterIdentitiyId);
-    activity.setNumberOfSharer(activityEntity.getSharerList().getSharerList().size());
+    
+    activity.setNumberOfSharer(activityEntity.getNumberOfSharer());
+    Map<String, List<String>> map = new HashMap<String, List<String>>();
+    List<SharerEntity> list = activityEntity.getSharerList().getSharerList();
+    for (SharerEntity sharerIdentity : list) {
+      List<String> ids = sharerIdentity.getSpaces() != null ? Arrays.asList(sharerIdentity.getSpaces()) : new ArrayList<String>();
+      if (sharerIdentity.getMyConnection()) {
+        ids.add("CONNECTIONS");
+      }
+      map.put(sharerIdentity.getName(), ids);
+    }
+    activity.setSharerStream(map);
     
     //
     List<String> computeCommentid = new ArrayList<String>();
@@ -985,8 +996,9 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
+      activityEntity.setNumberOfSharer(1);
       ShareListEntity sharesEntity = activityEntity.getOrCreateShareList();
-      SharerEntity sharerEntity = sharesEntity.createSharer(sharer.getRemoteId());
+      SharerEntity sharerEntity = sharesEntity.getOrCreateShareEntity(sharer.getRemoteId());
       sharesEntity.getSharerList().add(sharerEntity);
       sharerEntity.setMyConnection(true);
       getSession().save();

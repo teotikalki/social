@@ -1277,7 +1277,7 @@ public class ActivityManagerTest extends AbstractCoreTest {
     
     //mary and demo must see this activity on their streams
     ExoSocialActivity got = activityManager.getActivity(activity.getId());
-//    assertEquals(1, got.getNumberOfSharer());
+    assertEquals(1, got.getNumberOfSharer());
     
     //clean
     activityManager.deleteActivity(got);

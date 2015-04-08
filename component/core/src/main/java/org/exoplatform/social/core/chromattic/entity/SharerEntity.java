@@ -44,8 +44,8 @@ public abstract class SharerEntity implements NamedEntity {
       new PropertyLiteralExpression<String>(String.class, "soc:myConnection");
   
   @Property(name = "soc:spaces")
-  public abstract Boolean getSpaces();
-  public abstract void setMySpace(String mySpace);
+  public abstract String[] getSpaces();
+  public abstract void setMySpace(String[] mySpaces);
   public static final PropertyLiteralExpression<String> mySpaces =
       new PropertyLiteralExpression<String>(String.class, "soc:spaces");
   

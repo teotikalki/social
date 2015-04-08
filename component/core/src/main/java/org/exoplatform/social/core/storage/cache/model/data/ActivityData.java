@@ -20,6 +20,7 @@ package org.exoplatform.social.core.storage.cache.model.data;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.exoplatform.social.core.activity.model.ActivityStream;
@@ -67,6 +68,9 @@ public class ActivityData implements CacheData<ExoSocialActivity> {
   private final String posterId;
   private final String parentId;
   
+  private final int nbSharer;
+  private final Map<String, List<String>> sharerStream;
+  
   private boolean isDeleted = false;
 
   public ActivityData(final ExoSocialActivity activity) {
@@ -99,6 +103,9 @@ public class ActivityData implements CacheData<ExoSocialActivity> {
     this.streamType = activity.getActivityStream().getType();
     this.posterId = activity.getPosterId();
     this.parentId = activity.getParentId();
+    
+    this.nbSharer = activity.getNumberOfSharer();
+    this.sharerStream = activity.getSharerStream();
 
     if (activity.getTemplateParams() != null) {
       this.templateParams = Collections.unmodifiableMap(activity.getTemplateParams());
@@ -139,6 +146,9 @@ public class ActivityData implements CacheData<ExoSocialActivity> {
     this.streamType = activity.getActivityStream().getType();
     this.posterId = activity.getPosterId();
     this.parentId = activity.getParentId();
+    
+    this.nbSharer = activity.getNumberOfSharer();
+    this.sharerStream = activity.getSharerStream();
 
     if (activity.getTemplateParams() != null) {
       this.templateParams = Collections.unmodifiableMap(activity.getTemplateParams());
@@ -192,6 +202,9 @@ public class ActivityData implements CacheData<ExoSocialActivity> {
     activityStream.setType(streamType);
 
     activity.setActivityStream(activityStream);
+    
+    activity.setNumberOfSharer(nbSharer);
+    activity.setSharerStream(sharerStream);
 
     return activity;
 
