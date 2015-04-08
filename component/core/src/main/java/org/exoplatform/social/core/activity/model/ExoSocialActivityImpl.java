@@ -18,6 +18,8 @@ package org.exoplatform.social.core.activity.model;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.shindig.social.core.model.ActivityImpl;
@@ -93,6 +95,10 @@ public class ExoSocialActivityImpl extends ActivityImpl implements ExoSocialActi
   
   //
   private String parentId;
+  
+  private int nbSharer;
+  
+  private Map<String, List<String>> sharerStream;
   
   /**
    * constructor.
@@ -506,6 +512,26 @@ public class ExoSocialActivityImpl extends ActivityImpl implements ExoSocialActi
     this.parentId = parentId;
   }
 
+  @Override
+  public int getNumberOfSharer() {
+    return nbSharer;
+  }
+  
+  @Override
+  public void setNumberOfSharer(int nbSharer) {
+    this.nbSharer = nbSharer;
+  }
+  
+  @Override
+  public Map<String, List<String>> getSharerStream() {
+    return sharerStream;
+  }
+  
+  @Override
+  public void setSharerStream(Map<String, List<String>> sharerStream) {
+    this.sharerStream = sharerStream;
+  }
+  
   @Override
   public String toString() {
     return "ExoSocialActivity[id = " + getId() + ",title=" + getTitle() + ",lastModified= " + getUpdated().getTime() + " ]";

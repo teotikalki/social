@@ -141,6 +141,14 @@ public interface ActivityStorage {
      * @since 1.1.1
      */
   public ExoSocialActivity saveActivity(Identity owner, ExoSocialActivity activity) throws ActivityStorageException;
+  
+  /**
+   * Share the activity in existing the activity
+   * 
+   * @param sharer
+   * @param activity
+   */
+  public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException;
 
   public ExoSocialActivity getParentActivity(ExoSocialActivity comment) throws ActivityStorageException;
 

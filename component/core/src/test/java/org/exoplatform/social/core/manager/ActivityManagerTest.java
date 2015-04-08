@@ -1259,6 +1259,30 @@ public class ActivityManagerTest extends AbstractCoreTest {
     assertEquals("1", mentioners[0].split("@")[1]);
   }
 
+  public void testShareActivity() throws Exception {
+    //john posts an activity
+    ExoSocialActivity activity = new ExoSocialActivityImpl();
+    activity.setTitle("activity title");
+    activityManager.saveActivityNoReturn(johnIdentity, activity);
+    tearDownActivityList.add(activity);
+    
+    //root connects with mary and demo
+    relationshipManager.inviteToConnect(rootIdentity, demoIdentity);
+    relationshipManager.confirm(demoIdentity, rootIdentity);
+    relationshipManager.inviteToConnect(rootIdentity, maryIdentity);
+    relationshipManager.confirm(maryIdentity, rootIdentity);
+    
+    //root shares activity of john for his connections
+    activityManager.shareActivity(activity, rootIdentity, true, new ArrayList<String>());
+    
+    //mary and demo must see this activity on their streams
+    ExoSocialActivity got = activityManager.getActivity(activity.getId());
+//    assertEquals(1, got.getNumberOfSharer());
+    
+    //clean
+    activityManager.deleteActivity(got);
+  }
+  
   /**
    *
    */

@@ -74,6 +74,8 @@ import org.exoplatform.social.core.chromattic.entity.ActivityParameters;
 import org.exoplatform.social.core.chromattic.entity.HidableEntity;
 import org.exoplatform.social.core.chromattic.entity.IdentityEntity;
 import org.exoplatform.social.core.chromattic.entity.LockableEntity;
+import org.exoplatform.social.core.chromattic.entity.ShareListEntity;
+import org.exoplatform.social.core.chromattic.entity.SharerEntity;
 import org.exoplatform.social.core.chromattic.filter.JCRFilterLiteral;
 import org.exoplatform.social.core.chromattic.utils.ActivityList;
 import org.exoplatform.social.core.identity.model.ActiveIdentityFilter;
@@ -467,6 +469,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activity.setPriority(activityEntity.getPriority());
     activity.isComment(isComment);
     activity.setPosterId(posterIdentitiyId);
+    activity.setNumberOfSharer(activityEntity.getSharerList().getSharerList().size());
     
     //
     List<String> computeCommentid = new ArrayList<String>();
@@ -977,7 +980,31 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       }
     }
   }
-
+  
+  @Override
+  public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
+    try {
+      ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
+      ShareListEntity sharesEntity = activityEntity.getOrCreateShareList();
+      SharerEntity sharerEntity = sharesEntity.createSharer(sharer.getRemoteId());
+      sharesEntity.getSharerList().add(sharerEntity);
+      sharerEntity.setMyConnection(true);
+      getSession().save();
+    }
+    catch (NodeNotFoundException e) {
+      throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SHARE_ACTIVITY, e.getMessage(), e);
+    } catch (ChromatticException ex) {
+      Throwable throwable = ex.getCause();
+      if (throwable instanceof ItemExistsException || 
+          throwable instanceof InvalidItemStateException) {
+        LOG.warn("Probably was share activity by another session");
+        LOG.debug(ex.getMessage(), ex);
+      } else {
+        throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SHARE_ACTIVITY, ex.getMessage());
+      }
+    }
+  }
+  
   /**
    * {@inheritDoc}
    */

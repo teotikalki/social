@@ -732,6 +732,9 @@
           <value>org.exoplatform.social.core.chromattic.entity.ActivityYearEntity</value>
           <value>org.exoplatform.social.core.chromattic.entity.ActivityParameters</value>
           
+          <value>org.exoplatform.social.core.chromattic.entity.ShareListEntity</value>
+          <value>org.exoplatform.social.core.chromattic.entity.SharerEntity</value>
+          
           <value>org.exoplatform.social.core.chromattic.entity.StreamsEntity</value>
           <value>org.exoplatform.social.core.chromattic.entity.ActivityRefListEntity</value>
           <value>org.exoplatform.social.core.chromattic.entity.ActivityRefDayEntity</value>

@@ -289,6 +289,16 @@ public interface ActivityManager {
   void addActivityEventListener(ActivityListenerPlugin activityListenerPlugin);
   
   /**
+   * Share an activity to connections or to a space
+   * 
+   * @param activity activity to share
+   * @param sharer who share the activity
+   * @param isConnectionShare true if share to his connections
+   * @param spaceIds list of space's id that activity will be share
+   */
+  void shareActivity(ExoSocialActivity activity, Identity sharer, boolean isConnectionShare, List<String> spaceIds);
+  
+  /**
    * Saves a newly created activity to a stream. Note that the Activity.userId will be set to the owner identity if it
    * has not already been set.
    *

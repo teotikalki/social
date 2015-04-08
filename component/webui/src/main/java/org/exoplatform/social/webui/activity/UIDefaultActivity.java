@@ -38,8 +38,7 @@ import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
     @EventConfig(listeners = BaseUIActivity.PostCommentActionListener.class),
     @EventConfig(listeners = BaseUIActivity.DeleteActivityActionListener.class),
     @EventConfig(listeners = BaseUIActivity.DeleteCommentActionListener.class),
-    @EventConfig(listeners = BaseUIActivity.ShareActivityActionListener.class),
-    @EventConfig(listeners = BaseUIActivity.UnShareActivityActionListener.class)
+    @EventConfig(listeners = BaseUIActivity.ShareActivityActionListener.class)
   }
 )
 public class UIDefaultActivity extends BaseUIActivity {

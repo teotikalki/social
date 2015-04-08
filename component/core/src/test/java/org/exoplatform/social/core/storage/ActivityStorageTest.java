@@ -2798,6 +2798,24 @@ public class ActivityStorageTest extends AbstractCoreTest {
     assertEquals(2, demoActivities.size());
   }
 
+  @MaxQueryNumber(290)
+  public void testShareActivity() throws ActivityStorageException {
+    final String activityTitle = "activity Title";
+  
+    ExoSocialActivity activity = new ExoSocialActivityImpl();
+    activity.setTitle(activityTitle);
+    activityStorage.saveActivity(rootIdentity, activity);
+  
+    assertNotNull("activity.getId() must not be null", activity.getId());
+  
+    List<ExoSocialActivity> list = activityStorage.getUserActivities(rootIdentity, 0, 1);
+    assertTrue(list.size() > 0);
+    
+    ExoSocialActivity rootActivity = list.get(0);
+
+    activityStorage.shareActivity(rootIdentity, rootActivity);
+  }
+  
   /**
    * Creates activities.
    * 

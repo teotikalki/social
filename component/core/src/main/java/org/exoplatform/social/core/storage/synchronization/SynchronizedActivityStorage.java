@@ -139,6 +139,22 @@ public class SynchronizedActivityStorage extends ActivityStorageImpl {
     }
 
   }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void shareActivity(final Identity sharer, final ExoSocialActivity activity) throws ActivityStorageException {
+
+    boolean created = startSynchronization();
+    try {
+      super.shareActivity(sharer, activity);
+    }
+    finally {
+      stopSynchronization(created);
+    }
+
+  }
 
   /**
    * {@inheritDoc}

@@ -2010,4 +2010,9 @@ public class CachedActivityStorage implements ActivityStorage {
     ListActivityStreamData streamData = this.exoStreamCache.get(key);
     streamData.getList().remove(activityId);
   }
+
+  @Override
+  public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
+    storage.shareActivity(sharer, activity);    
+  }
 }

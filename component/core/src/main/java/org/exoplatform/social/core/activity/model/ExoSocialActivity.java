@@ -16,6 +16,11 @@
  */
 package org.exoplatform.social.core.activity.model;
 
+import java.util.List;
+import java.util.Map;
+
+import org.exoplatform.social.core.chromattic.entity.SharerEntity;
+
 /**
  * ExoSocialActivity interface extends {@link org.apache.shindig.social.opensocial.model.Activity}}.
  *
@@ -274,4 +279,32 @@ public interface ExoSocialActivity extends org.apache.shindig.social.opensocial.
    * @param parentId
    */
   void setParentId(String parentId);
+  
+  /**
+   * Get the number of sharer
+   * 
+   * @return the number of sharer
+   */
+  int getNumberOfSharer();
+  
+  /**
+   * Set the number of sharer
+   * 
+   * @param nbSharer
+   */
+  void setNumberOfSharer(int nbSharer);
+  
+  /**
+   * Get activity stream that user shares
+   * 
+   * @return list of stream that user shares
+   */
+  Map<String, List<String>> getSharerStream();
+  
+  /**
+   * Set activity stream that user shares
+   * 
+   * @param map
+   */
+  void setSharerStream(Map<String, List<String>> map);
 }

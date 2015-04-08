@@ -473,7 +473,14 @@ public class ActivityManagerImpl implements ActivityManager {
     return activity;
   }
 
-
+  public void shareActivity(ExoSocialActivity activity, Identity sharer, boolean isConnectionShare, List<String> spaceIds) {
+    if (isConnectionShare) { //share to connections
+      activity.setNumberOfSharer(1);
+      updateActivity(activity);
+    }
+    activityStorage.shareActivity(sharer, activity);
+  }
+  
   /**
    * Validates the start and limit for duplicated method.
    * The limit must be greater than or equal to start.

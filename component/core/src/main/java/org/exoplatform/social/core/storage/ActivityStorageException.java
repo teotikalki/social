@@ -30,6 +30,7 @@ public class ActivityStorageException extends ExoSocialException {
   public static enum Type {
     ILLEGAL_ARGUMENTS("Illegal_Arguments"),
     FAILED_TO_SAVE_ACTIVITY("Failed_To_Save_Activity"),
+    FAILED_TO_SHARE_ACTIVITY("Failed_To_Share_Activity"),
     FAILED_TO_GET_ACTIVITY("Failed_To_Get_Activity"),
     FAILED_TO_UPDATE_ACTIVITY("Failed_To_Update_Activity"),
     FAILED_TO_DELETE_ACTIVITY("Failed_To_Delete_Activity"),

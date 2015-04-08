@@ -155,6 +155,12 @@ public abstract class ActivityEntity implements NamedEntity {
   @Property(name = "soc:priority")
   public abstract Float getPriority();
   public abstract void setPriority(Float priority);
+  
+  @MappedBy("soc:shares")
+  @OneToOne
+  @Owner
+  public abstract ShareListEntity getSharerList();
+  public abstract void setSharerList(ShareListEntity shareListEntity);
 
   /**
    * The list of identity Ids who like the activity.
@@ -226,6 +232,23 @@ public abstract class ActivityEntity implements NamedEntity {
 
   @Create
   public abstract ActivityParameters createParams();
+  
+  @Create
+  public abstract ShareListEntity createShares();
+  
+  /**
+   * Creates new ShareList entity
+   * @return
+   */
+  public ShareListEntity getOrCreateShareList() {
+    if (getSharerList() != null) {
+      return getSharerList();
+    } else {
+      ShareListEntity list = createShares(); 
+      setSharerList(list);
+      return list;
+    }
+  }
 
   public void putParams(Map<String, String> parameters) {
 
