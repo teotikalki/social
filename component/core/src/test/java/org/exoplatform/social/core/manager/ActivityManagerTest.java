@@ -30,6 +30,7 @@ import org.exoplatform.services.organization.User;
 import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
@@ -1273,11 +1274,15 @@ public class ActivityManagerTest extends AbstractCoreTest {
     relationshipManager.confirm(maryIdentity, rootIdentity);
     
     //root shares activity of john for his connections
-    activityManager.shareActivity(activity, rootIdentity, true, new ArrayList<String>());
+    ShareOptions options = new ShareOptions(true, new ArrayList<String>(), rootIdentity);
+    activityManager.shareActivity(activity, options);
     
     //mary and demo must see this activity on their streams
     ExoSocialActivity got = activityManager.getActivity(activity.getId());
     assertEquals(1, got.getNumberOfSharer());
+    ShareOptions shareOptions = activityManager.getShareOptions(got, rootIdentity);
+    assertTrue(shareOptions.isShareConnections());
+    assertEquals(0, shareOptions.getSpaceIds().size());
     
     //clean
     activityManager.deleteActivity(got);

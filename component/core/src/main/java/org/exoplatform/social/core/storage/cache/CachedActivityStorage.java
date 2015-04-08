@@ -31,6 +31,7 @@ import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.activity.filter.ActivityFilter;
 import org.exoplatform.social.core.activity.filter.ActivityUpdateFilter;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 import org.exoplatform.social.core.storage.api.ActivityStorage;
@@ -2015,5 +2016,10 @@ public class CachedActivityStorage implements ActivityStorage {
   public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
     storage.shareActivity(sharer, activity);
     clearActivityCached(activity.getId());
+  }
+
+  @Override
+  public ShareOptions getShareOptions(ExoSocialActivity activity, Identity currentUser) {
+    return storage.getShareOptions(activity, currentUser);
   }
 }

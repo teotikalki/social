@@ -25,6 +25,7 @@ import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.activity.filter.ActivityFilter;
 import org.exoplatform.social.core.activity.filter.ActivityUpdateFilter;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 import org.exoplatform.social.core.storage.impl.ActivityBuilderWhere;
@@ -1065,4 +1066,13 @@ public interface ActivityStorage {
    * @since 4.0
    */
   public int getNumberOfOlderComments(ExoSocialActivity existingActivity, Long sinceTime);
+
+  /**
+   * Get the options list that current user shares associated to an activity
+   * 
+   * @param activity
+   * @param currentUser
+   * @return
+   */
+  public ShareOptions getShareOptions(ExoSocialActivity activity, Identity currentUser);
 }

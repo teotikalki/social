@@ -23,6 +23,7 @@ import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.BaseActivityProcessorPlugin;
 import org.exoplatform.social.core.activity.ActivityListenerPlugin;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 
@@ -292,11 +293,9 @@ public interface ActivityManager {
    * Share an activity to connections or to a space
    * 
    * @param activity activity to share
-   * @param sharer who share the activity
-   * @param isConnectionShare true if share to his connections
-   * @param spaceIds list of space's id that activity will be share
+   * @param shareOptions option that user want to share
    */
-  void shareActivity(ExoSocialActivity activity, Identity sharer, boolean isConnectionShare, List<String> spaceIds);
+  void shareActivity(ExoSocialActivity activity, ShareOptions shareOptions);
   
   /**
    * Saves a newly created activity to a stream. Note that the Activity.userId will be set to the owner identity if it
@@ -486,4 +485,13 @@ public interface ActivityManager {
    */
   @Deprecated
   void processActivitiy(ExoSocialActivity activity);
+  
+  /**
+   * Get the options list that current user shares associated to an activity
+   * 
+   * @param activity
+   * @param currentUser
+   * @return
+   */
+  ShareOptions getShareOptions(ExoSocialActivity activity, Identity currentUser);
 }

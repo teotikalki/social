@@ -68,6 +68,7 @@ import org.exoplatform.social.core.activity.model.ActivityStream;
 import org.exoplatform.social.core.activity.model.ActivityStreamImpl;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.chromattic.entity.ActivityEntity;
 import org.exoplatform.social.core.chromattic.entity.ActivityListEntity;
 import org.exoplatform.social.core.chromattic.entity.ActivityParameters;
@@ -471,16 +472,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activity.setPosterId(posterIdentitiyId);
     
     activity.setNumberOfSharer(activityEntity.getNumberOfSharer());
-    Map<String, List<String>> map = new HashMap<String, List<String>>();
-    List<SharerEntity> list = activityEntity.getSharerList().getSharerList();
-    for (SharerEntity sharerIdentity : list) {
-      List<String> ids = sharerIdentity.getSpaces() != null ? Arrays.asList(sharerIdentity.getSpaces()) : new ArrayList<String>();
-      if (sharerIdentity.getMyConnection()) {
-        ids.add("CONNECTIONS");
-      }
-      map.put(sharerIdentity.getName(), ids);
-    }
-    activity.setSharerStream(map);
     
     //
     List<String> computeCommentid = new ArrayList<String>();
@@ -3357,5 +3348,21 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     } catch (NodeNotFoundException e) {
       return false;
     }
+  }
+
+  public ShareOptions getShareOptions(ExoSocialActivity activity, Identity currentUser) {
+    ShareOptions shareOptions = new ShareOptions(currentUser);
+    try {
+      ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
+      ShareListEntity list = activityEntity.getSharerList();
+      SharerEntity sharerEntity = _findByPath(SharerEntity.class, list.getPath() + "/soc:" + currentUser.getRemoteId());
+      if (sharerEntity != null) {
+        shareOptions.setShareConnections(sharerEntity.getMyConnection());
+        shareOptions.setSpaceIds(sharerEntity.getSpaces() != null ? Arrays.asList(sharerEntity.getSpaces()) : new ArrayList<String>());
+      }
+    } catch (NodeNotFoundException e) {
+      LOG.error("Failed to get share options");
+    }
+    return shareOptions;
   }
 }

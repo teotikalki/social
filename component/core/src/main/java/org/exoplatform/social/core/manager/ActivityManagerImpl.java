@@ -36,6 +36,7 @@ import org.exoplatform.social.core.activity.ActivityListenerPlugin;
 import org.exoplatform.social.core.activity.CommentsRealtimeListAccess;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.core.storage.ActivityStorageException;
@@ -473,10 +474,10 @@ public class ActivityManagerImpl implements ActivityManager {
     return activity;
   }
 
-  public void shareActivity(ExoSocialActivity activity, Identity sharer, boolean isConnectionShare, List<String> spaceIds) {
-    if (isConnectionShare) { //share to connections
+  public void shareActivity(ExoSocialActivity activity, ShareOptions shareOptions) {
+    if (shareOptions.isShareConnections()) { //share to connections
     }
-    activityStorage.shareActivity(sharer, activity);
+    activityStorage.shareActivity(shareOptions.getSharer(), activity);
   }
   
   /**
@@ -500,6 +501,11 @@ public class ActivityManagerImpl implements ActivityManager {
   private Identity getStreamOwner(ExoSocialActivity newActivity) {
     Validate.notNull(newActivity.getUserId(), "activity.getUserId() must not be null!");
     return identityManager.getIdentity(newActivity.getUserId(), false);
+  }
+
+  @Override
+  public ShareOptions getShareOptions(ExoSocialActivity activity, Identity currentUser) {
+    return activityStorage.getShareOptions(activity, currentUser);
   }
 
 }
