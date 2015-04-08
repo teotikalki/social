@@ -24,6 +24,7 @@ import java.util.SortedSet;
 import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.activity.filter.ActivityUpdateFilter;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 import org.exoplatform.social.core.storage.api.ActivityStreamStorage;
@@ -144,11 +145,11 @@ public class SynchronizedActivityStorage extends ActivityStorageImpl {
    * {@inheritDoc}
    */
   @Override
-  public void shareActivity(final Identity sharer, final ExoSocialActivity activity) throws ActivityStorageException {
+  public void shareActivity(final ShareOptions shareOptions, final ExoSocialActivity activity) throws ActivityStorageException {
 
     boolean created = startSynchronization();
     try {
-      super.shareActivity(sharer, activity);
+      super.shareActivity(shareOptions, activity);
     }
     finally {
       stopSynchronization(created);

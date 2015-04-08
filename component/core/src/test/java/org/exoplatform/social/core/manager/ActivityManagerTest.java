@@ -1284,6 +1284,11 @@ public class ActivityManagerTest extends AbstractCoreTest {
     assertTrue(shareOptions.isShareConnections());
     assertEquals(0, shareOptions.getSpaceIds().size());
     
+    List<ExoSocialActivity> activities = activityManager.getActivitiesOfConnectionsWithListAccess(demoIdentity).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    
     //clean
     activityManager.deleteActivity(got);
   }

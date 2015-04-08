@@ -94,6 +94,7 @@ import org.exoplatform.social.core.storage.api.IdentityStorage;
 import org.exoplatform.social.core.storage.api.RelationshipStorage;
 import org.exoplatform.social.core.storage.api.SpaceStorage;
 import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
+import org.exoplatform.social.core.storage.impl.ActivityStreamStorageImpl.ActivityRefType;
 import org.exoplatform.social.core.storage.query.WhereExpression;
 import org.exoplatform.social.core.storage.streams.StreamContext;
 import org.exoplatform.social.core.storage.streams.StreamInvocationHelper;
@@ -984,14 +985,23 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   }
   
   @Override
-  public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException {
+  public void shareActivity(ShareOptions shareOptions, ExoSocialActivity activity) throws ActivityStorageException {
+    Identity sharer = shareOptions.getSharer();
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
-      activityEntity.setNumberOfSharer(1);
+      
+      ShareOptions oldOptions = getShareOptions(activity, sharer);
+      List<Identity> connections = relationshipStorage.getConnections(sharer);
+      for (Identity identity : connections) {
+        streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
+      }
       ShareListEntity sharesEntity = activityEntity.getOrCreateShareList();
       SharerEntity sharerEntity = sharesEntity.getOrCreateShareEntity(sharer.getRemoteId());
       sharesEntity.getSharerList().add(sharerEntity);
       sharerEntity.setMyConnection(true);
+      
+      
+      activityEntity.setNumberOfSharer(1);
       getSession().save();
     }
     catch (NodeNotFoundException e) {

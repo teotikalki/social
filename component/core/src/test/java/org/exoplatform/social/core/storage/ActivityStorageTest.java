@@ -28,6 +28,7 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.social.core.activity.model.ActivityStream;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
@@ -2813,7 +2814,8 @@ public class ActivityStorageTest extends AbstractCoreTest {
     
     ExoSocialActivity rootActivity = list.get(0);
 
-    activityStorage.shareActivity(rootIdentity, rootActivity);
+    ShareOptions shareOptions = new ShareOptions(rootIdentity);
+    activityStorage.shareActivity(shareOptions, rootActivity);
   }
   
   /**

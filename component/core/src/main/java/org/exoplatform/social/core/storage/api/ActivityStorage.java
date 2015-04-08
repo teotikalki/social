@@ -146,10 +146,10 @@ public interface ActivityStorage {
   /**
    * Share the activity in existing the activity
    * 
-   * @param sharer
+   * @param shareOptions
    * @param activity
    */
-  public void shareActivity(Identity sharer, ExoSocialActivity activity) throws ActivityStorageException;
+  public void shareActivity(ShareOptions shareOptions, ExoSocialActivity activity) throws ActivityStorageException;
 
   public ExoSocialActivity getParentActivity(ExoSocialActivity comment) throws ActivityStorageException;
 

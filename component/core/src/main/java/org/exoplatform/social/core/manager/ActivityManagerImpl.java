@@ -475,9 +475,7 @@ public class ActivityManagerImpl implements ActivityManager {
   }
 
   public void shareActivity(ExoSocialActivity activity, ShareOptions shareOptions) {
-    if (shareOptions.isShareConnections()) { //share to connections
-    }
-    activityStorage.shareActivity(shareOptions.getSharer(), activity);
+    activityStorage.shareActivity(shareOptions, activity);
   }
   
   /**
