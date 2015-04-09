@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import javax.portlet.MimeResponse;
+import javax.portlet.ResourceURL;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.ListAccess;
@@ -30,10 +33,12 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.activity.model.ShareOptions;
 import org.exoplatform.social.core.application.SpaceActivityPublisher;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
+import org.exoplatform.social.core.manager.ActivityManager;
 import org.exoplatform.social.core.processor.I18NActivityProcessor;
 import org.exoplatform.social.core.relationship.model.Relationship;
 import org.exoplatform.social.core.relationship.model.Relationship.Type;
@@ -108,30 +113,46 @@ public class BaseUIActivity extends UIForm {
    * 
    * @throws Exception
    */
+  UIFormInputWithActions uiFormInputWithActions = null;
+  
   public BaseUIActivity(){
     //tricktip for gatein bug
     setSubmitAction("return false;");
 
     comments = new ArrayList<ExoSocialActivity>();
+    
+    addChild(uiFormInputWithActions = new UIFormInputWithActions("ShareOptions"));
   }
 
   protected void initShareOptions() throws Exception {
+    uiFormInputWithActions.setId("ShareOptions" + activity.getId());
     ResourceBundle resApp = WebuiRequestContext.getCurrentInstance().getApplicationResourceBundle();
-    UIFormInputWithActions uiFIWA = new UIFormInputWithActions("ShareOptions" + activity.getId());
-    uiFIWA.addChild(buildCheckBox("MyConnections", resApp.getString("UIActivity.label.MyConnections"), false));
-    
+    initCheckBox("MyConnections", resApp.getString("UIActivity.label.MyConnections"), isChecked("MyConnections"));
     SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
     ListAccess<Space> spaces = spaceService.getAccessibleSpacesWithListAccess(Utils.getViewerIdentity().getRemoteId());
     for (Space space : spaces.load(0, 10)) { // temp; need to check
-      uiFIWA.addChild(buildCheckBox(space.getDisplayName(), space.getPrettyName(), false));
+      initCheckBox(space.getPrettyName(), space.getDisplayName(), isChecked(space.getPrettyName()));
     }
-    addChild(uiFIWA);
   }
 
-  private UICheckBoxInput buildCheckBox(String name, String label, boolean isChecked) {
-    UICheckBoxInput uiCBI = new UICheckBoxInput(name, null, isChecked);
-    uiCBI.setLabel(label);
-    return uiCBI;
+  private boolean isChecked(String key) {
+    ShareOptions shareOptions = CommonsUtils.getService(ActivityManager.class).getShareOptions(getActivity(), Utils.getViewerIdentity());
+    if ("MyConnections".equals(key)) {
+      return shareOptions.isShareConnections();
+    }
+    
+    return shareOptions.getSpaceIds().contains(key);
+  }
+
+  private void initCheckBox(String name, String label, boolean isChecked) {
+    UICheckBoxInput uiCheckbox = uiFormInputWithActions.getChildById(name);
+    if (uiCheckbox == null) {
+      uiCheckbox = new UICheckBoxInput(name, null, isChecked);
+      uiCheckbox.setLabel(label);
+      uiFormInputWithActions.addChild(uiCheckbox);
+    } else {
+      uiCheckbox.setChecked(isChecked);
+    }
   }
   
   public RealtimeListAccess<ExoSocialActivity> getActivityCommentsListAccess() {
@@ -292,6 +313,10 @@ public class BaseUIActivity extends UIForm {
    */
   public int getAllCommentSize() {
     return activityCommentsListAccess.getSize();
+  }
+  
+  public int getShareActivitySize() {
+    return getActivity().getNumberOfSharer();  
   }
   
   public String[] getIdentityLikes() {
@@ -819,22 +844,22 @@ public class BaseUIActivity extends UIForm {
       WebuiRequestContext requestContext = event.getRequestContext();
       
       //
-      UIFormInputWithActions uiIWA = (UIFormInputWithActions)baseUIActivity
+      UIFormInputWithActions uiFormInputWithActions = (UIFormInputWithActions)baseUIActivity
           .getChildById("ShareOptions" + baseUIActivity.activity.getId());
-      List<UIComponent> checkBoxList = uiIWA.getChildren();
+      List<UIComponent> checkBoxList = uiFormInputWithActions.getChildren();
       List<String> shareTos = new ArrayList<String>();
-      for (UIComponent uiC : checkBoxList) {
-        UICheckBoxInput uiCBI = (UICheckBoxInput)uiC;
-        if (uiCBI.getValue()) {
-          System.out.println("\n share to: " + uiCBI.getId());
-          shareTos.add(uiCBI.getId());    
+      for (UIComponent uiComponent : checkBoxList) {
+        UICheckBoxInput uiCheckBoxInput = (UICheckBoxInput)uiComponent;
+        if (uiCheckBoxInput.getValue()) {
+          shareTos.add(uiCheckBoxInput.getId());    
         }
       }
       
+      ShareOptions shareOptions = new ShareOptions(shareTos.contains("MyConnections"), shareTos, Utils.getViewerIdentity());
+      CommonsUtils.getService(ActivityManager.class).shareActivity(baseUIActivity.getActivity(), shareOptions);
       //
       
-      requestContext.addUIComponentToUpdateByAjax(baseUIActivity);
-      baseUIActivity.getParent().broadcast(event, event.getExecutionPhase());
+      requestContext.addUIComponentToUpdateByAjax(baseUIActivity.getParent());
     }
   }
   
