@@ -93,6 +93,9 @@ import org.exoplatform.social.core.storage.api.ActivityStreamStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
 import org.exoplatform.social.core.storage.api.RelationshipStorage;
 import org.exoplatform.social.core.storage.api.SpaceStorage;
+import org.exoplatform.social.core.storage.cache.CachedActivityStorage;
+import org.exoplatform.social.core.storage.cache.model.key.ActivityType;
+import org.exoplatform.social.core.storage.cache.model.key.StreamKey;
 import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.impl.ActivityStreamStorageImpl.ActivityRefType;
 import org.exoplatform.social.core.storage.query.WhereExpression;
@@ -1000,7 +1003,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           //share to my connections
           List<Identity> connections = relationshipStorage.getConnections(sharer);
           for (Identity identity : connections) {
-            streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
+            streamStorage.updateActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION);
           }
           break;
         }
@@ -1009,6 +1012,8 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           List<Identity> connections = relationshipStorage.getConnections(sharer);
           for (Identity identity : connections) {
             streamStorage.removeActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION);
+            StreamKey key = StreamKey.init(identity.getId()).key(ActivityType.CONNECTION);
+            CommonsUtils.getService(CachedActivityStorage.class).removeActivityFromStreamCache(activity.getId(), key);
           }
           break;
         } 
@@ -1020,14 +1025,16 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       //share to my spaces
       for (String spaceName : oldOptions.addedSpaces(shareOptions)) {
         Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
-        streamStorage.createSpaceActivityRef(spaceIdentity, Arrays.asList(activity));
+        streamStorage.updateActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM);
       }
       //unshare to my spaces
       for (String spaceName : oldOptions.removedSpaces(shareOptions)) {
         Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
         streamStorage.removeActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM);
+        StreamKey key = StreamKey.init(spaceIdentity.getId()).key(ActivityType.SPACE);
+        CommonsUtils.getService(CachedActivityStorage.class).removeActivityFromStreamCache(activity.getId(), key);
       }
-      //sharerEntity.setMySpace(shareOptions.getSpaces().toArray(new String[shareOptions.getSpaces().size()]));
+      sharerEntity.setSpaces(shareOptions.getSpaces().toArray(new String[shareOptions.getSpaces().size()]));
       
       //if first share, increase
       if (!oldOptions.isShareConnections() && oldOptions.getSpaces().size() == 0

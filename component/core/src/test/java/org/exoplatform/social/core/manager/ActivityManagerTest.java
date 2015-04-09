@@ -1308,7 +1308,7 @@ public class ActivityManagerTest extends AbstractCoreTest {
     assertEquals(1, got.getNumberOfSharer());
     ShareOptions shareOptions = activityManager.getShareOptions(got, demoIdentity);
     assertTrue(shareOptions.isShareConnections());
-    assertEquals(0, shareOptions.getSpaces().size());
+    assertEquals(3, shareOptions.getSpaces().size());
     
     activities = activityManager.getActivitiesOfConnectionsWithListAccess(rootIdentity).loadAsList(0, 10);
     assertEquals(1, activities.size());
@@ -1326,6 +1326,24 @@ public class ActivityManagerTest extends AbstractCoreTest {
     assertEquals(1, activities.size());
     activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity2).loadAsList(0, 10);
     assertEquals(1, activities.size());
+    
+    //unshare my connections
+    options = new ShareOptions(false, spaces, demoIdentity);
+    activityManager.shareActivity(activity, options);
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(rootIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    
+    //unshare my spaces
+    options = new ShareOptions(false, new ArrayList<String>(), demoIdentity);
+    activityManager.shareActivity(activity, options);
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity0).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity1).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity2).loadAsList(0, 10);
+    assertEquals(0, activities.size());
     
     //clean
     activityManager.deleteActivity(got);
