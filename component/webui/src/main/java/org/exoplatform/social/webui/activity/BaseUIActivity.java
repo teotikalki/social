@@ -141,7 +141,7 @@ public class BaseUIActivity extends UIForm {
       return shareOptions.isShareConnections();
     }
     
-    return shareOptions.getSpaceIds().contains(key);
+    return shareOptions.getSpaces().contains(key);
   }
 
   private void initCheckBox(String name, String label, boolean isChecked) {
