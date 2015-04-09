@@ -991,15 +991,25 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
       
       ShareOptions oldOptions = getShareOptions(activity, sharer);
-      List<Identity> connections = relationshipStorage.getConnections(sharer);
-      for (Identity identity : connections) {
-        streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
-      }
       ShareListEntity sharesEntity = activityEntity.getOrCreateShareList();
       SharerEntity sharerEntity = sharesEntity.getOrCreateShareEntity(sharer.getRemoteId());
       sharesEntity.getSharerList().add(sharerEntity);
-      sharerEntity.setMyConnection(true);
       
+      //share to my connections
+      if (shareOptions.isShareConnections()) {
+        List<Identity> connections = relationshipStorage.getConnections(sharer);
+        for (Identity identity : connections) {
+          streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
+        }
+        sharerEntity.setMyConnection(shareOptions.isShareConnections());
+      }
+      
+      //share to my spaces
+      for (String spaceName : shareOptions.getSpaces()) {
+        Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
+        streamStorage.createSpaceActivityRef(spaceIdentity, Arrays.asList(activity));
+      }
+      //sharerEntity.setMySpace(shareOptions.getSpaces().toArray(new String[shareOptions.getSpaces().size()]));
       
       activityEntity.setNumberOfSharer(1);
       getSession().save();
@@ -3368,7 +3378,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       SharerEntity sharerEntity = _findByPath(SharerEntity.class, list.getPath() + "/soc:" + currentUser.getRemoteId());
       if (sharerEntity != null) {
         shareOptions.setShareConnections(sharerEntity.getMyConnection());
-        shareOptions.setSpaceIds(sharerEntity.getSpaces() != null ? Arrays.asList(sharerEntity.getSpaces()) : new ArrayList<String>());
+        shareOptions.setSpaces(sharerEntity.getSpaces() != null ? Arrays.asList(sharerEntity.getSpaces()) : new ArrayList<String>());
       }
     } catch (NodeNotFoundException e) {
       LOG.error("Failed to get share options");

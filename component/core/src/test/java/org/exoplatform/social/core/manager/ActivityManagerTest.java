@@ -1267,26 +1267,64 @@ public class ActivityManagerTest extends AbstractCoreTest {
     activityManager.saveActivityNoReturn(johnIdentity, activity);
     tearDownActivityList.add(activity);
     
-    //root connects with mary and demo
-    relationshipManager.inviteToConnect(rootIdentity, demoIdentity);
-    relationshipManager.confirm(demoIdentity, rootIdentity);
-    relationshipManager.inviteToConnect(rootIdentity, maryIdentity);
-    relationshipManager.confirm(maryIdentity, rootIdentity);
+    //demo create 3 spaces
+    Space space0 = this.getSpaceInstance(spaceService, 0);
+    Space space1 = this.getSpaceInstance(spaceService, 1);
+    Space space2 = this.getSpaceInstance(spaceService, 2);
+    tearDownSpaceList.add(space0);
+    tearDownSpaceList.add(space1);
+    tearDownSpaceList.add(space2);
+    Identity spaceIdentity0 = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space0.getPrettyName(), false);
+    Identity spaceIdentity1 = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space1.getPrettyName(), false);
+    Identity spaceIdentity2 = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space2.getPrettyName(), false);
     
-    //root shares activity of john for his connections
-    ShareOptions options = new ShareOptions(true, new ArrayList<String>(), rootIdentity);
+    List<ExoSocialActivity> activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity0).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity1).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity2).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(demoIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    
+    //demo connects with root and mary
+    relationshipManager.inviteToConnect(demoIdentity, rootIdentity);
+    relationshipManager.confirm(rootIdentity, demoIdentity);
+    relationshipManager.inviteToConnect(demoIdentity, maryIdentity);
+    relationshipManager.confirm(maryIdentity, demoIdentity);
+    
+    //demo shares activity of john for his connections and his spaces
+    List<String> spaces = new ArrayList<String>();
+    spaces.add(space0.getPrettyName());
+    spaces.add(space1.getPrettyName());
+    spaces.add(space2.getPrettyName());
+    ShareOptions options = new ShareOptions(true, spaces, demoIdentity);
     activityManager.shareActivity(activity, options);
     
-    //mary and demo must see this activity on their streams
+    //mary and root must see this activity on their streams
     ExoSocialActivity got = activityManager.getActivity(activity.getId());
     assertEquals(1, got.getNumberOfSharer());
-    ShareOptions shareOptions = activityManager.getShareOptions(got, rootIdentity);
+    ShareOptions shareOptions = activityManager.getShareOptions(got, demoIdentity);
     assertTrue(shareOptions.isShareConnections());
-    assertEquals(0, shareOptions.getSpaceIds().size());
+    assertEquals(0, shareOptions.getSpaces().size());
     
-    List<ExoSocialActivity> activities = activityManager.getActivitiesOfConnectionsWithListAccess(demoIdentity).loadAsList(0, 10);
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(rootIdentity).loadAsList(0, 10);
     assertEquals(1, activities.size());
+    activities = activityManager.getActivityFeedWithListAccess(rootIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
     activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    activities = activityManager.getActivityFeedWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(0, activities.size());
+    
+    //activity must be displayed on space0, space1 and space2
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity0).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity1).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    activities = activityManager.getActivitiesOfSpaceWithListAccess(spaceIdentity2).loadAsList(0, 10);
     assertEquals(1, activities.size());
     
     //clean

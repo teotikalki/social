@@ -30,18 +30,18 @@ import org.exoplatform.social.core.identity.model.Identity;
 public class ShareOptions {
   
   private boolean isShareConnections;
-  private List<String> spaceIds;
+  private List<String> spaces;
   private Identity sharer;
   
   public ShareOptions(Identity sharer) {
     this.isShareConnections = false;
-    this.spaceIds = new ArrayList<String>();
+    this.spaces = new ArrayList<String>();
     this.setSharer(sharer);
   }
   
-  public ShareOptions(boolean isShareConnections, List<String> spaceIds, Identity sharer) {
+  public ShareOptions(boolean isShareConnections, List<String> spaces, Identity sharer) {
     this.isShareConnections = isShareConnections;
-    this.spaceIds = spaceIds;
+    this.spaces = spaces;
     this.setSharer(sharer);
   }
   
@@ -53,12 +53,12 @@ public class ShareOptions {
     this.isShareConnections = isShareConnections;
   }
   
-  public List<String> getSpaceIds() {
-    return spaceIds;
+  public List<String> getSpaces() {
+    return spaces;
   }
   
-  public void setSpaceIds(List<String> spaceIds) {
-    this.spaceIds = spaceIds;
+  public void setSpaces(List<String> spaces) {
+    this.spaces = spaces;
   }
 
   public Identity getSharer() {
