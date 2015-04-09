@@ -1259,6 +1259,42 @@ public class ActivityManagerTest extends AbstractCoreTest {
     assertEquals("1", commenters[0].split("@")[1]);
     assertEquals("1", mentioners[0].split("@")[1]);
   }
+  
+  public void testShareActivityWithOrder() throws Exception {
+    //john posts an activity
+    ExoSocialActivity activity = new ExoSocialActivityImpl();
+    activity.setTitle("john activity title");
+    activityManager.saveActivityNoReturn(johnIdentity, activity);
+    tearDownActivityList.add(activity);
+    
+    //demo connects with root and mary
+    relationshipManager.inviteToConnect(demoIdentity, rootIdentity);
+    relationshipManager.confirm(rootIdentity, demoIdentity);
+    relationshipManager.inviteToConnect(demoIdentity, maryIdentity);
+    relationshipManager.confirm(maryIdentity, demoIdentity);
+    
+    //demo posts an activity
+    ExoSocialActivity demoActivity = new ExoSocialActivityImpl();
+    demoActivity.setTitle("demo activity title");
+    activityManager.saveActivityNoReturn(demoIdentity, demoActivity);
+    tearDownActivityList.add(demoActivity);
+    
+    List<ExoSocialActivity> activities = activityManager.getActivitiesOfConnectionsWithListAccess(rootIdentity).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(1, activities.size());
+    
+    //demo share john's activity to his connection
+    ShareOptions options = new ShareOptions(true, new ArrayList<String>(), demoIdentity);
+    activityManager.shareActivity(activity, options);
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(rootIdentity).loadAsList(0, 10);
+    assertEquals(2, activities.size());
+    activities = activityManager.getActivitiesOfConnectionsWithListAccess(maryIdentity).loadAsList(0, 10);
+    assertEquals(2, activities.size());
+    
+    //check order
+    assertEquals("john activity title", activities.get(0).getTitle());
+  }
 
   public void testShareActivity() throws Exception {
     //john posts an activity

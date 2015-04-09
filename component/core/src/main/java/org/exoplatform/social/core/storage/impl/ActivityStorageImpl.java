@@ -100,6 +100,7 @@ import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.impl.ActivityStreamStorageImpl.ActivityRefType;
 import org.exoplatform.social.core.storage.query.WhereExpression;
 import org.exoplatform.social.core.storage.streams.StreamContext;
+import org.exoplatform.social.core.storage.streams.StreamHelper;
 import org.exoplatform.social.core.storage.streams.StreamInvocationHelper;
 
 /**
@@ -992,24 +993,28 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     Identity sharer = shareOptions.getSharer();
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
+      long lastUpdated = System.currentTimeMillis();
       
       ShareOptions oldOptions = getShareOptions(activity, sharer);
       ShareListEntity sharesEntity = activityEntity.getOrCreateShareList();
       SharerEntity sharerEntity = sharesEntity.getOrCreateShareEntity(sharer.getRemoteId());
       sharesEntity.getSharerList().add(sharerEntity);
       
+      List<Identity> connections = new ArrayList<Identity>();
       switch (oldOptions.getShareType(shareOptions)) {
         case SHARE_CONNECTIONS: {
           //share to my connections
-          List<Identity> connections = relationshipStorage.getConnections(sharer);
+          connections = relationshipStorage.getConnections(sharer);
           for (Identity identity : connections) {
-            streamStorage.updateActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION, System.currentTimeMillis());
+            streamStorage.updateActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION, lastUpdated);
+            //
+            StreamHelper.SHARE.moveConnection(identity, activity);
           }
           break;
         }
         case UNSHARE_CONNECTIONS: {
           //unshare my connections
-          List<Identity> connections = relationshipStorage.getConnections(sharer);
+          connections = relationshipStorage.getConnections(sharer);
           for (Identity identity : connections) {
             streamStorage.removeActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION);
             StreamKey key = StreamKey.init(identity.getId()).key(ActivityType.CONNECTION);
@@ -1025,7 +1030,9 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       //share to my spaces
       for (String spaceName : oldOptions.addedSpaces(shareOptions)) {
         Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
-        streamStorage.updateActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM, System.currentTimeMillis());
+        streamStorage.updateActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM, lastUpdated);
+        //
+        StreamHelper.SHARE.moveSpace(spaceIdentity, activity);
       }
       //unshare to my spaces
       for (String spaceName : oldOptions.removedSpaces(shareOptions)) {
@@ -1034,6 +1041,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         StreamKey key = StreamKey.init(spaceIdentity.getId()).key(ActivityType.SPACE);
         CommonsUtils.getService(CachedActivityStorage.class).removeActivityFromStreamCache(activity.getId(), key);
       }
+      boolean mustUpdatedTime = connections.size() > 0 || oldOptions.addedSpaces(shareOptions).size() > 0 || oldOptions.removedSpaces(shareOptions).size() > 0;
       sharerEntity.setSpaces(shareOptions.getSpaces().toArray(new String[shareOptions.getSpaces().size()]));
       
       //if first share, increase
@@ -1047,6 +1055,10 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         activityEntity.setNumberOfSharer(activityEntity.getNumberOfSharer() - 1);
         //remove shareEntity
         _removeById(SharerEntity.class, sharerEntity.getId());
+      }
+      
+      if (mustUpdatedTime) {
+        activityEntity.setLastUpdated(lastUpdated);
       }
       getSession().save();
     }

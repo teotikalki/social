@@ -357,6 +357,8 @@ public class StreamHelper {
       }
     }
     
+    
+    
     /**
      * Puts the activity ref to mentioners
      * 
@@ -371,6 +373,44 @@ public class StreamHelper {
         moveTopStream(identityId, activity, ActivityType.FEED);
         moveTopStream(identityId, activity, ActivityType.USER);
       }
+    }
+    
+    /**
+     * Moves the activity to at the top of stream for relationship in What's hot functional
+     * 
+     * @param ownerId
+     * @param activity
+     * @param type
+     */
+    private static void moveTopStream(String identityId, ExoSocialActivity activity, ActivityType type) {
+      StreamKey newKey = StreamKey.init(identityId).key(type);
+      
+      ExoCache<StreamKey, ListActivityStreamData> streamCache = StreamContext.getStreamCache();
+      
+      ListActivityStreamData data = streamCache.get(newKey);
+      if (data == null) {
+        data = new ListActivityStreamData(newKey);
+        streamCache.put(newKey, data);
+      }
+      LOG.debug("moveToTop:: identity : " + identityId + " activity: " + activity.getTitle() + " stream: " + type.toString());
+      data.moveTop(activity.getId(), identityId);
+    }
+  }
+  
+  public static class SHARE {
+    
+    /**
+     * Moves the activity to poster's connections
+     * 
+     * @param identity
+     * @param activity
+     */
+    public static void moveConnection(Identity identity, ExoSocialActivity activity) {
+      moveTopStream(identity.getId(), activity, ActivityType.CONNECTION);
+    }
+    
+    public static void moveSpace(Identity identity, ExoSocialActivity activity) {
+      moveTopStream(identity.getId(), activity, ActivityType.SPACE);
     }
     
     /**
