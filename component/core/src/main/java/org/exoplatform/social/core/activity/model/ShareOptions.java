@@ -29,6 +29,10 @@ import org.exoplatform.social.core.identity.model.Identity;
  */
 public class ShareOptions {
   
+  public enum ShareType {
+    SHARE_CONNECTIONS, NO_CHANGE, UNSHARE_CONNECTIONS
+  }
+  
   private boolean isShareConnections;
   private List<String> spaces;
   private Identity sharer;
@@ -69,5 +73,33 @@ public class ShareOptions {
     this.sharer = sharer;
   }
 
+  public List<String> addedSpaces(ShareOptions newShareOptions) {
+    List<String> added = new ArrayList<String>();
+    for (String space : newShareOptions.getSpaces()) {
+      if (! this.getSpaces().contains(space)) {
+        added.add(space);
+      }
+    }
+    return added;
+  }
 
+  public List<String> removedSpaces(ShareOptions newShareOptions) {
+    List<String> removed = new ArrayList<String>();
+    for (String space : this.getSpaces()) {
+      if (! newShareOptions.getSpaces().contains(space)) {
+        removed.add(space);
+      }
+    }
+    return removed;
+  }
+  
+  public ShareType getShareType(ShareOptions newShareOptions) {
+    if (this.isShareConnections() && ! newShareOptions.isShareConnections()) {
+      return ShareType.UNSHARE_CONNECTIONS;
+    }
+    if (! this.isShareConnections() && newShareOptions.isShareConnections()) {
+      return ShareType.SHARE_CONNECTIONS;
+    }
+    return ShareType.NO_CHANGE;
+  }
 }

@@ -854,8 +854,12 @@ public class BaseUIActivity extends UIForm {
           shareTos.add(uiCheckBoxInput.getId());    
         }
       }
+      boolean shareConnections = shareTos.contains("MyConnections");
+      if (shareConnections) {
+        shareTos.remove("MyConnections");
+      }
       
-      ShareOptions shareOptions = new ShareOptions(shareTos.contains("MyConnections"), shareTos, Utils.getViewerIdentity());
+      ShareOptions shareOptions = new ShareOptions(shareConnections, shareTos, Utils.getViewerIdentity());
       CommonsUtils.getService(ActivityManager.class).shareActivity(baseUIActivity.getActivity(), shareOptions);
       //
       

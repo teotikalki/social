@@ -995,23 +995,52 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       SharerEntity sharerEntity = sharesEntity.getOrCreateShareEntity(sharer.getRemoteId());
       sharesEntity.getSharerList().add(sharerEntity);
       
-      //share to my connections
-      if (shareOptions.isShareConnections()) {
-        List<Identity> connections = relationshipStorage.getConnections(sharer);
-        for (Identity identity : connections) {
-          streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
+      switch (oldOptions.getShareType(shareOptions)) {
+        case SHARE_CONNECTIONS: {
+          //share to my connections
+          List<Identity> connections = relationshipStorage.getConnections(sharer);
+          for (Identity identity : connections) {
+            streamStorage.createActivityRef(identity, activity, ActivityRefType.CONNECTION);
+          }
+          break;
         }
-        sharerEntity.setMyConnection(shareOptions.isShareConnections());
+        case UNSHARE_CONNECTIONS: {
+          //unshare my connections
+          List<Identity> connections = relationshipStorage.getConnections(sharer);
+          for (Identity identity : connections) {
+            streamStorage.removeActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION);
+          }
+          break;
+        } 
+        default:
+          break;
       }
+      sharerEntity.setMyConnection(shareOptions.isShareConnections());
       
       //share to my spaces
-      for (String spaceName : shareOptions.getSpaces()) {
+      for (String spaceName : oldOptions.addedSpaces(shareOptions)) {
         Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
         streamStorage.createSpaceActivityRef(spaceIdentity, Arrays.asList(activity));
       }
+      //unshare to my spaces
+      for (String spaceName : oldOptions.removedSpaces(shareOptions)) {
+        Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
+        streamStorage.removeActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM);
+      }
       //sharerEntity.setMySpace(shareOptions.getSpaces().toArray(new String[shareOptions.getSpaces().size()]));
       
-      activityEntity.setNumberOfSharer(1);
+      //if first share, increase
+      if (!oldOptions.isShareConnections() && oldOptions.getSpaces().size() == 0
+          && (shareOptions.isShareConnections() || shareOptions.getSpaces().size() > 0)) {
+        activityEntity.setNumberOfSharer(activityEntity.getNumberOfSharer() + 1);
+      }
+      //if unshare all, decrease
+      if ((oldOptions.isShareConnections() || oldOptions.getSpaces().size() > 0)
+          && !shareOptions.isShareConnections() && shareOptions.getSpaces().size() == 0) {
+        activityEntity.setNumberOfSharer(activityEntity.getNumberOfSharer() - 1);
+        //remove shareEntity
+        //TODO
+      }
       getSession().save();
     }
     catch (NodeNotFoundException e) {
@@ -3381,7 +3410,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         shareOptions.setSpaces(sharerEntity.getSpaces() != null ? Arrays.asList(sharerEntity.getSpaces()) : new ArrayList<String>());
       }
     } catch (NodeNotFoundException e) {
-      LOG.error("Failed to get share options");
+      LOG.debug("Failed to get share options");
     }
     return shareOptions;
   }
