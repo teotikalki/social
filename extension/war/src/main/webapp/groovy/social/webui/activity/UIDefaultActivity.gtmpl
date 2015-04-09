@@ -210,7 +210,7 @@
 					<ul class="pull-right statusAction">
 					  <li>
               <a class="$commentLink" id="ShareActivityLink${activity.id}" href="javascript:void(0);">
-                <i class="uiIconComment uiIconLightGray"></i>&nbsp;10 <!-- $allCommentSize -->
+                <i class="uiIconShare uiIconLightGray"></i>&nbsp;<%=activity.getNumberOfSharer(); %>
               </a> 
             </li>
 						<li>
