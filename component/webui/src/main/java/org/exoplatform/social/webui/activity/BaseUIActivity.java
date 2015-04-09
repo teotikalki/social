@@ -860,10 +860,11 @@ public class BaseUIActivity extends UIForm {
       }
       
       ShareOptions shareOptions = new ShareOptions(shareConnections, shareTos, Utils.getViewerIdentity());
-      CommonsUtils.getService(ActivityManager.class).shareActivity(baseUIActivity.getActivity(), shareOptions);
+      ActivityManager activityManager = CommonsUtils.getService(ActivityManager.class);
+      activityManager.shareActivity(baseUIActivity.getActivity(), shareOptions);
       //
-      
-      requestContext.addUIComponentToUpdateByAjax(baseUIActivity.getParent());
+      baseUIActivity.setActivity(activityManager.getActivity(baseUIActivity.getActivity().getId()));
+      requestContext.addUIComponentToUpdateByAjax(baseUIActivity);
     }
   }
   
