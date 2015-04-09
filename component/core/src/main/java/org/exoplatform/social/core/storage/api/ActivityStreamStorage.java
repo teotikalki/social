@@ -384,6 +384,8 @@ public interface ActivityStreamStorage {
    */
   void updateActivityRef(Identity owner, String activityId, ActivityRefType type);
   
+  void updateActivityRef(Identity owner, String activityId, ActivityRefType type, long lastUpdated);
+  
   /**
    * Creates the ActivityRef on the Feed stream by the given ActivityRefType
    * 

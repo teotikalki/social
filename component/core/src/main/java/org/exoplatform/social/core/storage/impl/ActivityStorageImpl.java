@@ -1003,7 +1003,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           //share to my connections
           List<Identity> connections = relationshipStorage.getConnections(sharer);
           for (Identity identity : connections) {
-            streamStorage.updateActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION);
+            streamStorage.updateActivityRef(identity, activity.getId(), ActivityRefType.CONNECTION, System.currentTimeMillis());
           }
           break;
         }
@@ -1025,7 +1025,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       //share to my spaces
       for (String spaceName : oldOptions.addedSpaces(shareOptions)) {
         Identity spaceIdentity = identityStorage.findIdentity(SpaceIdentityProvider.NAME, spaceName);
-        streamStorage.updateActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM);
+        streamStorage.updateActivityRef(spaceIdentity, activity.getId(), ActivityRefType.SPACE_STREAM, System.currentTimeMillis());
       }
       //unshare to my spaces
       for (String spaceName : oldOptions.removedSpaces(shareOptions)) {
@@ -1046,7 +1046,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           && !shareOptions.isShareConnections() && shareOptions.getSpaces().size() == 0) {
         activityEntity.setNumberOfSharer(activityEntity.getNumberOfSharer() - 1);
         //remove shareEntity
-        //TODO
+        _removeById(SharerEntity.class, sharerEntity.getId());
       }
       getSession().save();
     }

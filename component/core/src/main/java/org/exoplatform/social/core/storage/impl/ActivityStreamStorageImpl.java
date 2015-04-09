@@ -1134,6 +1134,10 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
    * @param type
    */
   public void updateActivityRef(Identity owner, String activityId, ActivityRefType type) {
+    updateActivityRef(owner, activityId, type, 0);
+  }
+  
+  public void updateActivityRef(Identity owner, String activityId, ActivityRefType type, long lastUpdated) {
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activityId);
       boolean hiddenValue = getHidableMixinValue(activityEntity, HidableEntity.class, false);
@@ -1141,7 +1145,7 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
       ActivityRefListEntity refList = type.refsOf(identityEntity);
       refList.remove(activityEntity, hiddenValue, null);
       ActivityRef newRef = refList.getOrCreated(activityEntity, hiddenValue);
-      newRef.setLastUpdated(activityEntity.getLastUpdated());
+      newRef.setLastUpdated(lastUpdated > 0 ? lastUpdated : activityEntity.getLastUpdated());
       newRef.setActivityEntity(activityEntity);
     } catch (NodeNotFoundException ex) {
       LOG.warn("Probably was updated activity reference by another session and the exception: " + ex.getMessage());
