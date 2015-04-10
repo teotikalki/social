@@ -476,7 +476,11 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activity.isComment(isComment);
     activity.setPosterId(posterIdentitiyId);
     
-    activity.setNumberOfSharer(activityEntity.getNumberOfSharer());
+    try {//for old data that do not exist this property
+      activity.setNumberOfSharer(activityEntity.getNumberOfSharer());
+    } catch (Exception e) {
+      activity.setNumberOfSharer(0);
+    }
     
     //
     List<String> computeCommentid = new ArrayList<String>();
