@@ -3426,13 +3426,13 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     ShareOptions shareOptions = new ShareOptions(currentUser);
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activity.getId());
-      ShareListEntity list = activityEntity.getSharerList();
+      ShareListEntity list = activityEntity.getOrCreateShareList();
       SharerEntity sharerEntity = _findByPath(SharerEntity.class, list.getPath() + "/soc:" + currentUser.getRemoteId());
       if (sharerEntity != null) {
         shareOptions.setShareConnections(sharerEntity.getMyConnection());
         shareOptions.setSpaces(sharerEntity.getSpaces() != null ? Arrays.asList(sharerEntity.getSpaces()) : new ArrayList<String>());
       }
-    } catch (NodeNotFoundException e) {
+    } catch (Exception e) {
       LOG.debug("Failed to get share options");
     }
     return shareOptions;
