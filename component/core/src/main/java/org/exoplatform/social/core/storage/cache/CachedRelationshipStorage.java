@@ -17,7 +17,15 @@
 
 package org.exoplatform.social.core.storage.cache;
 
-import org.exoplatform.container.PortalContainer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -45,16 +53,6 @@ import org.exoplatform.social.core.storage.cache.selector.RelationshipCacheSelec
 import org.exoplatform.social.core.storage.cache.selector.SuggestionCacheSelector;
 import org.exoplatform.social.core.storage.impl.AbstractStorage;
 import org.exoplatform.social.core.storage.impl.RelationshipStorageImpl;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.UnsupportedRepositoryOperationException;
 
 /**
  * Cache support for RelationshipStorage.
@@ -87,7 +85,6 @@ public class CachedRelationshipStorage extends AbstractStorage implements Relati
   //
   private final RelationshipStorageImpl storage;
   private final IdentityStorage identityStorage;
-  private CachedActivityStorage cachedActivityStorage;
 
   //
   private static final RelationshipKey RELATIONSHIP_NOT_FOUND = new RelationshipKey(null);
@@ -180,14 +177,6 @@ public class CachedRelationshipStorage extends AbstractStorage implements Relati
 
   }
 
-  public CachedActivityStorage getCachedActivityStorage() {
-    if (cachedActivityStorage == null) {
-      cachedActivityStorage = (CachedActivityStorage)
-          PortalContainer.getInstance().getComponentInstanceOfType(CachedActivityStorage.class);
-    }
-    return cachedActivityStorage;
-  }
-
   public CachedRelationshipStorage(final RelationshipStorageImpl storage, final IdentityStorage identityStorage,
                                    final SocialStorageCacheService cacheService) {
 
@@ -230,7 +219,6 @@ public class CachedRelationshipStorage extends AbstractStorage implements Relati
     exoRelationshipByIdentityCache.put(identityKey1, key);
     exoRelationshipByIdentityCache.put(identityKey2, key);
     clearCacheFor(relationship);
-    getCachedActivityStorage().clearCache();
 
     return r;
 
@@ -257,7 +245,6 @@ public class CachedRelationshipStorage extends AbstractStorage implements Relati
     
     //
     clearCacheFor(relationship);
-    getCachedActivityStorage().clearCache();
     
   }
 
