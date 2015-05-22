@@ -658,8 +658,6 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
     relationship.setReceiver(receiver);
 
     relationship.setStatus(Relationship.Type.valueOf(got.getStatus()));
-    //TODO
-//    clearActivityStorageCache();
 
     return relationship;
   }
@@ -688,6 +686,8 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
           RelationshipStorageException.Type.ILLEGAL_ARGUMENTS,
           new String[] { Relationship.class.getSimpleName() });
     }
+    //
+    clearActivityStorageCache();
 
     return relationship;
   }
@@ -719,7 +719,6 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
       StreamInvocationHelper.deleteConnect(relationship.getSender(), relationship.getReceiver());
       
       clearActivityStorageCache();
-      
 
       //
       LOG.debug(String.format(
