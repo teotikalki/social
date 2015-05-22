@@ -55,9 +55,12 @@ import org.exoplatform.social.core.profile.ProfileLoader;
 import org.exoplatform.social.core.relationship.model.Relationship;
 import org.exoplatform.social.core.storage.IdentityStorageException;
 import org.exoplatform.social.core.storage.RelationshipStorageException;
+import org.exoplatform.social.core.storage.api.ActivityStorage;
+import org.exoplatform.social.core.storage.api.ActivityStreamStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
 import org.exoplatform.social.core.storage.api.RelationshipStorage;
 import org.exoplatform.social.core.storage.cache.CachedActivityStorage;
+import org.exoplatform.social.core.storage.cache.CachedActivityStreamStorage;
 import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.query.JCRProperties;
 import org.exoplatform.social.core.storage.query.WhereExpression;
@@ -76,6 +79,7 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
   private RelationshipManager relationshipManager;
   private RelationshipStorage relationshipStorage;
   private CachedActivityStorage cachedActivityStorage;
+  private CachedActivityStreamStorage streamStorage;
 
   public RelationshipStorageImpl(IdentityStorage identityStorage) {
    this.identityStorage = identityStorage;
@@ -96,10 +100,20 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
     
     if (this.cachedActivityStorage == null) {
       PortalContainer container = PortalContainer.getInstance();
-      this.cachedActivityStorage  = (CachedActivityStorage) container.getComponentInstanceOfType(CachedActivityStorage.class);
+      this.cachedActivityStorage  = (CachedActivityStorage) container.getComponentInstanceOfType(ActivityStorage.class);
     }
     
     return this.cachedActivityStorage;
+  }
+  
+  private CachedActivityStreamStorage getCachedActivityStreamStorage() {
+    
+    if (this.streamStorage == null) {
+      PortalContainer container = PortalContainer.getInstance();
+      this.streamStorage  = (CachedActivityStreamStorage) container.getComponentInstanceOfType(ActivityStreamStorage.class);
+    }
+    
+    return this.streamStorage;
   }
   
   private void putRelationshipToList(List<Relationship> relationships, RelationshipListEntity list) {
@@ -681,7 +695,6 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
           new String[] { Relationship.class.getSimpleName() });
     }
 
-    getCachedActivityStorage().clearCache();
     return relationship;
   }
 
