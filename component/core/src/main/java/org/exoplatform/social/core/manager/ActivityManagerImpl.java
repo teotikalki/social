@@ -148,7 +148,7 @@ public class ActivityManagerImpl implements ActivityManager {
   public void saveComment(ExoSocialActivity existingActivity, ExoSocialActivity newComment) throws
           ActivityStorageException {
     activityStorage.saveComment(existingActivity, newComment);
-    activityLifeCycle.saveComment(activityStorage.getComment(newComment.getId()));
+    activityLifeCycle.saveComment(activityStorage.getActivity(newComment.getId()));
   }
 
   /**
@@ -490,12 +490,5 @@ public class ActivityManagerImpl implements ActivityManager {
   private Identity getStreamOwner(ExoSocialActivity newActivity) {
     Validate.notNull(newActivity.getUserId(), "activity.getUserId() must not be null!");
     return identityManager.getIdentity(newActivity.getUserId(), false);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public ExoSocialActivity getComment(String commentId) {
-    return activityStorage.getComment(commentId);
   }
 }

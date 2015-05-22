@@ -44,7 +44,6 @@ import javax.jcr.RepositoryException;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.shindig.gadgets.UnsupportedFeatureException;
 import org.chromattic.api.ChromatticException;
 import org.chromattic.api.query.Ordering;
 import org.chromattic.api.query.Query;
@@ -3138,13 +3137,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     return getActivitiesOfIdentitiesQuery(ActivityBuilderWhere.simple().owners(spaceList), filter).objects().size();
   }
   
-  /**
-   * {@inheritDoc}
-   */
-  public ExoSocialActivity getComment(String commentId) throws ActivityStorageException {
-    return getActivity(commentId);
-  }
-
   @Override
   public void addPlugin(BaseComponentPlugin baseComponent) {
     //unsupported this method now
