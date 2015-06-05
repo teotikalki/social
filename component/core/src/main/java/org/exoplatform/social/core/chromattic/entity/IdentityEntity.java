@@ -263,4 +263,9 @@ public abstract class IdentityEntity {
     getProperties().put(key, value);
   }
   
+  @Override
+  public String toString() {
+    return "IdentityEntity[remoteId = " + getRemoteId() + ", providerId = " + getProviderId() + "]";
+  }
+  
 }

@@ -87,6 +87,10 @@ public class ActivityCountKey extends ScopeCacheKey {
   public ActivityKey getActivityKey() {
     return activityKey;
   }
+  
+  public ActivityType getActivityType() {
+    return type;
+  }
 
   @Override
   public boolean equals(final Object o) {
@@ -124,6 +128,18 @@ public class ActivityCountKey extends ScopeCacheKey {
     }
 
     return true;
+  }
+  
+  @Override
+  public String toString() {
+    StringBuffer buffer = new StringBuffer();
+    if (this.key != null) {
+      buffer.append("identity:").append(this.key.getId());
+    }
+    if (this.type != null) {
+      buffer.append(",type:").append(this.type.toString());
+    }
+    return buffer.toString();
   }
 
   @Override

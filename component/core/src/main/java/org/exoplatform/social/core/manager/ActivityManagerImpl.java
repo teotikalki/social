@@ -40,6 +40,7 @@ import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 import org.exoplatform.social.core.storage.api.ActivityStorage;
+import org.exoplatform.social.core.storage.streams.StreamHelper;
 
 /**
  * Class ActivityManagerImpl implements ActivityManager without caching.
@@ -103,6 +104,7 @@ public class ActivityManagerImpl implements ActivityManager {
     ExoSocialActivity activity = new ExoSocialActivityImpl();
     activity.setType(activityType);
     activity.setTitle(activityTitle);
+    activity.setUserId(streamOwner.getId());
     saveActivity(streamOwner, activity);
   }
 
@@ -190,6 +192,8 @@ public class ActivityManagerImpl implements ActivityManager {
     identityIds = (String[]) ArrayUtils.add(identityIds, identity.getId());
     existingActivity.setLikeIdentityIds(identityIds);
     updateActivity(existingActivity);
+    StreamHelper.ADD.addLike(identity.getId(), existingActivity);
+    //
     activityLifeCycle.likeActivity(existingActivity);
   }
 
@@ -204,6 +208,7 @@ public class ActivityManagerImpl implements ActivityManager {
     if (ArrayUtils.contains(identityIds, identity.getId())) {
       identityIds = (String[]) ArrayUtils.removeElement(identityIds, identity.getId());
       activity.setLikeIdentityIds(identityIds);
+      StreamHelper.REMOVE.removeLike(identity.getId(), activity);
       updateActivity(activity);
     } else {
       LOG.warn("activity is not liked by identity: " + identity);

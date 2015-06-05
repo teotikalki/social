@@ -578,4 +578,10 @@ public class CachedIdentityStorage implements IdentityStorage {
 
     return data.build();
   }
+  
+  @Override
+  public List<Identity> getActiveConnections(Identity identity) {
+    return storage.getActiveConnections(identity);
+  }
+
 }

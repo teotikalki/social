@@ -12,6 +12,32 @@
 	String removeConnectionLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.RemoveConnection"));
 	String ignoreLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.Ignore"));
 
+<<<<<<< HEAD
+=======
+	def searchActionLabel = _ctx.appRes("${uicomponentId}.label.Search");
+	def searchByNameLabel = _ctx.appRes("${uicomponentId}.label.SearchByName");
+	def nameDefaultVal = StringEscapeUtils.escapeJavaScript(_ctx.appRes("${uicomponentId}.label.Name"));
+	def positionDefaultVal = StringEscapeUtils.escapeJavaScript(_ctx.appRes("${uicomponentId}.label.Position"));
+	def skillsDefaultVal = StringEscapeUtils.escapeJavaScript(_ctx.appRes("${uicomponentId}.label.Skills"));
+	def searchId = "Search";
+	def positionId = "position";
+	def skillsId = "skills";
+	def childs = uicomponent.getChildren();
+	
+	
+	def restContextName = uicomponent.getRestContextName();
+  def currentUserName = uicomponent.getCurrentUserName();
+  def typeOfRelation = uicomponent.getTypeOfRelation();
+  def spaceURL = uicomponent.getSpaceURL();
+	
+	def statusTitle = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.Loading"));
+	def connectLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.Connect"));
+  def confirmLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.Confirm"));
+  def cancelRequestLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.CancelRequest"));
+  def removeConnectionLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.RemoveConnection"));
+  def ignoreLabel = StringEscapeUtils.escapeJavaScript(_ctx.appRes("UserProfilePopup.label.Ignore"));
+  
+>>>>>>> fix/4.1.x/SOC-4399-4401-4525
 	def labels = """ {
 	  StatusTitle: '${statusTitle}',
 	  Connect: '${connectLabel}',

@@ -30,8 +30,6 @@ import org.exoplatform.social.common.service.ProcessContext;
 import org.exoplatform.social.common.service.SocialServiceContext;
 
 public abstract class SocialChromatticAsyncProcessor implements AsyncProcessor {
-  
-  /** Logger */
   private static final Log LOG = ExoLogger.getLogger(SocialChromatticAsyncProcessor.class);
   
   protected SocialServiceContext socialContext;
@@ -68,7 +66,6 @@ public abstract class SocialChromatticAsyncProcessor implements AsyncProcessor {
       LOG.error(e.getMessage(), e);
       processContext.setException(e);
     } finally {
-    //end Session
       end(processContext);
     }
     

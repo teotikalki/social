@@ -185,7 +185,6 @@ public class UserActivityStreamMigration extends AbstractStorage {
       protected ProcessContext execute(ProcessContext processContext) throws Exception {
         StreamProcessContext streamCtx = ObjectHelper.cast(StreamProcessContext.class, processContext);
         int limit = streamCtx.getLimit();
-        
         //
         StreamUpgradeProcessor.feed(streamCtx.getIdentity()).upgrade(0, limit);
         StreamUpgradeProcessor.connection(streamCtx.getIdentity()).upgrade(0, limit);

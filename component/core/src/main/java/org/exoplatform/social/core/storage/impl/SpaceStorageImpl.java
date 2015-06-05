@@ -49,6 +49,8 @@ import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.query.JCRProperties;
 import org.exoplatform.social.core.storage.query.QueryFunction;
 import org.exoplatform.social.core.storage.query.WhereExpression;
+import org.exoplatform.social.core.storage.streams.StreamContext;
+import org.exoplatform.social.core.storage.streams.StreamHelper;
 import org.exoplatform.social.core.storage.streams.StreamInvocationHelper;
 
 import java.util.ArrayList;
@@ -338,7 +340,7 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
     return l.toArray(new String[]{});
   }
 
-  private void createRefs(SpaceEntity spaceEntity, Space space) throws NodeNotFoundException {
+  private void createRefs(SpaceEntity spaceEntity, Space space, boolean isNew) throws NodeNotFoundException {
 
     String[] removedMembers = sub(spaceEntity.getMembersId(), space.getMembers());
     String[] removedManagers = sub(spaceEntity.getManagerMembersId(), space.getManagers());
@@ -351,8 +353,10 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
     String[] addedPending = sub(space.getPendingUsers(), spaceEntity.getPendingMembersId());
 
     manageRefList(new UpdateContext(addedMembers, removedMembers), spaceEntity, RefType.MEMBER);
-    manageActivityRefList(new UpdateContext(addedMembers, removedMembers), spaceEntity, RefType.MEMBER);
-    
+    if (!isNew) {
+      manageActivityRefList(new UpdateContext(addedMembers, removedMembers), spaceEntity, RefType.MEMBER);
+    }
+
     manageRefList(new UpdateContext(addedManagers, removedManagers), spaceEntity, RefType.MANAGER);
     manageRefList(new UpdateContext(addedInvited, removedInvited), spaceEntity, RefType.INVITED);
     manageRefList(new UpdateContext(addedPending, removedPending), spaceEntity, RefType.PENDING);
@@ -436,16 +440,16 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
     if (context.getAdded() != null) {
       for (String userName : context.getAdded()) {
         Identity identity = identityStorage.findIdentity(OrganizationIdentityProvider.NAME, userName);
-        //streamStorage.addSpaceMember(identity, spaceIdentity);
         StreamInvocationHelper.addSpaceMember(identity, spaceIdentity);
+        StreamHelper.CACHED.clearSpace(identity.getId());
       }
     }
 
     if (context.getRemoved() != null) {
       for (String userName : context.getRemoved()) {
         Identity identity = identityStorage.findIdentity(OrganizationIdentityProvider.NAME, userName);
-        //streamStorage.removeSpaceMember(identity, spaceIdentity);
         StreamInvocationHelper.removeSpaceMember(identity, spaceIdentity);
+        StreamHelper.CACHED.clearSpace(identity.getId());
       }
     }
   }
@@ -842,7 +846,7 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
       }
 
       //
-      createRefs(entity, space);
+      createRefs(entity, space, isNew);
       
       fillEntityFromSpace(space, entity);
 

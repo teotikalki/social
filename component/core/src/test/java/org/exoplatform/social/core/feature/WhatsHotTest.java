@@ -27,16 +27,15 @@ import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.RelationshipManager;
 import org.exoplatform.social.core.manager.RelationshipManagerImpl;
 import org.exoplatform.social.core.relationship.model.Relationship;
-import org.exoplatform.social.core.space.SpaceUtils;
+import org.exoplatform.social.core.storage.api.ActivityStorage;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
-import org.exoplatform.social.core.storage.impl.ActivityStorageImpl;
-import org.exoplatform.social.core.storage.impl.StorageUtils;
+import org.exoplatform.social.core.storage.streams.event.DataChangeMerger;
 import org.exoplatform.social.core.test.AbstractCoreTest;
 import org.exoplatform.social.core.test.MaxQueryNumber;
 
 public class WhatsHotTest extends AbstractCoreTest {
   private IdentityStorage identityStorage;
-  private ActivityStorageImpl activityStorage;
+  private ActivityStorage activityStorage;
   private RelationshipManagerImpl relationshipManager;
   private RelationshipPublisher publisher;
   
@@ -53,7 +52,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     super.setUp();
 
     identityStorage = (IdentityStorage) getContainer().getComponentInstanceOfType(IdentityStorage.class);
-    activityStorage = (ActivityStorageImpl) getContainer().getComponentInstanceOfType(ActivityStorageImpl.class);
+    activityStorage = (ActivityStorage) getContainer().getComponentInstanceOfType(ActivityStorage.class);
     relationshipManager = (RelationshipManagerImpl) getContainer().getComponentInstanceOfType(RelationshipManager.class);
     
 
@@ -61,9 +60,6 @@ public class WhatsHotTest extends AbstractCoreTest {
     assertNotNull(activityStorage);
     assertNotNull(relationshipManager);
     
-    
-    
-
     rootIdentity = new Identity("organization", "root");
     johnIdentity = new Identity("organization", "john");
     maryIdentity = new Identity("organization", "mary");
@@ -98,7 +94,8 @@ public class WhatsHotTest extends AbstractCoreTest {
     identityStorage.deleteIdentity(johnIdentity);
     identityStorage.deleteIdentity(maryIdentity);
     identityStorage.deleteIdentity(demoIdentity);
-
+    
+    DataChangeMerger.reset();
     super.tearDown();
   }
   
@@ -113,7 +110,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     }
 
     // remove 5 activities
-    List<ExoSocialActivity> result = activityStorage.getUserActivities(rootIdentity);
+    List<ExoSocialActivity> result = activityStorage.getUserActivities(rootIdentity, 0, 20);
     Iterator<ExoSocialActivity> it = result.iterator();
 
     for (int i = 0; i < 5; ++i) {
@@ -134,7 +131,7 @@ public class WhatsHotTest extends AbstractCoreTest {
       tearDownActivityList.add(activity);
     }
 
-    List<ExoSocialActivity> activityies = activityStorage.getUserActivities(rootIdentity);
+    List<ExoSocialActivity> activityies = activityStorage.getUserActivities(rootIdentity, 0, 20);
     int i = 0;
     int[] values = {0, 1, 2, 3, 4, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     for (ExoSocialActivity activity : activityies) {
@@ -190,7 +187,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     }
 
     //5 activities
-    Iterator<ExoSocialActivity> it = activityStorage.getUserActivities(rootIdentity).iterator();
+    Iterator<ExoSocialActivity> it = activityStorage.getUserActivities(rootIdentity, 0, 20).iterator();
 
     // fill 10 others
     for (int i = 0; i < 10; ++i) {
@@ -207,13 +204,14 @@ public class WhatsHotTest extends AbstractCoreTest {
       tearDownActivityList.add(activity);
     }
 
-    List<ExoSocialActivity> activityies = activityStorage.getUserActivities(rootIdentity);
+    List<ExoSocialActivity> activityies = activityStorage.getUserActivities(rootIdentity, 0, 20);
     int i = 0;
     int[] values = {0, 1, 2, 3, 4, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
     for (ExoSocialActivity activity : activityies) {
       assertEquals("title " + values[i], activity.getTitle());
       ++i;
     }
+    
   }
   
   @MaxQueryNumber(500)
@@ -309,7 +307,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     List<ExoSocialActivity> list = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
     
     //only show activity (not comment) posted by demo
-    assertEquals(0, list.size());
+    assertEquals(1, list.size());
     
     //john view root'as --> only show activity (not comment) posted by root
     list = activityStorage.getActivities(rootIdentity, johnIdentity, 0, 10);
@@ -340,7 +338,7 @@ public class WhatsHotTest extends AbstractCoreTest {
     
     List<ExoSocialActivity> list = activityStorage.getActivities(demoIdentity, johnIdentity, 0, 10);
     //only show demo's activity when John is viewer
-    assertEquals(1, list.size());
+    assertEquals(2, list.size());
     
     tearDownActivityList.addAll(list);
     relationshipManager.unregisterListener(publisher);

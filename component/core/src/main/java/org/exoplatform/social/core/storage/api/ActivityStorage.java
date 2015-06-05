@@ -70,7 +70,9 @@ public interface ActivityStorage {
    *
    * @param owner the identity
    * @return the activities
+   * @deprecated Due to the performance reason then it will be removed PLF 4.2.0
    */
+  @Deprecated
   public List<ExoSocialActivity> getUserActivities(Identity owner) throws ActivityStorageException;
 
   /**
@@ -169,7 +171,9 @@ public interface ActivityStorage {
    * @param limit
    * @return the activities related to the list of connections
    * @since 1.2.0-GA
+   * @Deprecated : it has been deprecated by activity manager
    */
+  @Deprecated
   public List<ExoSocialActivity> getActivitiesOfIdentities(
       List<Identity> connectionList, long offset, long limit) throws ActivityStorageException;
 
@@ -372,7 +376,10 @@ public interface ActivityStorage {
    * @return
    * @throws ActivityStorageException
    * @since 1.2.0-Beta3
-    */
+   * @deprecated it will be removed on PLF 4.1.0. Using getUserActivities method instead of
+   * 
+   */
+  @Deprecated
   public List<ExoSocialActivity> getActivitiesOfIdentity(Identity ownerIdentity, long offset, long limit);
 
   /**

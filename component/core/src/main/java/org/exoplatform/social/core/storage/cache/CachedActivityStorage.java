@@ -18,10 +18,12 @@
 package org.exoplatform.social.core.storage.cache;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+import org.apache.commons.lang.Validate;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -36,17 +38,24 @@ import org.exoplatform.social.core.storage.cache.loader.ServiceContext;
 import org.exoplatform.social.core.storage.cache.model.data.ActivityData;
 import org.exoplatform.social.core.storage.cache.model.data.IntegerData;
 import org.exoplatform.social.core.storage.cache.model.data.ListActivitiesData;
+import org.exoplatform.social.core.storage.cache.model.data.ListActivityStreamData;
 import org.exoplatform.social.core.storage.cache.model.data.ListIdentitiesData;
 import org.exoplatform.social.core.storage.cache.model.key.ActivityCountKey;
 import org.exoplatform.social.core.storage.cache.model.key.ActivityKey;
 import org.exoplatform.social.core.storage.cache.model.key.ActivityType;
 import org.exoplatform.social.core.storage.cache.model.key.IdentityKey;
 import org.exoplatform.social.core.storage.cache.model.key.ListActivitiesKey;
+import org.exoplatform.social.core.storage.cache.model.key.StreamKey;
 import org.exoplatform.social.core.storage.cache.selector.ActivityOwnerCacheSelector;
 import org.exoplatform.social.core.storage.cache.selector.ActivityStreamOwnerCacheSelector;
+import org.exoplatform.social.core.storage.cache.selector.CommentsCacheSelector;
+import org.exoplatform.social.core.storage.cache.selector.NewerOlderStreamCountCacheSelector;
 import org.exoplatform.social.core.storage.cache.selector.ScopeCacheSelector;
 import org.exoplatform.social.core.storage.impl.ActivityBuilderWhere;
 import org.exoplatform.social.core.storage.impl.ActivityStorageImpl;
+import org.exoplatform.social.core.storage.impl.StorageUtils;
+import org.exoplatform.social.core.storage.streams.StreamContext;
+import org.exoplatform.social.core.storage.streams.StreamHelper;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -60,25 +69,38 @@ public class CachedActivityStorage implements ActivityStorage {
   private final ExoCache<ActivityKey, ActivityData> exoActivityCache;
   private final ExoCache<ActivityCountKey, IntegerData> exoActivitiesCountCache;
   private final ExoCache<ListActivitiesKey, ListActivitiesData> exoActivitiesCache;
+  private final ExoCache<StreamKey, ListActivityStreamData> exoStreamCache;
 
   private final FutureExoCache<ActivityKey, ActivityData, ServiceContext<ActivityData>> activityCache;
   private final FutureExoCache<ActivityCountKey, IntegerData, ServiceContext<IntegerData>> activitiesCountCache;
   private final FutureExoCache<ListActivitiesKey, ListActivitiesData, ServiceContext<ListActivitiesData>> activitiesCache;
+  private final FutureStreamExoCache<String, StreamKey, ListActivityStreamData, ServiceContext<ListActivityStreamData>> streamCache;
 
   private final ActivityStorageImpl storage;
-
+  
   public void clearCache() {
 
     try {
       exoActivitiesCache.select(new ScopeCacheSelector<ListActivitiesKey, ListActivitiesData>());
-      exoActivitiesCountCache.select(new ScopeCacheSelector<ActivityCountKey, IntegerData>());
+      exoActivitiesCountCache.select(new NewerOlderStreamCountCacheSelector());
     }
     catch (Exception e) {
       LOG.error(e);
     }
 
   }
+  
+  public void clearCommentsCache(String activityId) {
 
+    try {
+      exoActivitiesCache.select(new CommentsCacheSelector(activityId));
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+
+  }
+  
   void clearOwnerCache(String ownerId) {
 
     try {
@@ -119,6 +141,20 @@ public class CachedActivityStorage implements ActivityStorage {
     ActivityKey key = new ActivityKey(activityId);
     exoActivityCache.remove(key);
     clearCache();
+  }
+  
+  private void updateCommentCountCaching(String activityId, boolean isIncrease) {
+    ActivityCountKey key = new ActivityCountKey(activityId, ActivityType.COMMENTS);
+    IntegerData data = exoActivitiesCountCache.get(key);
+    if (data != null) {
+      if (isIncrease) {
+        data.increase();
+      } else {
+        data.decrease();
+      }
+    }
+    
+    
   }
   
   /**
@@ -169,14 +205,16 @@ public class CachedActivityStorage implements ActivityStorage {
     this.exoActivityCache = cacheService.getActivityCache();
     this.exoActivitiesCountCache = cacheService.getActivitiesCountCache();
     this.exoActivitiesCache = cacheService.getActivitiesCache();
+    this.exoStreamCache = cacheService.getStreamCache();
 
     //
     this.activityCache = CacheType.ACTIVITY.createFutureCache(exoActivityCache);
     this.activitiesCountCache = CacheType.ACTIVITIES_COUNT.createFutureCache(exoActivitiesCountCache);
     this.activitiesCache = CacheType.ACTIVITIES.createFutureCache(exoActivitiesCache);
-
+    this.streamCache = CacheType.STREAM.createFutureStreamCache(exoStreamCache);
+    
   }
-
+  
   /**
    * {@inheritDoc}
    */
@@ -224,58 +262,78 @@ public class CachedActivityStorage implements ActivityStorage {
    */
   public List<ExoSocialActivity> getUserActivities(final Identity owner, final long offset, final long limit)
                                                                                             throws ActivityStorageException {
+    final StreamKey key = StreamKey.init(owner.getId()).key(ActivityType.USER);
 
     //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(owner), ActivityType.USER);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
-
-    //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getUserActivities(owner, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, (int)offset, (int)limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
-
+    return buildActivitiesFromStream(keys, offset, limit);
   }
 
   /**
    * {@inheritDoc}
    */
   public void saveComment(final ExoSocialActivity activity, final ExoSocialActivity comment) throws ActivityStorageException {
-
-    //
+    List<String> oldMentioners = Collections.emptyList();
+    if (activity.getId() != null) {
+      ExoSocialActivity old = getActivity(activity.getId());
+      oldMentioners = StorageUtils.getIdentityIds(old.getMentionedIds());
+    }
+    
     storage.saveComment(activity, comment);
-
+    
+    //get new mentioners list
+    List<String> newMentioners = StorageUtils.getIdentityIds(activity.getMentionedIds());
+    //
+    //compares and get new mentioners of new comment
+    List<String> addedMentioners = StorageUtils.sub(newMentioners, oldMentioners);
+    StreamHelper.MOVE.addComment(comment.getUserId(), activity);
+    StreamHelper.MOVE.addOrMoveMentioners(addedMentioners, activity);
     //
     exoActivityCache.put(new ActivityKey(comment.getId()), new ActivityData(getActivity(comment.getId())));
     ActivityKey activityKey = new ActivityKey(activity.getId());
-    exoActivityCache.remove(activityKey);
-    exoActivityCache.put(activityKey, new ActivityData(getActivity(activity.getId())));
+    exoActivityCache.put(activityKey, new ActivityData(activity));
     clearCache();
+    updateCommentCountCaching(activity.getId(), true);
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
    * {@inheritDoc}
    */
   public ExoSocialActivity saveActivity(final Identity owner, final ExoSocialActivity activity) throws ActivityStorageException {
-
+    try {
+      Validate.notNull(owner, "owner must not be null.");
+      Validate.notNull(activity, "activity must not be null.");
+    } catch (IllegalArgumentException e) {
+      throw new ActivityStorageException(ActivityStorageException.Type.ILLEGAL_ARGUMENTS, e.getMessage(), e);
+    }
+    
+    boolean isNew = activity.getId() == null;
     //
     ExoSocialActivity a = storage.saveActivity(owner, activity);
-
+    
+    if (isNew && !activity.isHidden()) {
+      StreamHelper.ADD.addActivity(activity);
+    }
     //
     ActivityKey key = new ActivityKey(a.getId());
-    exoActivityCache.put(key, new ActivityData(getActivity(a.getId())));
+    exoActivityCache.put(key, new ActivityData(a));
     clearCache();
-
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
     //
     return a;
-
   }
 
   /**
@@ -289,33 +347,60 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public void deleteActivity(final String activityId) throws ActivityStorageException {
-
-    //
-    ExoSocialActivity a = storage.getActivity(activityId);
-    storage.deleteActivity(activityId);
-
-    //
     ActivityKey key = new ActivityKey(activityId);
-    exoActivityCache.remove(key);
-    clearCache();
-
+    ActivityData data = exoActivityCache.get(key);
+    if (data == null) {
+      return;
+    } else if (data.isDeleted()) {
+      storage.deleteActivity(activityId);
+      exoActivityCache.remove(key);
+    } else {
+      ExoSocialActivity activity = storage.getActivity(activityId);
+      StreamHelper.REMOVE.removeActivity(activity);
+      exoActivityCache.remove(key);
+      exoActivityCache.put(key, ActivityData.REMOVED);
+      clearCache();
+    }
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
    * {@inheritDoc}
    */
   public void deleteComment(final String activityId, final String commentId) throws ActivityStorageException {
-    
+    //get old mentioners list
+    ExoSocialActivity old = getActivity(activityId);
+    List<String> oldMentioners = StorageUtils.getIdentityIds(old.getMentionedIds());
     //
     storage.deleteComment(activityId, commentId);
-
-    //
-    exoActivityCache.remove(new ActivityKey(commentId));
-    ActivityKey activityKey = new ActivityKey(activityId);
-    exoActivityCache.remove(activityKey);
-    exoActivityCache.put(activityKey, new ActivityData(getActivity(activityId)));
-
     clearActivityCached(activityId);
+    ExoSocialActivity comment = getActivity(commentId);
+    clearActivityCached(commentId);
+    //
+    //re-loading the activity with refresh mentioners list
+    ExoSocialActivity newActivity = getActivity(activityId);
+    //get new mentioners list
+    List<String> newMentioners = StorageUtils.getIdentityIds(newActivity.getMentionedIds());
+    //
+    //compares between old and new mentioners, to get removed mentioners list.
+    List<String> removedMentioners = StorageUtils.sub(oldMentioners, newMentioners);
+    //excluded the commenter list
+    List<String> commenters = StorageUtils.getIdentityIds(newActivity.getCommentedIds());
+    List<String> removedList = StorageUtils.sub(removedMentioners, commenters);
+    //case when remove the comment, the activity removes out commenter's stream
+    String removedCommenterId = comment.getUserId();
+    if (!newMentioners.contains(removedCommenterId) && !commenters.contains(removedCommenterId)) {
+      StreamHelper.REMOVE.removeComment(removedCommenterId, newActivity);
+    }
+    
+    StreamHelper.REMOVE.removeMentioners(removedList, newActivity);
+    clearCommentsCache(activityId);
+    updateCommentCountCaching(activityId, false);
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
@@ -470,23 +555,91 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public List<ExoSocialActivity> getActivityFeed(final Identity ownerIdentity, final int offset, final int limit) {
+    
+    final StreamKey key = StreamKey.init(ownerIdentity.getId()).key(ActivityType.FEED);
 
     //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(ownerIdentity), ActivityType.FEED);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
-
-    //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivityFeed(ownerIdentity, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
+    return buildActivitiesFromStream(keys, offset, limit);
+  }
+  
+  /**
+   * Build the activity list from the caches Ids.
+   *
+   * @param data ids
+   * @return activities
+   */
+  private List<ExoSocialActivity> buildActivitiesFromStream(ListActivityStreamData data, final long offset, final long limit) {
+    List<ExoSocialActivity> activities = new ArrayList<ExoSocialActivity>();
+    long to = Math.min(data.size(), offset + limit);
+    List<String> ids = Collections.synchronizedList(data.subList((int)offset, (int)to));
+    for (String id : ids) {
+      ExoSocialActivity a = getActivity(id);
+      if (a != null && !a.isHidden()) {
+          activities.add(a);
+      }
+    }
+    return activities;
+
+  }
+  
+  /**
+   * Build the ids from the activity list.
+   *
+   * @return remoteId
+   * @param activities activities
+   * 
+   */
+  private ListActivityStreamData buildStreamDataIds(StreamKey key, List<ExoSocialActivity> activities, int offset, int limit) {
+
+    ListActivityStreamData data = this.exoStreamCache.get(key);
+    if (data == null) {
+      data = new ListActivityStreamData(key);
+      this.exoStreamCache.put(key, data);
+    }
+    //Fixed the use case:
+    //1. Refresh AS
+    //2. clear caching by jconsole
+    //3. load more by scroll end of the page
+    //4. refresh AS
+    //Expected: expected shows 20 activities in first page. 
+    if (data.size() == 0 && offset > 0) {
+      for (int i = 0; i < offset; i++) {
+        data.insertLast(null);
+      }
+    }
+    //checks the data contains NULL value inside for offset + limit
+    //detail in 
+    boolean isOverride = data.size() >= (offset + limit); 
+    int index = 0;
+    //
+    for(int i = 0, len = activities.size(); i < len; i++) {
+      ExoSocialActivity a = activities.get(i);
+      //handle the activity is NULL
+      if (a == null || a.isHidden()) {
+        continue;
+      }
+      if (isOverride) {
+        data.insertAt(offset + index, a.getId());
+        index++;
+      } else {
+        //
+        if (!data.contains(a.getId())) {
+          data.insertLast(a.getId());
+        }
+
+      }
+    }
+    return data;
 
   }
 
@@ -607,24 +760,20 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public List<ExoSocialActivity> getActivitiesOfConnections(final Identity ownerIdentity, final int offset, final int limit) {
+    final StreamKey key = StreamKey.init(ownerIdentity.getId()).key(ActivityType.CONNECTION);
 
     //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(ownerIdentity), ActivityType.CONNECTION);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
-
-    //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivitiesOfConnections(ownerIdentity, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
-    
+    return buildActivitiesFromStream(keys, offset, limit);
   }
 
   /**
@@ -653,7 +802,8 @@ public class CachedActivityStorage implements ActivityStorage {
    */
   public List<ExoSocialActivity> getActivitiesOfIdentity(final Identity ownerIdentity, final long offset, final long limit)
                                                                                        throws ActivityStorageException {
-    return storage.getActivitiesOfIdentity(ownerIdentity, offset, limit);
+    
+    return getUserActivities(ownerIdentity, offset, limit);
   }
 
   /**
@@ -754,24 +904,21 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public List<ExoSocialActivity> getUserSpacesActivities(final Identity ownerIdentity, final int offset, final int limit) {
+    
+    final StreamKey key = StreamKey.init(ownerIdentity.getId()).key(ActivityType.SPACES);
 
     //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(ownerIdentity), ActivityType.SPACES);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
-
-    //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getUserSpacesActivities(ownerIdentity, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
-
+    return buildActivitiesFromStream(keys, offset, limit);
   }
 
   /**
@@ -912,10 +1059,8 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public int getNumberOfComments(final ExoSocialActivity existingActivity) {
-    
     //
-    ActivityCountKey key =
-        new ActivityCountKey(existingActivity.getId(), ActivityType.COMMENTS);
+    ActivityCountKey key = new ActivityCountKey(existingActivity.getId(), ActivityType.COMMENTS);
 
     //
     return activitiesCountCache.get(
@@ -969,17 +1114,49 @@ public class CachedActivityStorage implements ActivityStorage {
    * {@inheritDoc}
    */
   public void updateActivity(final ExoSocialActivity existingActivity) throws ActivityStorageException {
-
+    //
+    ActivityKey key = new ActivityKey(existingActivity.getId());
+    ActivityData oldData = exoActivityCache.get(key);
+    //
+    ExoSocialActivity oldA = oldData != null ? oldData.build() : getActivity(existingActivity.getId());
+    //
+    boolean isChangeHiddenToDisplay = oldA.isHidden() != existingActivity.isHidden() && !existingActivity.isHidden();
+    if (isChangeHiddenToDisplay) {
+      existingActivity.setPostedTime(System.currentTimeMillis());
+      existingActivity.setUpdated(System.currentTimeMillis());
+    }
+    
+    boolean isKeepTitle = existingActivity.getTitle() == null;
+    boolean isKeepBody = existingActivity.getBody() == null;
+    boolean isKeepParams = existingActivity.getTemplateParams() == null;
     //
     storage.updateActivity(existingActivity);
     
+    if (isChangeHiddenToDisplay) {
+      StreamHelper.ADD.addActivity(existingActivity);
+      StreamHelper.ADD.addMentioners(existingActivity);
+    }
+
     //
-    ActivityKey key = new ActivityKey(existingActivity.getId());
-    exoActivityCache.remove(key);
+    if (isKeepTitle) {
+      existingActivity.setTitle(oldA.getTitle());
+    }
+    //
+    if (isKeepBody) {
+      existingActivity.setBody(oldA.getBody());
+    }
+    //
+    if (isKeepParams) {
+      existingActivity.setTemplateParams(oldA.getTemplateParams());
+    }
+    
+    exoActivityCache.put(key, new ActivityData(existingActivity));
     
     //
     clearCache();
-    clearActivityCached(existingActivity.getId());
+    
+    //
+    StreamContext.instanceInContainer().getActivityPersister().commit(false);
   }
 
   /**
@@ -1112,22 +1289,20 @@ public class CachedActivityStorage implements ActivityStorage {
 
   @Override
   public List<ExoSocialActivity> getSpaceActivities(final Identity ownerIdentity, final int offset, final int limit) {
-    //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(ownerIdentity), ActivityType.SPACE);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
+    final StreamKey key = StreamKey.init(ownerIdentity.getId()).key(ActivityType.SPACE);
 
     //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getSpaceActivities(ownerIdentity, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, offset, limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
+    return buildActivitiesFromStream(keys, offset, limit);
   }
   
   @Override
@@ -1431,23 +1606,21 @@ public class CachedActivityStorage implements ActivityStorage {
                                                final Identity viewer,
                                                final long offset,
                                                final long limit) throws ActivityStorageException {
-    //
-    ActivityCountKey key = new ActivityCountKey(new IdentityKey(owner), new IdentityKey(viewer), ActivityType.VIEWER);
-    ListActivitiesKey listKey = new ListActivitiesKey(key, offset, limit);
+    
+    final StreamKey key = StreamKey.init(owner.getId()).key(ActivityType.VIEWER);
 
     //
-    ListActivitiesData keys = activitiesCache.get(
-        new ServiceContext<ListActivitiesData>() {
-          public ListActivitiesData execute() {
+    ListActivityStreamData keys = streamCache.get(
+        new ServiceContext<ListActivityStreamData>() {
+          public ListActivityStreamData execute() {
             List<ExoSocialActivity> got = storage.getActivities(owner, viewer, offset, limit);
-            return buildIds(got);
+            return buildStreamDataIds(key, got, (int)offset, (int)limit);
           }
         },
-        listKey);
+        key, offset, limit);
 
     //
-    return buildActivities(keys);
-    
+    return buildActivitiesFromStream(keys, offset, limit);
   }
 
   @Override
@@ -1827,4 +2000,14 @@ public class CachedActivityStorage implements ActivityStorage {
     
   }
   
+  /**
+   * When activity ref is removed from jcr, we remove also it from caching list
+   * 
+   * @param activityId id of activity need to remove the reference from stream
+   * @param key a cache's key that represents a list of activity related to an user on a specific stream
+   */
+  public void removeActivityFromStreamCache(String activityId, StreamKey key) {
+    ListActivityStreamData streamData = this.exoStreamCache.get(key);
+    streamData.getList().remove(activityId);
+  }
 }

@@ -17,8 +17,10 @@
 
 package org.exoplatform.social.core.storage.impl;
 
+import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,10 +29,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +68,6 @@ import org.exoplatform.social.core.activity.model.ActivityStream;
 import org.exoplatform.social.core.activity.model.ActivityStreamImpl;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
-import org.exoplatform.social.core.chromattic.entity.ActivityDayEntity;
 import org.exoplatform.social.core.chromattic.entity.ActivityEntity;
 import org.exoplatform.social.core.chromattic.entity.ActivityListEntity;
 import org.exoplatform.social.core.chromattic.entity.ActivityParameters;
@@ -102,7 +105,11 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   private static final Log LOG = ExoLogger.getLogger(ActivityStorageImpl.class);
   private static final Pattern MENTION_PATTERN = Pattern.compile("@([^\\s]+)|@([^\\s]+)$");
   public static final Pattern USER_NAME_VALIDATOR_REGEX = Pattern.compile("^[\\p{L}][\\p{L}._\\-\\d]+$");
+  protected String[] MONTH_NAME = new DateFormatSymbols(Locale.ENGLISH).getMonths();
   private ActivityStorage activityStorage;
+  
+  private final Map<String, String> temporaryTransaction;
+  
 
   private final SortedSet<ActivityProcessor> activityProcessors;
 
@@ -111,19 +118,20 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   private final SpaceStorage spaceStorage;
   private final ActivityStreamStorage streamStorage;
   //sets value to tell this storage to inject Streams or not
-  private boolean mustInjectStreams = true;
+  private boolean mustInjectStreams = false;
 
   public ActivityStorageImpl(
       final RelationshipStorage relationshipStorage,
       final IdentityStorage identityStorage,
       final SpaceStorage spaceStorage,
       final ActivityStreamStorage streamStorage) {
-
+ 
     this.relationshipStorage = relationshipStorage;
     this.identityStorage = identityStorage;
     this.spaceStorage = spaceStorage;
     this.streamStorage = streamStorage;
     this.activityProcessors = new TreeSet<ActivityProcessor>(processorComparator());
+    temporaryTransaction = new ConcurrentHashMap<String, String>();
   }
   
   /**
@@ -133,59 +141,201 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   public void setInjectStreams(boolean mustInject) {
     this.mustInjectStreams = mustInject;
   }
+  
+  /**
+   * Gets IdentityStorage
+   * @return
+   */
+  private IdentityStorage getIdentityStorage() {
+    return CommonsUtils.getService(IdentityStorage.class);
+  }
 
   /*
    * Internal
    */
   protected ActivityEntity _createActivity(Identity owner, ExoSocialActivity activity, List<String> mentioners) throws NodeNotFoundException {
-
-    IdentityEntity identityEntity = _findById(IdentityEntity.class, owner.getId());
-
-    IdentityEntity posterIdentityEntity;
-    if (activity.getPosterId() != null) {
-      posterIdentityEntity = _findById(IdentityEntity.class, activity.getPosterId());
-    } else if (activity.getUserId() != null) {
-      posterIdentityEntity = _findById(IdentityEntity.class, activity.getUserId());
-    } else {
-      posterIdentityEntity = identityEntity;
+    try {
+      Validate.notNull(owner, "owner must not be null.");
+      Validate.notNull(activity, "activity must not be null.");
+      Validate.notNull(activity.getUpdated(), "Activity.getUpdated() must not be null.");
+      Validate.notNull(activity.getPostedTime(), "Activity.getPostedTime() must not be null.");
+      Validate.notNull(activity.getTitle(), "Activity.getTitle() must not be null.");
+    } catch (IllegalArgumentException e) {
+      throw new ActivityStorageException(ActivityStorageException.Type.ILLEGAL_ARGUMENTS, e.getMessage(), e);
     }
     
-    // Get ActivityList
-    ActivityListEntity activityListEntity = identityEntity.getActivityList();
-    //
-    Collection<ActivityEntity> entities = new ActivityList(activityListEntity);
+    try {
+      IdentityEntity identityEntity = _findById(IdentityEntity.class, owner.getId());
 
-    // Create activity
-    long currentMillis = System.currentTimeMillis();
-    long activityMillis = (activity.getPostedTime() != null ? activity.getPostedTime() : currentMillis);
-    ActivityEntity activityEntity = activityListEntity.createActivity(String.valueOf(activityMillis));
-    entities.add(activityEntity);
-    activityEntity.setIdentity(identityEntity);
-    activityEntity.setComment(Boolean.FALSE);
-    activityEntity.setPostedTime(activityMillis);
-    activityEntity.setLastUpdated(activityMillis);
-    activityEntity.setPosterIdentity(posterIdentityEntity);
-    
-
-    // Fill activity model
-    activity.setId(activityEntity.getId());
-    activity.setStreamOwner(identityEntity.getRemoteId());
-    activity.setStreamId(identityEntity.getId());
-    activity.setPostedTime(activityMillis);
-    activity.setReplyToId(new String[]{});
-    activity.setUpdated(activityMillis);
-    
-    //records activity for mention case.
-    
-    activity.setMentionedIds(processMentions(activity.getMentionedIds(), activity.getTitle(), mentioners, true));
-    
-    //
-    activity.setPosterId(activity.getUserId() != null ? activity.getUserId() : owner.getId());
+      IdentityEntity posterIdentityEntity;
+      if (activity.getUserId() != null) {
+        posterIdentityEntity = _findById(IdentityEntity.class, activity.getUserId());
+      } else {
+        posterIdentityEntity = identityEntity;
+      }
       
+      // Get ActivityList
+      ActivityListEntity activityListEntity = identityEntity.getActivityList();
+      //
+      Collection<ActivityEntity> entities = new ActivityList(activityListEntity);
+     
+      // Create activity
+      long currentMillis = System.currentTimeMillis();
+      long activityMillis = (activity.getPostedTime() != null ? activity.getPostedTime() : currentMillis);
+      
+      Calendar calendar = Calendar.getInstance(Locale.ENGLISH);
+      calendar.setTimeInMillis(activityMillis);
+
+      String year = String.valueOf(calendar.get(Calendar.YEAR));
+      String month = MONTH_NAME[calendar.get(Calendar.MONTH)];
+      String day = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
+      
+      boolean hasParentNode = activityListEntity.hasYearMonthDay(year, month, day);
+      if (hasParentNode) {
+        this.temporaryTransaction.put(owner.getId(), Thread.currentThread().getName());
+      }
+      
+      ActivityEntity activityEntity = activityListEntity.createActivity(String.valueOf(activityMillis));
+      entities.add(activityEntity);
+      activityEntity.setIdentity(identityEntity);
+      activityEntity.setTitle(activity.getTitle());
+      activityEntity.setTitleId(activity.getTitleId());
+      activityEntity.setBody(activity.getBody());
+      activityEntity.setBodyId(activity.getBodyId());
+      activityEntity.setType(activity.getType());
+      activityEntity.setExternalId(activity.getExternalId());
+      activityEntity.setUrl(activity.getUrl());
+      activityEntity.setComment(Boolean.FALSE);
+      activityEntity.setPostedTime(activityMillis);
+      activityEntity.setLastUpdated(activityMillis);
+      activityEntity.setPosterIdentity(posterIdentityEntity);
+      //
+      if (activity.isHidden()) {
+        HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, true);
+        hidable.setHidden(activity.isHidden());
+      }
+      
+      if (activity.isLocked()) {
+        LockableEntity lockable = _getMixin(activityEntity, LockableEntity.class, true);
+        lockable.setLocked(activity.isLocked());
+      }
+      
+      activityEntity.setLikes(activity.getLikeIdentityIds());
+      activityEntity.setAppId(activity.getAppId());
+      activityEntity.setPriority(activity.getPriority());
+      //
+      activityEntity.setMentioners(activity.getMentionedIds());
+      activityEntity.setCommenters(activity.getCommentedIds());
+      
+      //
+      Map<String, String> params = activity.getTemplateParams();
+      if (params != null) {
+        activityEntity.putParams(params);
+      }
+      //persist when has parent node of activity just created
+      if (this.temporaryTransaction.containsKey(owner.getId())) {
+        getSession().save();
+      }
+
+      // Fill activity model
+      activity.setId(activityEntity.getId());
+      activity.setUserId(posterIdentityEntity.getId());
+      activity.setStreamOwner(identityEntity.getRemoteId());
+      activity.setPostedTime(activityMillis);
+      activity.setReplyToId(new String[]{});
+      activity.setUpdated(activityMillis);
+      
+      //records activity for mention case.
+      //just keep raw data for mentioner
+      //process mentioners on
+      activity.setMentionedIds(processMentions(activity.getMentionedIds(), activity.getTitle(), mentioners, true));
+      
+      //
+      activity.setPosterId(activity.getUserId() != null ? activity.getUserId() : owner.getId());
+      
+      //
+      fillStream(identityEntity, activity);
+      processActivity(activity);
+      
+      return activityEntity;
+    }
+    catch (NodeNotFoundException e) {
+      throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_ACTIVITY, e.getMessage(), e);
+    } catch (ChromatticException ex) {
+      Throwable throwable = ex.getCause();
+      if (throwable instanceof ItemExistsException || 
+          throwable instanceof InvalidItemStateException) {
+        LOG.warn("Probably was inserted activity by another session");
+        LOG.debug(ex.getMessage(), ex);
+      } else {
+        throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_ACTIVITY, ex.getMessage());
+      }
+    } finally {
+      this.temporaryTransaction.remove(owner.getId());
+    }
+    return null;
+  }
+  
+  /**
+   * Persist the remaining the 
+   * @param activity
+   * @throws ActivityStorageException
+   */
+  public void persist(ExoSocialActivity activity) throws ActivityStorageException {
+    try {
+      ActivityEntity entity = _findById(ActivityEntity.class, activity.getId());
+      entity.setLikes(activity.getLikeIdentityIds());
+      entity.setAppId(activity.getAppId());
+      entity.setPriority(activity.getPriority());
+      //
+      entity.setMentioners(activity.getMentionedIds());
+      entity.setCommenters(activity.getCommentedIds());
+      
+      //
+      Map<String, String> params = activity.getTemplateParams();
+      if (params != null) {
+        entity.putParams(params);
+      }
+    }
+    catch (NodeNotFoundException e) {
+      throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_UPDATE_ACTIVITY, e.getMessage());
+    } catch (ChromatticException ex) {
+      Throwable throwable = ex.getCause();
+      if (throwable instanceof ItemExistsException || throwable instanceof InvalidItemStateException) {
+        LOG.warn("Probably was updated activity by another session");
+        LOG.debug(ex.getMessage(), ex);
+      } else {
+        throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_UPDATE_ACTIVITY, ex.getMessage());
+      }
+    } finally {
+      getSession().save();
+    }
+
+  }
+  
+  private void fillStream(IdentityEntity identityEntity, ExoSocialActivity activity) {
     //
-    fillActivityEntityFromActivity(activity, activityEntity);
+    ActivityStream stream = new ActivityStreamImpl();
+    //
+    stream.setId(identityEntity.getId());
+    stream.setPrettyId(identityEntity.getRemoteId());
+    stream.setType(identityEntity.getProviderId());
     
-    return activityEntity;
+    //Identity identity = identityStorage.findIdentityById(identityEntity.getId());
+    if (identityEntity != null && SpaceIdentityProvider.NAME.equals(identityEntity.getProviderId())) {
+      Space space = spaceStorage.getSpaceByPrettyName(identityEntity.getRemoteId());
+      //work-around for SOC-2366 when rename space's display name.
+      if (space != null) {
+        String groupId = space.getGroupId().split("/")[2];
+        stream.setPermaLink(LinkProvider.getActivityUriForSpace(identityEntity.getRemoteId(), groupId));
+      }
+    } else {
+      stream.setPermaLink(LinkProvider.getActivityUri(identityEntity.getProviderId(), identityEntity.getRemoteId()));
+    }
+    //
+    activity.setActivityStream(stream);
+    activity.setStreamId(stream.getId());
+    activity.setStreamOwner(stream.getPrettyId());
   }
 
   protected void _saveActivity(ExoSocialActivity activity) throws NodeNotFoundException {
@@ -253,10 +403,18 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activityEntity.setPriority(activity.getPriority());
     activityEntity.setLastUpdated(activity.getUpdated().getTime());
     //
-    HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, true);
-    hidable.setHidden(activity.isHidden());
-    LockableEntity lockable = _getMixin(activityEntity, LockableEntity.class, true);
-    lockable.setLocked(activity.isLocked());
+    boolean hideValue = getHidableMixinValue(activityEntity, HidableEntity.class, false);
+    if (activity.isHidden() != hideValue) {
+      HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, true);
+      hidable.setHidden(activity.isHidden());
+    }
+    //
+    boolean lockValue = getHidableMixinValue(activityEntity, HidableEntity.class, false);
+    if(activity.isLocked() != lockValue) {
+      LockableEntity lockable = _getMixin(activityEntity, LockableEntity.class, true);
+      lockable.setLocked(activity.isLocked());
+    }
+    
     activityEntity.setMentioners(activity.getMentionedIds());
     activityEntity.setCommenters(activity.getCommentedIds());
 
@@ -338,14 +496,10 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     activity.setTemplateParams(getTemplateParamsFromEntity(activityEntity.getParams()));
     
     //
-    LockableEntity lockable = _getMixin(activityEntity, LockableEntity.class, false);
-    if (lockable != null) {
-      activity.isLocked(lockable.getLocked());
-    }
-    HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, false);
-    if (hidable != null) {
-      activity.isHidden(hidable.getHidden());
-    }
+    activity.isLocked(getLockableMixinValue(activityEntity, LockableEntity.class, false));
+    
+    activity.isHidden(getHidableMixinValue(activityEntity, HidableEntity.class, false));
+    
     } catch (Exception e) {
       LOG.debug("Failed to fill activity from entity : entity null or missing property", e);
       return null;
@@ -429,10 +583,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       comment.isLocked(false);
       
       //
-      HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, false);
-      if (hidable != null) {
-        comment.isHidden(hidable.getHidden());
-      }
+      comment.isHidden(getHidableMixinValue(activityEntity, HidableEntity.class, false));
       
 //      if (comment != null) {
 //        fillStream(activityEntity, comment);
@@ -608,7 +759,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       long i = remaind;
       // fill to enough limit
       for (ExoSocialActivity activity : origin) {
-        if (got.contains(activity) == false) {
+        if (activity != null && got.contains(activity) == false) {
           got.add(activity);
           migrateList.add(activity);
           if (--i == 0) {
@@ -629,9 +780,20 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
    * {@inheritDoc}
    */
   public void saveComment(ExoSocialActivity activity, ExoSocialActivity comment) throws ActivityStorageException {
-
     try {
-
+      if (activity.getId() == null) {
+        Identity streamOwner = null;
+        if (activity.getStreamId() != null) {
+          streamOwner =  getIdentityStorage().findIdentityById(activity.getStreamId());
+        } else {
+          streamOwner =  getIdentityStorage().findIdentityById(activity.getUserId());
+        }
+        saveActivity(streamOwner, activity);
+        if (activity.getId() == null) {
+          throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_COMMENT, "The activity's Id is null");
+        }
+      }
+      
       //
       long currentMillis = System.currentTimeMillis();
       long commentMillis = (comment.getPostedTime() != null ? comment.getPostedTime() : currentMillis);
@@ -694,9 +856,8 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       //Resolved SOC-3915 empty stream when post comment but lost it.
       //Resolved WhatsHotTest is failed.
       //persist and refresh JCR node to prevent NodeNotFoundException
-      StorageUtils.persist(true);
-      //
       if (mustInjectStreams) {
+        StorageUtils.persist(true);
         Identity identity = identityStorage.findIdentityById(comment.getUserId());
         StreamInvocationHelper.updateCommenter(identity, activityEntity, commenters.toArray(new String[0]), oldUpdated);
         //make sure there is no duplicated identity in commenters and mentioners list 
@@ -707,6 +868,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           StreamInvocationHelper.update(activity, oldUpdated);
         }
       }
+      
     }  
     catch (NodeNotFoundException e) {
       throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_COMMENT, e.getMessage(), e);
@@ -720,8 +882,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
         throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_ACTIVITY, ex.getMessage());
       }
     }
-    //persist and refresh JCR node to prevent NodeNotFoundException
-    StorageUtils.persist(true);
     //
     LOG.debug(String.format(
         "Comment %s by %s (%s) created: comment size is == %s ",
@@ -750,11 +910,28 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
 
       if (activity.getId() == null) {
         
+        try {
+          while (true) {
+            String value = this.temporaryTransaction.get(owner.getId());
+            if (value != null) {
+              //the same threading, go out
+              if (Thread.currentThread().getName().equals(value)) {
+                break;
+              }
+              Thread.sleep(10);
+            } else {
+              StorageUtils.refreshSession();
+              break;
+            }
+          }
+
+        } catch (InterruptedException e) {
+          LOG.error(e.getMessage(), e);
+        }
+        
         List<String> mentioners = new ArrayList<String>();
         ActivityEntity entity = _createActivity(owner, activity, mentioners);
 
-        
-        StorageUtils.persist(true);
         //create refs
         if (mustInjectStreams) {
           //run synchronous
@@ -764,15 +941,18 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           StorageUtils.persist(true);
           //run asynchronous: JCR session doesn't share in multi threading, in Stream service.
           StreamInvocationHelper.save(owner, entity, mentioners.toArray(new String[0]));
+          //move getSession().save() to handle better case create new ref for unit testcase
+          getSession().save();
         }
       }
       else {
         _saveActivity(activity);
       }
       //persist and refresh JCR node to prevent NodeNotFoundException
-      StorageUtils.persist(true);
-
-      //
+      //StorageUtils.persist(true);
+      //remove getSession().save() >> due to throw the exception wiki new page
+      //javax.jcr.InvalidItemStateException: [social] ADD PROPERTY
+      //org.exoplatform.social.core.storage.impl.ActivityStorageImpl.saveActivity(ActivityStorageImpl.java:950)
       LOG.debug(String.format(
           "Activity %s by %s (%s) saved",
           activity.getTitle(),
@@ -827,7 +1007,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
 
       //
       ActivityEntity activityEntity = _findById(ActivityEntity.class, activityId);
-      ActivityDayEntity dayEntity = activityEntity.getDay();
 
       // For logging
       ExoSocialActivity activity = new ExoSocialActivityImpl();
@@ -838,7 +1017,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       // remove mentions information
       if (activityEntity.isComment()) {
         ActivityEntity activityEntityOfComment = activityEntity.getParentActivity();
-        
         //
         List<String> mentioners = new ArrayList<String>();
         activityEntityOfComment.setMentioners(processMentions(activityEntityOfComment.getMentioners(), activityEntity.getTitle(), mentioners, false));
@@ -870,15 +1048,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
 
       //
       _removeById(ActivityEntity.class, activityId);
-
-      //
-      if (dayEntity != null) { // False when activity is a comment
-        dayEntity.desc();
-      }
-
-      //
-      //getSession().save();
-      StorageUtils.persist();
 
       //
       LOG.debug(String.format(
@@ -1427,7 +1596,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     if (activities.size() >= limit) {
       return activities;
     }
-    //
     List<ExoSocialActivity> got = streamStorage.getConnections(ownerIdentity, offset, limit);
     got = buildList(activities, got, limit);
     //
@@ -1444,7 +1612,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       int i = remaind;
       // fill to enough limit
       for (ExoSocialActivity activity : origin) {
-
         //SOC-4525 : exclude all space activities that owner is not member
         if (SpaceIdentityProvider.NAME.equals(activity.getActivityStream().getType().toString())) {
           Space space = spaceStorage.getSpaceByPrettyName(activity.getStreamOwner());
@@ -1465,7 +1632,6 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
           }
         }
         //
-
         if (got.contains(activity) == false) {
           got.add(activity);
           migrateList.add(activity);
@@ -1594,14 +1760,12 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       int i = remaind;
       // fill to enough limit
       for (ExoSocialActivity activity : origin) {
-
         //SOC-4525 : exclude all space activities that owner is not member
         if (SpaceIdentityProvider.NAME.equals(activity.getActivityStream().getType().toString())) {
           continue;
         }
-        //
-
-        if (got.contains(activity) == false) {
+        
+        if (activity != null && got.contains(activity) == false) {
           got.add(activity);
           migrateList.add(activity);
           if (--i == 0) {
@@ -1750,19 +1914,13 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     try {
       ActivityEntity activityEntity = _findById(ActivityEntity.class, commentId);
       if (activityEntity != null) {
-        HidableEntity hidable = _getMixin(activityEntity, HidableEntity.class, false);
-        if (hidable != null) {
-          return hidable.getHidden();
-        }
+        return getHidableMixinValue(activityEntity, HidableEntity.class, false);
       } else {
         return true;
       }
-      
     } catch (NodeNotFoundException e) {
       return true;
     }
-
-    return false;
   }
 
   /**
@@ -1915,32 +2073,16 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
 
       if (changedActivity.getTitle() == null) changedActivity.setTitle(activityEntity.getTitle());
       if (changedActivity.getBody() == null) changedActivity.setBody(activityEntity.getBody());
-      
-      boolean isHidden = getActivity(changedActivity.getId()).isHidden();
+      if (changedActivity.getTemplateParams() == null && activityEntity.getParams() != null) changedActivity.setTemplateParams(activityEntity.getParams().getParams());
       _saveActivity(changedActivity);
-
-      //if update comment, no need to update stream
-      if (changedActivity.isComment()) {
-        return;
-      }
-      //update activity ref when activity change value of isHidden
-      if (changedActivity.isHidden() != isHidden) {
-        Identity owner = identityStorage.findIdentity(SpaceIdentityProvider.NAME, changedActivity.getStreamOwner());
-        if (owner == null) {
-          owner = identityStorage.findIdentity(OrganizationIdentityProvider.NAME, changedActivity.getStreamOwner());
-        }
-        StreamInvocationHelper.updateHidable(owner, activityEntity, changedActivity);
-        getSession().save();
-      }
-      
+      processActivity(changedActivity);
     }
     catch (NodeNotFoundException e) {
       throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_SAVE_ACTIVITY, e.getMessage());
     } catch (ChromatticException ex) {
       Throwable throwable = ex.getCause();
-      if (throwable instanceof ItemExistsException || 
-          throwable instanceof InvalidItemStateException) {
-        LOG.warn("Probably was updated activity by another session");
+      if (throwable instanceof ItemExistsException || throwable instanceof InvalidItemStateException) {
+        LOG.error("Probably was updated activity by another session", ex);
         LOG.debug(ex.getMessage(), ex);
       } else {
         throw new ActivityStorageException(ActivityStorageException.Type.FAILED_TO_UPDATE_ACTIVITY, ex.getMessage());
@@ -1960,7 +2102,11 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     List<ExoSocialActivity> activities =  new ArrayList<ExoSocialActivity>();
 
     while(results.hasNext()) {
-      activities.add(getStorage().getActivity(results.next().getId()));
+      ExoSocialActivity a = getStorage().getActivity(results.next().getId());
+      if (a != null) {
+        activities.add(a);
+      }
+      
     }
 
     return activities;
@@ -3049,7 +3195,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
 
     ActivityFilter filter = new ActivityFilter(){};
     //
-    return getActivitiesOfIdentities (ActivityBuilderWhere.simple().poster(owner).mentioner(owner).commenter(owner).liker(owner).owners(owner), filter, offset, limit);
+    return getActivitiesOfIdentities(ActivityBuilderWhere.simple().poster(owner).mentioner(owner).commenter(owner).liker(owner).owners(owner), filter, offset, limit);
   }
 
   @Override
@@ -3159,5 +3305,19 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   
     //
     return getActivitiesOfIdentitiesQuery(ActivityBuilderWhere.simple().owners(spaceList), filter).objects().size();
+  }
+  
+  /**
+   * 
+   * @param activityId
+   * @return
+   */
+  public boolean hasActivity(String activityId) {
+    try {
+      ActivityEntity entity = _findById(ActivityEntity.class, activityId);
+      return entity != null;
+    } catch (NodeNotFoundException e) {
+      return false;
+    }
   }
 }

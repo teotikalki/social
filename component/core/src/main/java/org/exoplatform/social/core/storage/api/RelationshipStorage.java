@@ -120,8 +120,7 @@ public interface RelationshipStorage {
    * @return TRUE/FALSE
    * @throws RelationshipStorageException
    */
-  public boolean hasRelationship(final Identity identity1, final Identity identity2, final String relationshipPath)
-      throws RepositoryException;
+  public boolean hasRelationship(final Identity identity1, final Identity identity2, final String relationshipPath) throws RepositoryException;
 
   /**
    * Gets the list of relationship by identity matching with checking

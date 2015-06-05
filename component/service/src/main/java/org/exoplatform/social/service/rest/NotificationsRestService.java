@@ -35,8 +35,11 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
+import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
 import org.exoplatform.social.core.manager.ActivityManager;
 import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.core.manager.RelationshipManager;
@@ -68,6 +71,35 @@ public class NotificationsRestService implements ResourceContainer {
   }
   
   public NotificationsRestService() {
+  }
+  
+  @GET
+  @Path("createActivity/{owner}/{poster}/{from}/{to}/{isSpaceActivity}")
+  public Response createActivity(@Context UriInfo uriInfo,
+                                  @PathParam("owner") String owner,
+                                  @PathParam("poster") String poster,
+                                  @PathParam("from") int from,
+                                  @PathParam("to") int to,
+                                  @PathParam("isSpaceActivity") boolean isSpaceActivity) throws Exception {
+    checkAuthenticatedRequest();
+    
+    Identity ownerIdentity = getIdentityManager().getOrCreateIdentity(isSpaceActivity ? SpaceIdentityProvider.NAME : OrganizationIdentityProvider.NAME, owner, true);
+    Identity posterIdentity = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, poster, true);
+    if (ownerIdentity == null || posterIdentity == null || from > to) {
+      throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    }
+    
+    for (int i = from; i <= to; i++) {
+      ExoSocialActivity activity = new ExoSocialActivityImpl();
+      activity.setTitle(poster + " posts an activity : activity" + i);
+      activity.setUserId(posterIdentity.getId());
+      getActivityManager().saveActivityNoReturn(ownerIdentity, activity);
+    }
+  
+    String targetURL = Util.getBaseUrl() + LinkProvider.getRedirectUri("");
+    
+    // redirect to target page
+    return Response.seeOther(URI.create(targetURL)).build();
   }
   
   /**

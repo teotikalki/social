@@ -28,7 +28,6 @@ import java.util.Set;
 public class ActiveIdentitiesData implements CacheData<Set<String>> {
   private final Set<String> activeUsers;
   
-
   public ActiveIdentitiesData(final Set<String> activeUsers) {
     this.activeUsers = activeUsers;
   }

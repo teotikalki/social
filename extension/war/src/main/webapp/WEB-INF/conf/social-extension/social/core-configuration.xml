@@ -43,11 +43,15 @@
     <init-params>
       <value-param>
         <name>pool-size</name>
-        <value>5</value>
+        <value>${exo.social.activity.pool-size:5}</value>
       </value-param>
       <value-param>
         <name>max-pool-size</name>
-        <value>5</value>
+        <value>${exo.social.activity.max-pool-size:5}</value>
+      </value-param>
+      <value-param>
+        <name>max-queue-size</name>
+        <value>${exo.social.activity.max-queue-size:1000}</value>
       </value-param>
       <value-param>
         <name>async-mode</name>
@@ -65,21 +69,28 @@
     <type>org.exoplatform.social.core.storage.streams.StreamConfig</type>
     <init-params>
       <value-param>
-        <name>connections-threshold-param</name>
-        <value>1000</value> <!-- connections threshold -->
-      </value-param>
-      <value-param>
-        <name>last-login-around-days</name>
-        <value>15</value> <!-- the last login around days of an user -->
-      </value-param>
-      <value-param>
-        <name>limit-per-loading-param</name>
-        <value>20</value><!-- batch limit to persist to storage when CRUD node -->
-      </value-param>
-      <value-param>
         <name>active-user-groups-param</name>
         <value>/platform/administrators</value><!-- /platform/administrators,/platform/users -->
       </value-param>
+      <value-param>
+        <name>connections-threshold-param</name>
+        <value>${exo.social.connections.threshold:1000}</value> <!-- connections threshold -->
+      </value-param>
+      <value-param>
+        <name>last-login-around-days</name>
+        <value>${exo.social.last.login.around.days:15}</value> <!-- the last login around days of an user -->
+      </value-param>
+      <value-param>
+        <name>limit-per-loading-param</name>
+        <value>${exo.social.connections.loading.limit.threshold:50}</value><!-- batch limit to persist to storage when CRUD node -->
+      </value-param>
+      <!-- /platform/administrators,/platform/users -->
+      <!--
+      <value-param>
+        <name>active-user-groups-param</name>
+        <value>/platform/administrators</value>
+      </value-param>
+      -->
     </init-params>
   </component>
   
@@ -727,14 +738,4 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
-   <external-component-plugins>
-    <target-component>org.exoplatform.services.listener.ListenerService</target-component>
-    <component-plugin>
-      <name>exo.core.security.ConversationRegistry.register</name>
-      <set-method>addListener</set-method>
-      <type>org.exoplatform.social.core.listeners.AsynchronousLoadActivitiesListener</type>
-      <description>loading activities into caching with asynchronous</description>      
-    </component-plugin>       
-  </external-component-plugins>    
 </configuration>

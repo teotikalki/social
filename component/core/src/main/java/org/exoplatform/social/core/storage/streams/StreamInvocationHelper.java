@@ -118,7 +118,7 @@ public class StreamInvocationHelper {
     
     return processCtx;
   }
-  
+  @Deprecated
   public static ProcessContext updateHidable(Identity owner, ActivityEntity entity, ExoSocialActivity activity) {
     //
     StreamProcessContext processCtx = StreamProcessContext.getIntance(StreamProcessContext.UPDATE_ACTIVITY_REF, ctx);
@@ -236,7 +236,6 @@ public class StreamInvocationHelper {
     
     try {
       if(ctx.isAsync()) {
-        beforeAsync();
         ctx.getServiceExecutor().async(StreamProcessorFactory.connectStream(), processCtx);
       } else {
         ctx.getServiceExecutor().execute(StreamProcessorFactory.connectStream(), processCtx);

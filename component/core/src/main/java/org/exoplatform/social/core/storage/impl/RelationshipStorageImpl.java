@@ -64,6 +64,7 @@ import org.exoplatform.social.core.storage.cache.CachedActivityStreamStorage;
 import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.query.JCRProperties;
 import org.exoplatform.social.core.storage.query.WhereExpression;
+import org.exoplatform.social.core.storage.streams.StreamHelper;
 import org.exoplatform.social.core.storage.streams.StreamInvocationHelper;
 
 /**
@@ -467,14 +468,14 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
         updateRelationshipStatistic(receiver, true);
         
         StreamInvocationHelper.connect(relationship.getSender(), relationship.getReceiver());
+        getSession().save();
+        //
+        StreamHelper.CACHED.clearConnection(sender.getId(), receiver.getId());
         
         break;
       
       // TODO : IGNORED
     }
-
-    //getSession().save();
-
     //
     LOG.debug(String.format(
         "Relationship from %s:%s to %s:%s saved (%s)",
@@ -522,8 +523,6 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
     }
     
     identityEntity.setProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM, String.valueOf(newValue));
-
-    
   }
 
   protected List<Relationship> _getSenderRelationships(
@@ -710,21 +709,21 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
       IdentityEntity from = toDeleteRelationship.getFrom();
       IdentityEntity to = toDeleteRelationship.getTo();
       
-      updateRelationshipStatistic(from, false);
-      updateRelationshipStatistic(to, false);
-
       _removeById(RelationshipEntity.class, symmetricalRelationship.getId());
       _removeById(RelationshipEntity.class, relationship.getId());
+      
+      //
+      updateRelationshipStatistic(from, false);
+      updateRelationshipStatistic(to, false);
       
       //getSession().save();
       StorageUtils.persist();
       
       //getCachedActivityStreamStorage().deleteConnect(relationship.getSender(), relationship.getReceiver());
       StreamInvocationHelper.deleteConnect(relationship.getSender(), relationship.getReceiver());
-      
+      //
+      StreamHelper.CACHED.clearConnection(from.getId(), to.getId());
       getCachedActivityStorage().clearCache();
-      
-      
 
       //
       LOG.debug(String.format(
@@ -1096,7 +1095,6 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
   public int getConnectionsCount(Identity identity) throws RelationshipStorageException {
 
     try {
-      // TODO : use property to improve the perfs
       IdentityEntity identityEntity = _findById(IdentityEntity.class, identity.getId());
       if (identityEntity.hasProperty(IdentityEntity.RELATIONSHIP_NUMBER_PARAM)) {
         String value = identityEntity.getProperties().get(IdentityEntity.RELATIONSHIP_NUMBER_PARAM);
@@ -1110,6 +1108,7 @@ public class RelationshipStorageImpl extends AbstractStorage implements Relation
       }
     }
     catch (NodeNotFoundException e) {
+      LOG.error(e.getMessage(), e);
       throw new RelationshipStorageException(RelationshipStorageException.Type.ILLEGAL_ARGUMENTS);
     }
   }

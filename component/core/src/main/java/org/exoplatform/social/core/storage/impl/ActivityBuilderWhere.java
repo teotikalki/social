@@ -679,6 +679,22 @@ public abstract class ActivityBuilderWhere implements BuilderWhereExpression<JCR
             where.equals(ActivityEntity.identity, currentIdentity.getId());
 
           }
+          
+          if (first == false) {
+            where.and();
+          }
+
+          where.equals(ActivityEntity.isComment, Boolean.FALSE);
+
+          //
+          where.and();
+          //
+          where.startGroup();
+          {
+            where.equals(HidableEntity.isHidden, Boolean.FALSE);
+            where.or().isNull(HidableEntity.isHidden);
+          }
+          where.endGroup();
 
           if (first == false) {
             where.and();
@@ -713,7 +729,7 @@ public abstract class ActivityBuilderWhere implements BuilderWhereExpression<JCR
             where.or();
             where.startGroup();
             where.equals(ActivityEntity.poster, poster.getId());
-            where.and().equals(ActivityEntity.isComment, true);
+            where.and().equals(ActivityEntity.isComment, Boolean.FALSE);
             where.endGroup();
           }
           where.endGroup();

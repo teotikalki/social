@@ -31,6 +31,7 @@ import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.social.core.storage.streams.StreamContext;
 import org.exoplatform.social.core.test.AbstractCoreTest;
 
 public class SocialUserProfileEventListenerImplTest extends AbstractCoreTest {
@@ -58,6 +59,8 @@ public class SocialUserProfileEventListenerImplTest extends AbstractCoreTest {
     tearDownIdentityList = new ArrayList<Identity>();
     tearDownIdentityList.add(paul);
     tearDownIdentityList.add(raul);
+    
+    StreamContext.instanceInContainer().switchSchedulerOnOff(false);
   }
   
   private void fakePlugins() throws Exception {
@@ -74,6 +77,7 @@ public class SocialUserProfileEventListenerImplTest extends AbstractCoreTest {
     for (Identity identity : tearDownIdentityList) {
       identityManager.deleteIdentity(identity);
     }
+    StreamContext.instanceInContainer().switchSchedulerOnOff(true);
     super.tearDown();
   }
   

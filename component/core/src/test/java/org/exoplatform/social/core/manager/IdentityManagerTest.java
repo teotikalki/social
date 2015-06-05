@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.betwixt.expression.StringExpression;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.organization.User;
@@ -584,7 +583,7 @@ public class IdentityManagerTest extends AbstractCoreTest {
       //
       identityManager.deleteIdentity(testIdentity);
       identityListAccess = identityManager.getIdentitiesByProfileFilter("organization", profileFilter, false);
-      assertEquals(5, identityListAccess.getSize());
+      assertEquals(6, identityListAccess.getSize());
     }
 
     //Test with excluded identity list

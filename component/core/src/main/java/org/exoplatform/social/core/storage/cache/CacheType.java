@@ -21,6 +21,7 @@ import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.social.core.storage.cache.loader.CacheLoader;
 import org.exoplatform.social.core.storage.cache.loader.ServiceContext;
+import org.exoplatform.social.core.storage.cache.model.data.AbstractStreamListData;
 import org.exoplatform.social.core.storage.cache.model.key.CacheKey;
 
 import java.io.Serializable;
@@ -50,11 +51,13 @@ public enum CacheType {
   ACTIVITY("ActivityCache"),
   ACTIVITIES_COUNT("ActivitiesCountCache"),
   ACTIVITIES("ActivitiesCache"),
+  STREAM("StreamCache"),
   
   //
   ACTIVITY_REF("ActivityRefCache"),
   ACTIVITIES_REF_COUNT("ActivitiesRefCountCache"),
   ACTIVITIES_REF("ActivitiesRefCache"),
+  
 
   //
   SPACE("SpaceCache"),
@@ -77,11 +80,14 @@ public enum CacheType {
     return service.getCacheInstance(name);
   }
 
-  public <K extends CacheKey, V extends Serializable> FutureExoCache<K, V, ServiceContext<V>> createFutureCache(
-      ExoCache<K, V> cache) {
+  public <K extends CacheKey, V extends Serializable> FutureExoCache<K, V, ServiceContext<V>> createFutureCache(ExoCache<K, V> cache) {
 
     return new FutureExoCache<K, V, ServiceContext<V>>(new CacheLoader<K, V>(), cache);
+  }
+  
+  public <T extends Serializable, K extends CacheKey, V extends AbstractStreamListData<K, T>> FutureStreamExoCache<T, K, V, ServiceContext<V>> createFutureStreamCache(ExoCache<K, V> cache) {
 
+    return new FutureStreamExoCache<T, K, V, ServiceContext<V>>(new CacheLoader<K, V>(), cache);
   }
 
 }

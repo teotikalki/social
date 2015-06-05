@@ -274,7 +274,6 @@ public interface IdentityStorage {
    */
   public String getProfileActivityId(Profile profile, AttachedActivityType type);
   
-
   /**
    * Gets the active user list base on the given ActiveIdentityFilter.
    * 1. N days who last login less than N days.
@@ -286,5 +285,11 @@ public interface IdentityStorage {
    */
   public Set<String> getActiveUsers(ActiveIdentityFilter filter);
   
-  
+  /**
+   *  Gets the active user list who has the connected given identity.
+   * 
+   * @param identity
+   * @return the list of connections
+   */
+  public List<Identity> getActiveConnections(Identity identity);
 }
