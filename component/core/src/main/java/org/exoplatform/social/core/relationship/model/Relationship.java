@@ -47,7 +47,7 @@ public class Relationship {
     /** The CONFIRMED. */
     CONFIRMED,
     /** The IGNORED. */
-    IGNORED,
+    IGNORED, INCOMING, OUTGOING
   }
 
   /**
