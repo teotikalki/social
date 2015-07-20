@@ -27,13 +27,13 @@ import org.exoplatform.social.core.storage.cache.model.key.ActivityType;
  *          exo@exoplatform.com
  * Nov 6, 2014  
  */
-public class MySpacesStreamCountCacheSelector extends ScopeCacheSelector<ActivityCountKey, IntegerData> {
+public class StreamCountCacheSelector extends ScopeCacheSelector<ActivityCountKey, IntegerData> {
 
   private String streamOwnerId;
   private ActivityType type;
   
 
-  public MySpacesStreamCountCacheSelector(final String streamOwnerId, final ActivityType type) {
+  public StreamCountCacheSelector(final String streamOwnerId, final ActivityType type) {
     if (streamOwnerId == null) {
       throw new NullPointerException("streamOwnerId is not null.");
     }

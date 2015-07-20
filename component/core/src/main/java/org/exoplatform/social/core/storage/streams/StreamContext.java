@@ -29,7 +29,8 @@ import org.exoplatform.social.core.storage.cache.model.key.ActivityCountKey;
 import org.exoplatform.social.core.storage.cache.model.key.ActivityType;
 import org.exoplatform.social.core.storage.cache.model.key.IdentityKey;
 import org.exoplatform.social.core.storage.cache.model.key.StreamKey;
-import org.exoplatform.social.core.storage.cache.selector.MySpacesStreamCountCacheSelector;
+import org.exoplatform.social.core.storage.cache.selector.ConnectionStreamCountCacheSelector;
+import org.exoplatform.social.core.storage.cache.selector.StreamCountCacheSelector;
 import org.exoplatform.social.core.storage.streams.event.DataChangeMerger;
 import org.exoplatform.social.core.storage.streams.persister.ActivityPersister;
 import org.exoplatform.social.core.storage.streams.persister.Persister;
@@ -242,11 +243,27 @@ public class StreamContext implements Startable {
    * Clear my spaces stream cache count
    * @param streamOwnerId
    */
-  public static void clearMySpacesCountCache(final String streamOwnerId, final ActivityType type) {
+  public static void clearStreamCountCache(final String streamOwnerId, final ActivityType type) {
     ExoCache<ActivityCountKey, IntegerData> countCache = getActivitiesCountCache();
     if (countCache == null) return;
     try {
-      countCache.select(new MySpacesStreamCountCacheSelector(streamOwnerId, type));
+      countCache.select(new StreamCountCacheSelector(streamOwnerId, type));
+    }
+    catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+    
+  }
+  
+  /**
+   * Clear connection stream cache count
+   * @param streamOwnerId
+   */
+  public static void clearConnectionCountCache(final String streamOwnerId) {
+    ExoCache<ActivityCountKey, IntegerData> countCache = getActivitiesCountCache();
+    if (countCache == null) return;
+    try {
+      countCache.select(new ConnectionStreamCountCacheSelector(streamOwnerId));
     }
     catch (Exception e) {
       LOG.error(e.getMessage(), e);

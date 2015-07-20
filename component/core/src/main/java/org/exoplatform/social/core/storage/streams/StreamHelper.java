@@ -572,8 +572,12 @@ public class StreamHelper {
      * @param streamOwner
      */
     public static void clearConnection(String identityId1, String identityId2) {
+      StreamContext.clearConnectionCountCache(identityId1);
+      StreamContext.clearConnectionCountCache(identityId2);
+      
       clearStream(identityId1, ActivityType.FEED);
       clearStream(identityId1, ActivityType.CONNECTION);
+      
       //clearStream(identityId1, ActivityType.VIEWER);
       clearStream(identityId2, ActivityType.FEED);
       clearStream(identityId2, ActivityType.CONNECTION);
@@ -586,8 +590,11 @@ public class StreamHelper {
      */
     public static void clearPoster(String posterId) {
       clearStream(posterId, ActivityType.FEED);
+      clearStreamCountCache(posterId, ActivityType.FEED);
       clearStream(posterId, ActivityType.USER);
+      clearStreamCountCache(posterId, ActivityType.USER);
       clearStream(posterId, ActivityType.VIEWER);
+      clearStreamCountCache(posterId, ActivityType.VIEWER);
     }
     
     /**
@@ -595,9 +602,7 @@ public class StreamHelper {
      * @param posterId
      */
     public static void clearPosterConnections(String posterId) {
-      clearStream(posterId, ActivityType.FEED);
-      clearStream(posterId, ActivityType.USER);
-      clearStream(posterId, ActivityType.VIEWER);
+      clearPoster(posterId);
     }
     
     /**
@@ -606,20 +611,21 @@ public class StreamHelper {
      */
     public static void clearSpace(String removedSpaceMemberId) {
       clearStream(removedSpaceMemberId, ActivityType.FEED);
+      clearStreamCountCache(removedSpaceMemberId, ActivityType.FEED);
       clearStream(removedSpaceMemberId, ActivityType.SPACE);
+      clearStreamCountCache(removedSpaceMemberId, ActivityType.SPACE);
     }
     
     private static void clearStream(String identityId, ActivityType type) {
       StreamKey newKey = StreamKey.init(identityId).key(type);
-      
       ExoCache<StreamKey, ListActivityStreamData> streamCache = StreamContext.getStreamCache();
-      
       ListActivityStreamData data = streamCache.get(newKey);
       if (data == null) return;
-      
       data.clear();
-      
-      StreamContext.clearMySpacesCountCache(identityId, type);
+    }
+    
+    private static void clearStreamCountCache(String identityId, ActivityType type) {
+      StreamContext.clearStreamCountCache(identityId, type);
     }
   }
 }
