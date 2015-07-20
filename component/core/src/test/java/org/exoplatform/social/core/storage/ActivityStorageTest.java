@@ -350,7 +350,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#saveActivity(org.exoplatform.social.core.identity.model.Identity, org.exoplatform.social.core.activity.model.ExoSocialActivity)}
    */
-  @MaxQueryNumber(290)
+  @MaxQueryNumber(366)
   public void testSaveActivity() throws ActivityStorageException {
     final String activityTitle = "activity Title";
     //test wrong
@@ -385,7 +385,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#deleteActivity(String)}
    */
-  @MaxQueryNumber(770)
+  @MaxQueryNumber(810)
   public void testDeleteActivity() throws ActivityStorageException {
     final String activityTitle = "activity Title";
 
@@ -419,7 +419,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#saveComment(org.exoplatform.social.core.activity.model.ExoSocialActivity , org.exoplatform.social.core.activity.model.ExoSocialActivity)}
    */
-  @MaxQueryNumber(264)
+  @MaxQueryNumber(366)
   public void testSaveComment() throws ActivityStorageException {
 
     //comment on his own activity
@@ -456,7 +456,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#deleteComment(String, String)}
    */
 
-  @MaxQueryNumber(350)
+  @MaxQueryNumber(462)
   public void testDeleteComment() throws ActivityStorageException {
 
     ExoSocialActivity activity = new ExoSocialActivityImpl();
@@ -479,7 +479,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#getActivity(String)}
    */
-  @MaxQueryNumber(106)
+  @MaxQueryNumber(159)
   public void testGetActivity() throws ActivityStorageException {
     final String activityTitle = "activity title";
     ExoSocialActivity activity = new ExoSocialActivityImpl();
@@ -514,7 +514,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * and {@link org.exoplatform.social.core.storage.ActivityStorage#getUserActivities(org.exoplatform.social.core.identity.model.Identity)}
    *
    */
-  @MaxQueryNumber(6998)
+  @MaxQueryNumber(12675)
   public void testGetActivities() throws ActivityStorageException {
     checkCleanData();
     final int totalNumber = 20;
@@ -567,7 +567,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * Test {@link org.exoplatform.social.core.storage.ActivityStorage#getNumberOfUserActivities(org.exoplatform.social.core.identity.model.Identity)}
    */
 
-  @MaxQueryNumber(10726)
+  @MaxQueryNumber(18207)
   public void testGetActivitiesCount() throws ActivityStorageException {
 
     assertEquals(0, activityStorage.getNumberOfUserActivities(johnIdentity));
@@ -606,7 +606,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfNewerOnUserActivities(Identity, ExoSocialActivity)}.
    */
-  @MaxQueryNumber(418)
+  @MaxQueryNumber(615)
   public void testGetNumberOfNewerOnUserActivities() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -624,7 +624,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnUserActivities(Identity, ExoSocialActivity, int)}.
    */
-  @MaxQueryNumber(604)
+  @MaxQueryNumber(912)
   public void testGetNewerOnUserActivities() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -639,7 +639,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfOlderOnUserActivities(Identity, ExoSocialActivity)}.
    */
-  @MaxQueryNumber(770)
+  @MaxQueryNumber(774)
   public void testGetNumberOfOlderOnUserActivities() {
     checkCleanData();
     createActivities(3, demoIdentity);
@@ -655,7 +655,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnUserActivities(Identity, ExoSocialActivity, int)}.
    */
-  @MaxQueryNumber(604)
+  @MaxQueryNumber(912)
   public void testGetOlderOnUserActivities() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -672,7 +672,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getActivityFeed(Identity, int, int)}.
    */
-  @MaxQueryNumber(1410)
+  @MaxQueryNumber(1608)
   public void testGetActivityFeed() throws Exception {
     createActivities(1, demoIdentity);
     createActivities(1, maryIdentity);
@@ -695,36 +695,30 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfActivitesOnActivityFeed(Identity)}.
    */
-//  @MaxQueryNumber(862)
-//  public void testGetNumberOfActivitesOnActivityFeed() throws Exception {
-//    int demoActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
-//    assertEquals(0, demoActivityCount);
-//    
-//    int maryActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(maryIdentity);
-//    assertEquals(0, demoActivityCount);
-//    
-//    createActivities(3, demoIdentity);
-//    createActivities(2, maryIdentity);
-//    createActivities(1, johnIdentity);
-//    demoActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
-//    assertEquals("demoActivityCount must be 3", 3, demoActivityCount);
-//    maryActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(maryIdentity);
-//    assertEquals("maryActivityCount must be 2", 2, maryActivityCount);
-//    Relationship demoMaryConnection = relationshipManager.invite(demoIdentity, maryIdentity);
-//    int demoActivityCount2 = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
-//    assertEquals("demoActivityCount2 must be 3", 3, demoActivityCount2);
-//    relationshipManager.confirm(demoMaryConnection);
-//    
-//    int demoActivityCount3 = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
-//    assertEquals("demoActivityCount3 must be 5", 5, demoActivityCount3);
-//    int maryActivityCount2 = activityStorage.getNumberOfActivitesOnActivityFeed(maryIdentity);
-//    assertEquals("maryActivityCount2 must be 5", 5, maryActivityCount2);
-//  }
-  
+  @MaxQueryNumber(1293)
+  public void testGetNumberOfActivitesOnActivityFeed() throws Exception {
+    createActivities(3, demoIdentity);
+    createActivities(2, maryIdentity);
+    createActivities(1, johnIdentity);
+    int demoActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
+    assertEquals("demoActivityCount must be 3", 3, demoActivityCount);
+    int maryActivityCount = activityStorage.getNumberOfActivitesOnActivityFeed(maryIdentity);
+    assertEquals("maryActivityCount must be 2", 2, maryActivityCount);
+    Relationship demoMaryConnection = relationshipManager.invite(demoIdentity, maryIdentity);
+    int demoActivityCount2 = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
+    assertEquals("demoActivityCount2 must be 3", 3, demoActivityCount2);
+    relationshipManager.confirm(demoMaryConnection);
+    
+    int demoActivityCount3 = activityStorage.getNumberOfActivitesOnActivityFeed(demoIdentity);
+    assertEquals("demoActivityCount3 must be 5", 5, demoActivityCount3);
+    int maryActivityCount2 = activityStorage.getNumberOfActivitesOnActivityFeed(maryIdentity);
+    assertEquals("maryActivityCount2 must be 5", 5, maryActivityCount2);
+  }
+
   /**
    * Tests {@link ActivityStorage#getNumberOfActivitesOnActivityFeed(Identity, ExoSocialActivity)}.
    */
-  @MaxQueryNumber(1848)
+  @MaxQueryNumber(1908)
   public void testGetNumberOfNewerOnActivityFeed() throws Exception {
     createActivities(3, demoIdentity);
     createActivities(2, maryIdentity);
@@ -749,7 +743,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnActivityFeed(Identity, ExoSocialActivity, int)}.
    */
-  @MaxQueryNumber(1410)
+  @MaxQueryNumber(1701)
   public void testGetNewerOnActivityFeed() {
     createActivities(3, demoIdentity);
     ExoSocialActivity demoBaseActivity = activityStorage.getActivityFeed(demoIdentity, 0, 10).get(0);
@@ -767,7 +761,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfOlderOnActivityFeed(Identity, ExoSocialActivity)}.
    */
-  @MaxQueryNumber(868)
+  @MaxQueryNumber(1299)
   public void testGetNumberOfOlderOnActivityFeed() throws Exception {
     createActivities(3, demoIdentity);
     createActivities(2, maryIdentity);
@@ -790,7 +784,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnActivityFeed(Identity, ExoSocialActivity, int)}.
    */
-  @MaxQueryNumber(300)
+  @MaxQueryNumber(450)
   public void testGetOlderOnActivityFeed() {
     createActivities(3, demoIdentity);
     ExoSocialActivity demoBaseActivity = activityStorage.getActivityFeed(demoIdentity, 0, 10).get(2);
@@ -800,7 +794,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#getActivitiesOfConnections(Identity, int, int)}
    */
-  @MaxQueryNumber(2172)
+  @MaxQueryNumber(3195)
   public void testGetActivitiesOfConnections() throws Exception {
     List<Relationship> relationships = new ArrayList<Relationship> ();
     
@@ -846,7 +840,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#getActivitiesByPoster(Identity, int, int)}
    */
-  @MaxQueryNumber(940)
+  @MaxQueryNumber(1152)
   public void testGetActivitiesByPoster() throws Exception {
     RelationshipManager relationshipManager = this.getRelationshipManager();
     
@@ -897,7 +891,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#testGetActivitiesRelationshipByFeed(Identity, int, int)}
    */
-  @MaxQueryNumber(726)
+  @MaxQueryNumber(1077)
   public void testGetActivitiesRelationshipByFeed() throws Exception {
     RelationshipManager relationshipManager = this.getRelationshipManager();
     
@@ -929,7 +923,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     assertEquals(1, activities.size());
     
     activities = activityStorage.getActivityFeed(maryIdentity, 0, 10);
-    assertEquals(1, activities.size());
+    assertEquals(0, activities.size());
     
     //
     tearDownActivityList.add(demoActivity);
@@ -944,7 +938,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.2
    */
-  @MaxQueryNumber(708)
+  @MaxQueryNumber(1062)
   public void testGetActivitiesOfConnectionsWithPosterIdentity() throws Exception {
     RelationshipManager relationshipManager = this.getRelationshipManager();
     List<Relationship> relationships = new ArrayList<Relationship>();
@@ -972,8 +966,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     
     List<ExoSocialActivity> johnConnectionActivities = activityStorage.getActivitiesOfConnections(johnIdentity, 0, 10);
     assertNotNull("johnConnectionActivities must not be null", johnConnectionActivities);
-
-    assertEquals("johnConnectionActivities.size() must return: 1", 1, johnConnectionActivities.size());
+    assertEquals("johnConnectionActivities.size() must return: 0", 0, johnConnectionActivities.size());
     
     List<ExoSocialActivity> demoConnectionActivities = activityStorage.getActivitiesOfConnections(demoIdentity, 0, 10);
     assertNotNull("demoConnectionActivities must not be null", demoConnectionActivities);
@@ -981,9 +974,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
     
     List<ExoSocialActivity> maryConnectionActivities = activityStorage.getActivitiesOfConnections(maryIdentity, 0, 10);
     assertNotNull("maryConnectionActivities must not be null", maryConnectionActivities);
-
-    assertEquals("maryConnectionActivities.size() must return: 1", 1, maryConnectionActivities.size());
-
+    assertEquals("maryConnectionActivities.size() must return: 0", 0, maryConnectionActivities.size());
     
     for (Relationship rel : relationships) {
       relationshipManager.delete(rel);
@@ -995,7 +986,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(2172)
+  @MaxQueryNumber(3189)
   public void testGetNumberOfActivitiesOfConnections() throws Exception {
     List<Relationship> relationships = new ArrayList<Relationship> ();
     
@@ -1040,7 +1031,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(2172)
+  @MaxQueryNumber(2985)
   public void testGetNumberOfNewerOnActivitiesOfConnections() {
     List<Relationship> relationships = new ArrayList<Relationship> ();
     
@@ -1094,7 +1085,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(2202)
+  @MaxQueryNumber(3303)
   public void testGetNewerOnActivitiesOfConnections() {
     List<Relationship> relationships = new ArrayList<Relationship> ();
     this.createActivities(3, maryIdentity);
@@ -1280,7 +1271,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3382)
+  @MaxQueryNumber(5021)
   public void testGetUserSpacesActivities() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1366,56 +1357,56 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  //@MaxQueryNumber(3300)
-//  public void testGetNumberOfUserSpacesActivities() throws Exception {
-//    SpaceService spaceService = this.getSpaceService();
-//    Space space = this.getSpaceInstance(spaceService, 0);
-//    tearDownSpaceList.add(space);
-//    Identity spaceIdentity = this.identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space.getPrettyName(), false);
-//    
-//    int totalNumber = 10;
-//    
-//    //demo posts activities to space
-//    for (int i = 0; i < totalNumber; i ++) {
-//      ExoSocialActivity activity = new ExoSocialActivityImpl();
-//      activity.setTitle("activity title " + i);
-//      activity.setUserId(demoIdentity.getId());
-//      activityStorage.saveActivity(spaceIdentity, activity);
-//      tearDownActivityList.add(activity);
-//    }
-//    
-//    
-//    
-//    space = spaceService.getSpaceByDisplayName(space.getDisplayName());
-//    assertNotNull("space must not be null", space);
-//    assertEquals("space.getDisplayName() must return: my space 0", "my space 0", space.getDisplayName());
-//    assertEquals("space.getDescription() must return: add new space 0", "add new space 0", space.getDescription());
-//    
-//    int number = activityStorage.getNumberOfUserSpacesActivities(demoIdentity);
-//    assertEquals("number must be: 10", 10, number);
-//    
-//    Space space2 = this.getSpaceInstance(spaceService, 1);
-//    tearDownSpaceList.add(space2);
-//    Identity spaceIdentity2 = this.identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space2.getPrettyName(), false);
-//    
-//    //demo posts activities to space2
-//    for (int i = 0; i < totalNumber; i ++) {
-//      ExoSocialActivity activity = new ExoSocialActivityImpl();
-//      activity.setTitle("activity title " + i);
-//      activity.setUserId(demoIdentity.getId());
-//      activityStorage.saveActivity(spaceIdentity2, activity);
-//      tearDownActivityList.add(activity);
-//    }
-//    
-//    space2 = spaceService.getSpaceByDisplayName(space2.getDisplayName());
-//    assertNotNull("space2 must not be null", space2);
-//    assertEquals("space2.getDisplayName() must return: my space 1", "my space 1", space2.getDisplayName());
-//    assertEquals("space2.getDescription() must return: add new space 1", "add new space 1", space2.getDescription());
-//    
-//    number = activityStorage.getNumberOfUserSpacesActivities(demoIdentity);
-//    assertEquals("number must be: 20", 20, number);
-//    
-//  }
+  @MaxQueryNumber(5012)
+  public void testGetNumberOfUserSpacesActivities() throws Exception {
+    SpaceService spaceService = this.getSpaceService();
+    Space space = this.getSpaceInstance(spaceService, 0);
+    tearDownSpaceList.add(space);
+    Identity spaceIdentity = this.identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space.getPrettyName(), false);
+    
+    int totalNumber = 10;
+    
+    //demo posts activities to space
+    for (int i = 0; i < totalNumber; i ++) {
+      ExoSocialActivity activity = new ExoSocialActivityImpl();
+      activity.setTitle("activity title " + i);
+      activity.setUserId(demoIdentity.getId());
+      activityStorage.saveActivity(spaceIdentity, activity);
+      tearDownActivityList.add(activity);
+    }
+    
+    
+    
+    space = spaceService.getSpaceByDisplayName(space.getDisplayName());
+    assertNotNull("space must not be null", space);
+    assertEquals("space.getDisplayName() must return: my space 0", "my space 0", space.getDisplayName());
+    assertEquals("space.getDescription() must return: add new space 0", "add new space 0", space.getDescription());
+    
+    int number = activityStorage.getNumberOfUserSpacesActivities(demoIdentity);
+    assertEquals("number must be: 10", 10, number);
+    
+    Space space2 = this.getSpaceInstance(spaceService, 1);
+    tearDownSpaceList.add(space2);
+    Identity spaceIdentity2 = this.identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space2.getPrettyName(), false);
+    
+    //demo posts activities to space2
+    for (int i = 0; i < totalNumber; i ++) {
+      ExoSocialActivity activity = new ExoSocialActivityImpl();
+      activity.setTitle("activity title " + i);
+      activity.setUserId(demoIdentity.getId());
+      activityStorage.saveActivity(spaceIdentity2, activity);
+      tearDownActivityList.add(activity);
+    }
+    
+    space2 = spaceService.getSpaceByDisplayName(space2.getDisplayName());
+    assertNotNull("space2 must not be null", space2);
+    assertEquals("space2.getDisplayName() must return: my space 1", "my space 1", space2.getDisplayName());
+    assertEquals("space2.getDescription() must return: add new space 1", "add new space 1", space2.getDescription());
+    
+    number = activityStorage.getNumberOfUserSpacesActivities(demoIdentity);
+    assertEquals("number must be: 20", 20, number);
+    
+  }
 
   /**
    * Test {@link ActivityStorage#getNumberOfNewerOnUserSpacesActivities(Identity, ExoSocialActivity)}
@@ -1423,7 +1414,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3230)
+  @MaxQueryNumber(5012)
   public void testGetNumberOfNewerOnUserSpacesActivities() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1483,7 +1474,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3238)
+  @MaxQueryNumber(5012)
   public void testGetNewerOnUserSpacesActivities() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1542,7 +1533,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNumberOfNewerOnUserActivities(Identity, Long)}
    */
-  @MaxQueryNumber(760)
+  @MaxQueryNumber(1155)
   public void testGetNumberOfNewerOnUserActivitiesByTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -1571,7 +1562,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(1848)
+  @MaxQueryNumber(1995)
   public void testGetNumberOfNewerOnActivityFeedByTimestamp() {
     createActivities(3, demoIdentity);
     Long sinceTime = activityStorage.getActivityFeed(demoIdentity, 0, 10).get(0).getPostedTime();
@@ -1603,7 +1594,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.12
    */
-  @MaxQueryNumber(2372)
+  @MaxQueryNumber(3558)
   public void testGetNumberOfNewerOnActivitiesOfConnectionsByTimestamp() throws Exception {
     List<Relationship> relationships = new ArrayList<Relationship>();
     this.createActivities(3, maryIdentity);
@@ -1667,7 +1658,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.12
    */
-  @MaxQueryNumber(1619)
+  @MaxQueryNumber(2503)
   public void testGetNumberOfNewerOnUserSpacesActivitiesByTimestamp() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1708,7 +1699,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3230)
+  @MaxQueryNumber(5012)
   public void testGetNumberOfOlderOnUserSpacesActivities() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1771,7 +1762,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * @throws Exception
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3230)
+  @MaxQueryNumber(5012)
   public void testGetOlderOnUserSpacesActivities() throws Exception {
     SpaceService spaceService = this.getSpaceService();
     Space space = this.getSpaceInstance(spaceService, 0);
@@ -1835,7 +1826,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(15380)
+  @MaxQueryNumber(23019)
   public void testGetComments() {
     int totalNumber = 40;
     String activityTitle = "activity title";
@@ -1864,7 +1855,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(15380)
+  @MaxQueryNumber(23019)
   public void testGetNumberOfComments() {
     int totalNumber = 40;
     String activityTitle = "activity title";
@@ -1896,7 +1887,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(9260)
+  @MaxQueryNumber(13707)
   public void testGetNumberOfNewerComments() {
     int totalNumber = 10;
     String activityTitle = "activity title";
@@ -1946,7 +1937,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(9260)
+  @MaxQueryNumber(13707)
   public void testGetNewerComments() {
     int totalNumber = 10;
     String activityTitle = "activity title";
@@ -1999,7 +1990,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3816)
+  @MaxQueryNumber(5559)
   public void testGetNumberOfOlderComments() {
     int totalNumber = 10;
     String activityTitle = "activity title";
@@ -2043,7 +2034,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 1.2.0-Beta3
    */
-  @MaxQueryNumber(3816)
+  @MaxQueryNumber(5559)
   public void testGetOlderComments() {
     int totalNumber = 10;
     String activityTitle = "activity title";
@@ -2090,7 +2081,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws ActivityStorageException
    */
-  @MaxQueryNumber(122)
+  @MaxQueryNumber(177)
   public void testGetStreamInfo() throws ActivityStorageException {
     checkCleanData();
     // root save on root's stream
@@ -2129,7 +2120,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws ActivityStorageException
    */
-  @MaxQueryNumber(900)
+  @MaxQueryNumber(1371)
   public void testGetActivitiesByPagingWithoutCreatingComments() throws ActivityStorageException {
     checkCleanData();
     final int totalActivityCount = 9;
@@ -2152,7 +2143,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws ActivityStorageException
    */
-  @MaxQueryNumber(540)
+  @MaxQueryNumber(663)
   public void testGetActivitiesByPagingWithCreatingComments() throws ActivityStorageException {
     checkCleanData();
 
@@ -2188,7 +2179,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws ActivityStorageException
    */
-  @MaxQueryNumber(124)
+  @MaxQueryNumber(183)
   public void testTemplateParams() throws ActivityStorageException {
     checkCleanData();
     final String URL_PARAMS = "URL";
@@ -2216,7 +2207,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @since 4.0
    */
-  @MaxQueryNumber(2010)
+  @MaxQueryNumber(2904)
   public void testGetHiddenComments() {
     int totalNumber = 5;
     String activityTitle = "activity title";
@@ -2254,7 +2245,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnUserActivities(Identity, Long, int)}
    */
-  @MaxQueryNumber(760)
+  @MaxQueryNumber(1155)
   public void testGetNewerOnUserActivitiesWithTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -2283,7 +2274,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnUserActivities(Identity, Long, int)}
    */
-  @MaxQueryNumber(760)
+  @MaxQueryNumber(1155)
   public void testGetOlderOnUserActivitiesWithTimestamp() {
     checkCleanData();
     createActivities(2, demoIdentity);
@@ -2311,7 +2302,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getNewerOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(1344)
+  @MaxQueryNumber(2025)
   public void testGetNewerOnActivityFeedWithTimestamp() throws Exception {
     checkCleanData();
     createActivities(3, demoIdentity);
@@ -2341,7 +2332,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Tests {@link ActivityStorage#getOlderOnActivityFeed(Identity, Long, int)}.
    */
-  @MaxQueryNumber(780)
+  @MaxQueryNumber(1173)
   public void testGetOlderOnActivityFeedWithTimestamp() throws Exception {
     checkCleanData();
     createActivities(5, demoIdentity);
@@ -2372,7 +2363,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * Test
    * {@link ActivityStorage#getNewerOnActivitiesOfConnections(Identity, Long, int)}
    */
-  @MaxQueryNumber(2384)
+  @MaxQueryNumber(3558)
   public void testGetNewerOnActivitiesOfConnectionsWithTimestamp() throws Exception {
     checkCleanData();
     List<Relationship> relationships = new ArrayList<Relationship>();
@@ -2526,7 +2517,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws Exception
    */
-  @MaxQueryNumber(3530)
+  @MaxQueryNumber(5291)
   public void testGetNewerOnUserSpacesActivitiesWithTimestamp() throws Exception {
     checkCleanData();
     SpaceService spaceService = this.getSpaceService();
@@ -2600,7 +2591,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
    * 
    * @throws Exception
    */
-  @MaxQueryNumber(3432)
+  @MaxQueryNumber(5285)
   public void testGetOlderOnUserSpacesActivitiesWithTimestamp() throws Exception {
     checkCleanData();
     SpaceService spaceService = this.getSpaceService();
@@ -2679,7 +2670,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#getNewerComments(ExoSocialActivity, Long, int)}
    */
-  @MaxQueryNumber(9260)
+  @MaxQueryNumber(13707)
   public void testGetNewerCommentsWithTimestamp() throws Exception {
     checkCleanData();
     int totalNumber = 10;
@@ -2730,7 +2721,7 @@ public class ActivityStorageTest extends AbstractCoreTest {
   /**
    * Test {@link ActivityStorage#getOlderComments(ExoSocialActivity, Long, int)}
    */
-  @MaxQueryNumber(3834)
+  @MaxQueryNumber(5565)
   public void testGetOlderCommentsWithTimestamp() throws Exception {
     checkCleanData();
     int totalNumber = 10;

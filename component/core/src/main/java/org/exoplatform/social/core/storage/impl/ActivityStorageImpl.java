@@ -1165,7 +1165,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       builder.orderBy(ActivityEntity.postedTime.getName(), Ordering.DESC);
     }
 
-    return builder.get(false);
+    return builder.get();
   }
   
   /**
@@ -1365,73 +1365,9 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     List<ExoSocialActivity> got = streamStorage.getFeed(ownerIdentity, offset, limit);
     got = buildList(activities, got, limit);
     
-    if (got.size() == limit) {
-      return got;
-    }
-
-    int remaind = limit - got.size();
-    if (remaind > 0) {
-      int newOffset = got.size() + offset;
-      List<ExoSocialActivity> origin = getActivityFeedForUpgrade(ownerIdentity, newOffset, limit);
-      List<ExoSocialActivity> migrateList = new LinkedList<ExoSocialActivity>();
-
-      int i = remaind;
-      // fill to enough limit
-      for (ExoSocialActivity activity : origin) {
-        if (got.contains(activity) == false) {
-          got.add(activity);
-          migrateList.add(activity);
-          if (--i == 0) {
-            break;
-          }
-        }
-
-      }
-
-      if (migrateList.size() > 0) {
-        StreamInvocationHelper.createFeedActivityRef(ownerIdentity, migrateList);
-      }
-
-    }
-
-    return got;
+    return StorageUtils.sortActivitiesByTime(got, limit);
   }
   
-  private List<ExoSocialActivity> getActivityFeedForActiveUser(Identity ownerIdentity, int offset, int limit) {
-    List<ExoSocialActivity> got = streamStorage.getFeed(ownerIdentity, offset, limit);
-
-    if (got.size() == limit) {
-      return got;
-    }
-
-    int remaind = limit - got.size();
-    if (remaind > 0) {
-      int newOffset = got.size() + offset;
-      List<ExoSocialActivity> origin = getActivityFeedForUpgrade(ownerIdentity, newOffset, limit);
-      List<ExoSocialActivity> migrateList = new LinkedList<ExoSocialActivity>();
-
-      int i = remaind;
-      // fill to enough limit
-      for (ExoSocialActivity activity : origin) {
-        if (got.contains(activity) == false) {
-          got.add(activity);
-          migrateList.add(activity);
-          if (--i == 0) {
-            break;
-          }
-        }
-
-      }
-
-      if (migrateList.size() > 0) {
-        StreamInvocationHelper.createFeedActivityRef(ownerIdentity, migrateList);
-      }
-
-    }
-
-    return got;
-  }
-
   /**
    * {@inheritDoc}
    */
@@ -1599,56 +1535,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     List<ExoSocialActivity> got = streamStorage.getConnections(ownerIdentity, offset, limit);
     got = buildList(activities, got, limit);
     //
-    if (got.size() == limit) {
-      return got;
-    }
-    
-    int remaind = limit - got.size();
-    if (remaind > 0) {
-      int newOffset = got.size() + offset;
-      List<ExoSocialActivity> origin = getActivitiesOfConnectionsForUpgrade(ownerIdentity, newOffset, limit);
-      List<ExoSocialActivity> migrateList = new LinkedList<ExoSocialActivity>();
-
-      int i = remaind;
-      // fill to enough limit
-      for (ExoSocialActivity activity : origin) {
-        //SOC-4525 : exclude all space activities that owner is not member
-        if (SpaceIdentityProvider.NAME.equals(activity.getActivityStream().getType().toString())) {
-          Space space = spaceStorage.getSpaceByPrettyName(activity.getStreamOwner());
-          if(null == space){
-            IdentityEntity spaceIdentity;
-            try {
-              spaceIdentity = _findById(ActivityEntity.class, activity.getId()).getIdentity();
-              space = spaceStorage.getSpaceByPrettyName(spaceIdentity.getName());
-            } catch (NodeNotFoundException e) {
-              LOG.debug(e);
-            }
-            if(space!=null){
-              LOG.info("SPACE was renamed before: " + space.getPrettyName());
-            }
-          }
-          if (space != null && ! ArrayUtils.contains(space.getMembers(), ownerIdentity.getRemoteId())) {
-            continue;
-          }
-        }
-        //
-        if (got.contains(activity) == false) {
-          got.add(activity);
-          migrateList.add(activity);
-          if (--i == 0) {
-            break;
-          }
-        }
-
-      }
-
-      if (migrateList.size() > 0) {
-        StreamInvocationHelper.createConnectionsActivityRef(ownerIdentity, migrateList);
-      }
-
-    }
-
-    return got;
+    return StorageUtils.sortActivitiesByTime(got, limit);
   }
 
   /**
@@ -2123,7 +2010,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
     builder.where(whereBuilder.build(filter));
     whereBuilder.orderBy(builder, filter);
 
-    return builder.get(false);
+    return builder.get();
   }
   
   

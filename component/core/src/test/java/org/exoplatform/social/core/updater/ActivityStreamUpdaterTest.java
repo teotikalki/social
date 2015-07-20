@@ -142,7 +142,7 @@ public class ActivityStreamUpdaterTest extends AbstractCoreTest {
     
     ValueParam param = new ValueParam();
     param.setName("limit");
-    param.setValue("20");
+    param.setValue("100");
     InitParams params = new InitParams();
     params.addParameter(param);
     
@@ -155,9 +155,9 @@ public class ActivityStreamUpdaterTest extends AbstractCoreTest {
     begin();
     
     assertEquals(20, streamStorage.getFeed(rootIdentity, 0, 20).size());
-    assertEquals(20, streamStorage.getNumberOfFeed(demoIdentity));
-    assertEquals(20, streamStorage.getNumberOfFeed(maryIdentity));
-    assertEquals(20, streamStorage.getNumberOfFeed(johnIdentity));
+    assertEquals(50, streamStorage.getNumberOfFeed(demoIdentity));
+    assertEquals(50, streamStorage.getNumberOfFeed(maryIdentity));
+    assertEquals(50, streamStorage.getNumberOfFeed(johnIdentity));
     
     List<ExoSocialActivity> got = activityStorage.getActivityFeed(rootIdentity, 0, 50);
     assertEquals(50, got.size());

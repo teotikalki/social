@@ -1216,6 +1216,9 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
     boolean hideValue = getHidableMixinValue(activityEntity, HidableEntity.class, true);
     if (context.getAdded() != null) {
       for (Identity identity : context.getAdded()) {
+        if (!identity.isEnable()) {
+          continue;
+        }
         IdentityEntity identityEntity = identityStorage._findIdentityEntity(identity.getProviderId(), identity.getRemoteId());
         
         //keep the latest activity posted time
@@ -1237,6 +1240,9 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
     if (context.getRemoved() != null) {
 
       for (Identity identity : context.getRemoved()) {
+        if (!identity.isEnable()) {
+          continue;
+        }
         IdentityEntity identityEntity = identityStorage._findIdentityEntity(identity.getProviderId(), identity.getRemoteId());
           
         ActivityRefListEntity listRef = type.refsOf(identityEntity);

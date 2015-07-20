@@ -14,6 +14,10 @@
     };
   }
 
+  if (!window.location.origin) {
+    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+  }
+  
   eXo.social = eXo.social || {};
   
   if (eXo.env) {
@@ -34,7 +38,27 @@
     foundNoMatch : 'Found no matching users for '
   };
 
+  // Disable json cache on IE11
+  if (!!navigator.userAgent.match(/Trident\/7\./)) { // Browser is IE11 
+    $.ajaxSetup({
+      cache:false
+    });
+  }
   
+  // Parse URL Queries Method
+  $.getQuery = function( query ) {
+      query = query.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+      var expr = "[\\?&]"+query+"=([^&#]*)";
+      var regex = new RegExp( expr );
+      var results = regex.exec( window.location.href );
+      if( results !== null ) {
+          return results[1];
+          return decodeURIComponent(results[1].replace(/\+/g, " "));
+      } else {
+          return false;
+      }
+  };
+
   var SocialUtils = {
     /**
      * Constants
@@ -133,13 +157,13 @@
         gadgets.window.adjustHeight();
       }
     },
-    applyConfirmPopup : function(id) {
-      $('#' + id).find('.confirmPopup').on('click', function() {
+    applyConfirmPopup : function(confirmatioPopupParams) {
+      $('#' + confirmatioPopupParams.componentId).find('.confirmPopup').on('click', function() {
         var thizz = $(this);
         var action_ = thizz.attr('data-onclick'); 
-        var label_ = thizz.attr('data-labelAction') || 'OK';
-        var close_ = thizz.attr('data-labelClose') || 'Close'; 
-        var title_ = thizz.attr('data-title') || 'Confirmation';
+        var label_ = thizz.attr('data-labelAction') || confirmatioPopupParams.OK;
+        var close_ = thizz.attr('data-labelClose') || confirmatioPopupParams.Cancel; 
+        var title_ = thizz.attr('data-title') || confirmatioPopupParams.Caption;
         var message_ = thizz.attr('data-message');
         eXo.social.PopupConfirmation.confirm('demo', [{action: action_, label : label_}], title_, message_, close_);
       }); 

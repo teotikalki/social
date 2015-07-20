@@ -36,6 +36,7 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.GroupHandler;
+import org.exoplatform.services.organization.MembershipTypeHandler;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.social.core.application.PortletPreferenceRequiredPlugin;
@@ -731,7 +732,8 @@ public class SpaceServiceImpl implements SpaceService {
    * {@inheritDoc}
    */
   public boolean isMember(Space space, String userId) {
-    return ArrayUtils.contains(space.getMembers(), userId);
+    return ArrayUtils.contains(space.getMembers(), userId)
+        || SpaceUtils.isUserHasMembershipTypesInGroup(userId, space.getGroupId(), MembershipTypeHandler.ANY_MEMBERSHIP_TYPE);
   }
 
   /**
@@ -1355,7 +1357,11 @@ public class SpaceServiceImpl implements SpaceService {
    * {@inheritDoc}
    */
   public boolean hasSettingPermission(Space space, String userId) {
-    if (userId.equals(getUserACL().getSuperUser()) || (ArrayUtils.contains(space.getManagers(), userId))) {
+    
+    if (userId.equals(getUserACL().getSuperUser()) 
+        || (ArrayUtils.contains(space.getManagers(), userId)) 
+        || SpaceUtils.isUserHasMembershipTypesInGroup(userId, space.getGroupId(), MembershipTypeHandler.ANY_MEMBERSHIP_TYPE)
+        ) {
       return true;
     }
     return false;
@@ -1372,7 +1378,8 @@ public class SpaceServiceImpl implements SpaceService {
    * {@inheritDoc}
    */
   public boolean isManager(Space space, String userId) {
-    return ArrayUtils.contains(space.getManagers(), userId);
+    return ArrayUtils.contains(space.getManagers(), userId) 
+        || SpaceUtils.isUserHasMembershipTypesInGroup(userId, space.getGroupId(), MembershipTypeHandler.ANY_MEMBERSHIP_TYPE);
   }
 
   /**

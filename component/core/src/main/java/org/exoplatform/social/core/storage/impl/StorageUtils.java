@@ -29,6 +29,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.common.lifecycle.SocialChromatticLifeCycle;
+import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.chromattic.entity.ProfileEntity;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.profile.ProfileFilter;
@@ -350,6 +351,23 @@ public class StorageUtils {
     });
 
     return list;
+  }
+  
+  /**
+   * Sort a list of activity by updated time
+   * 
+   * @param list
+   * @return
+   */
+  public static List<ExoSocialActivity> sortActivitiesByTime(List<ExoSocialActivity> list, int limit) {
+    //
+    Collections.sort(list, new Comparator<ExoSocialActivity>() {
+      public int compare(ExoSocialActivity a1, ExoSocialActivity a2) {
+        return ((Long)a1.getUpdated().getTime()).compareTo((Long)a2.getUpdated().getTime()) / -1;
+      }
+    });
+
+    return list.size() > limit ? list.subList(0, limit - 1) : list;
   }
   
   /**

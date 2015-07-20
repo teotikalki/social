@@ -16,6 +16,7 @@
  */
 package org.exoplatform.social.webui;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -34,11 +35,11 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.application.RequestNavigationData;
 import org.exoplatform.portal.config.UserPortalConfigService;
-import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.user.UserNavigation;
 import org.exoplatform.portal.mop.user.UserNode;
-import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.portal.webui.workspace.UIPortalApplication;
 import org.exoplatform.portal.webui.workspace.UIWorkingWorkspace;
@@ -63,6 +64,7 @@ import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
+import org.json.JSONObject;
 
 /**
  * Contains some common methods for using as utility.<br>
@@ -176,6 +178,36 @@ public class Utils {
    */
   public static Identity getUserIdentity(String userName, boolean loadProfile) {
     return Utils.getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, userName, loadProfile);
+  }
+  
+  /**
+   * Check if an user is enable/disable from the remote id (user name)
+   * 
+   * @param userName
+   * @return true if user is enable else return false
+   */
+  public static boolean isEnableUser(String userName) {
+    return getUserIdentity(userName, false).isEnable();
+  }
+  
+  /**
+   * Get only users who are enable
+   * 
+   * @param users list of all users
+   * @return list of enable users
+   */
+  public static List<String> getEnableUsers(String[] users) {
+    if (users == null) {
+      return new ArrayList<String>();
+    }
+    List<String> results = new ArrayList<String>();
+    for (String user : users) {
+      if (!Utils.isEnableUser(user)) {
+        continue;
+      }
+      results.add(user);
+    }
+    return results;
   }
 
   /**
@@ -828,5 +860,25 @@ public class Utils {
     }
     
     return null;
+  }
+
+  /**
+   * Initializes confirmation popup.
+   *  
+   * @param componentId Target component.
+   * @param confirmationMsg Confirmation message.
+   * @throws Exception
+   */
+  public static void initConfirmationPopup(String componentId) throws Exception {
+    WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
+    ResourceBundle res = context.getApplicationResourceBundle();
+    JSONObject object = new JSONObject();
+    object.put("componentId", componentId);
+    object.put("Caption", res.getString("Confirmation.label.Caption"));
+    object.put("OK", res.getString("Confirmation.label.OK"));
+    object.put("Cancel", res.getString("Confirmation.label.Cancel"));
+    
+    context.getJavascriptManager().getRequireJS().require("SHARED/socialUtil", "socialUtil")
+           .addScripts("socialUtil.applyConfirmPopup(" + object.toString() + ");");
   }
 }

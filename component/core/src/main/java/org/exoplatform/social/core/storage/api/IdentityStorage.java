@@ -292,4 +292,13 @@ public interface IdentityStorage {
    * @return the list of connections
    */
   public List<Identity> getActiveConnections(Identity identity);
+  
+  /**
+   * Process enable/disable Identity
+   * 
+   * @param identity The Identity enable
+   * @param isEnable true if the user is enable, false if not
+   * @since 4.2.x
+   */
+  public void processEnabledIdentity(Identity identity, boolean isEnable);
 }

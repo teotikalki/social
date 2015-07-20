@@ -25,6 +25,8 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserHandler;
+import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.identity.SpaceMemberFilterListAccess.Type;
 import org.exoplatform.social.core.identity.model.Identity;
@@ -78,6 +80,8 @@ public class IdentityManagerTest extends AbstractCoreTest {
     
     tearDownIdentityList = new ArrayList<Identity>();
     tearDownSpaceList = new ArrayList<Space>();
+    org.exoplatform.services.security.Identity identity = getService(IdentityRegistry.class).getIdentity("root");
+    ConversationState.setCurrent(new ConversationState(identity));
   }
 
   public void tearDown() throws Exception {
@@ -583,7 +587,7 @@ public class IdentityManagerTest extends AbstractCoreTest {
       //
       identityManager.deleteIdentity(testIdentity);
       identityListAccess = identityManager.getIdentitiesByProfileFilter("organization", profileFilter, false);
-      assertEquals(6, identityListAccess.getSize());
+      assertEquals(5, identityListAccess.getSize());
     }
 
     //Test with excluded identity list

@@ -48,9 +48,11 @@ import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.MembershipTypeHandler;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.social.core.chromattic.entity.ActivityProfileEntity;
+import org.exoplatform.social.core.chromattic.entity.DisabledEntity;
 import org.exoplatform.social.core.chromattic.entity.IdentityEntity;
 import org.exoplatform.social.core.chromattic.entity.ProfileEntity;
 import org.exoplatform.social.core.chromattic.entity.ProfileXpEntity;
@@ -70,6 +72,7 @@ import org.exoplatform.social.core.model.AvatarAttachment;
 import org.exoplatform.social.core.profile.ProfileFilter;
 import org.exoplatform.social.core.search.Sorting;
 import org.exoplatform.social.core.service.LinkProvider;
+import org.exoplatform.social.core.space.SpaceUtils;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.storage.IdentityStorageException;
 import org.exoplatform.social.core.storage.api.IdentityStorage;
@@ -252,11 +255,20 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
           break;
         case MANAGER:
           members = gotSpace.getManagers();
+          List<String> wildcardUsers = SpaceUtils.findMembershipUsersByGroupAndTypes(space
+              .getGroupId(), MembershipTypeHandler.ANY_MEMBERSHIP_TYPE);
+          
+          for (String remoteId : wildcardUsers) {
+            relations.add(findIdentity(OrganizationIdentityProvider.NAME, remoteId));
+          }
           break;
       }
 
       for (int i = 0; i <  members.length; i++){
-        relations.add(findIdentity(OrganizationIdentityProvider.NAME, members[i]));
+        Identity identity = findIdentity(OrganizationIdentityProvider.NAME, members[i]);
+        if (!relations.contains(identity)) {
+          relations.add(identity);
+        }
       }
 
     } catch (IdentityStorageException e){
@@ -665,6 +677,7 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
 
     Identity identity = new Identity(providerId, remoteId);
     identity.setDeleted(identityEntity.isDeleted());
+    identity.setEnable(_getMixin(identityEntity, DisabledEntity.class, false) == null);
     identity.setId(identityEntity.getId());
 
     try {
@@ -702,6 +715,7 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
 
         identity = new Identity(OrganizationIdentityProvider.NAME, remoteId);
         identity.setId(identityEntity.getId());
+        identity.setEnable(_getMixin(identityEntity, DisabledEntity.class, false) == null);
       } else {
         identity = _findIdentity(providerId, remoteId);
       }
@@ -919,7 +933,7 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
       identity.setDeleted(identityEntity.isDeleted());
       identity.setRemoteId(identityEntity.getRemoteId());
       identity.setProviderId(identityEntity.getProviderId());
-
+      identity.setEnable(_getMixin(identityEntity, DisabledEntity.class, false) == null);
       //
       return identity;
     }
@@ -1004,16 +1018,18 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
   /**
    * {@inheritDoc}
    */
-  public int getIdentitiesCount (final String providerId) throws IdentityStorageException {
-
-    // TODO : use jcr property to improve the perfs
+  public int getIdentitiesCount(final String providerId) throws IdentityStorageException {
     ProviderEntity providerEntity = getProviderRoot().getProviders().get(providerId);
-    int nb = providerEntity.getIdentities().size();
-
-    //
-    return nb;
+    Iterator<IdentityEntity> iter = providerEntity.getIdentities().values().iterator();
+    int number = 0;
+    while (iter.hasNext()) {
+      if (_getMixin(iter.next(), DisabledEntity.class, false) == null) {
+        ++number;
+      }
+    }
+    return number;
   }
-
+  
   /**
    * {@inheritDoc}
    */
@@ -1054,8 +1070,10 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     while (results.hasNext()) {
 
       ProfileEntity profileEntity = results.next();
-
       Identity identity = createIdentityFromEntity(profileEntity.getIdentity());
+      if (! identity.isEnable()) {
+        continue;
+      }
       Profile profile = getStorage().loadProfile(new Profile(identity));
       identity.setProfile(profile);
       listIdentity.add(identity);
@@ -1110,9 +1128,10 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     while (results.hasNext()) {
 
       ProfileEntity profileEntity = results.next();
-
       Identity identity = createIdentityFromEntity(profileEntity.getIdentity());
-      
+      if (! identity.isEnable()) {
+        continue;
+      }
       Profile profile = getStorage().loadProfile(new Profile(identity));
       identity.setProfile(profile);
       
@@ -1162,8 +1181,10 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     while (results.hasNext()) {
 
       ProfileEntity profileEntity = results.next();
-
       Identity identity = createIdentityFromEntity(profileEntity.getIdentity());
+      if (! identity.isEnable()) {
+        continue;
+      }
       Profile profile = getStorage().loadProfile(new Profile(identity));
       identity.setProfile(profile);
       listIdentity.add(identity);
@@ -1197,11 +1218,24 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
 
     QueryResult<ProfileEntity> results = builder.get().objects();
 
-    return results.size();
+    return getCountFromQueryResult(results);
 
   }
 
-  
+  private int getCountFromQueryResult(QueryResult<ProfileEntity> results) {
+    int count = 0;
+    while (results.hasNext()) {
+      ProfileEntity profileEntity = results.next();
+      
+      //ignore if the user is disabled
+      if (_getMixin(profileEntity.getIdentity(), DisabledEntity.class, false) != null) {
+        continue;
+      }
+      
+      count++;
+    }
+    return count;
+  }
   
   /**
    * {@inheritDoc}
@@ -1226,7 +1260,7 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     
     QueryResult<ProfileEntity> results = builder.get().objects();
     
-    return results.size();
+    return getCountFromQueryResult(results);
   }
 
   /**
@@ -1265,9 +1299,10 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     while (results.hasNext()) {
 
       ProfileEntity profileEntity = results.next();
-      
       Identity identity = createIdentityFromEntity(profileEntity.getIdentity());
-      
+      if (! identity.isEnable()) {
+        continue;
+      }
       Profile profile = getStorage().loadProfile(new Profile(identity));
       identity.setProfile(profile);
       
@@ -1345,6 +1380,9 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     while (results.hasNext()) {
       ProfileEntity profileEntity = results.next();
       Identity identity = createIdentityFromEntity(profileEntity.getIdentity());
+      if (! identity.isEnable()) {
+        continue;
+      }
       Profile profile = getStorage().loadProfile(new Profile(identity));
       identity.setProfile(profile);
       listIdentity.add(identity);
@@ -1393,6 +1431,24 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
       return type.getActivityId(activityPEntity);
     } catch (Exception e) {
       return null;
+    }
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  public void processEnabledIdentity(Identity identity, boolean isEnable) {
+    try {
+      IdentityEntity identityEntity = _findById(IdentityEntity.class, identity.getId());
+      if (isEnable) {
+        _removeMixin(identityEntity, DisabledEntity.class);
+      } else {
+        _getMixin(identityEntity, DisabledEntity.class, true);
+      }
+      getSession().save();
+    } catch (Exception e) {
+      LOG.warn(String.format("Process enable identity of user %s unsuccessfully.", identity.getRemoteId()));
+      LOG.debug(e.getMessage(), e);
     }
   }
   

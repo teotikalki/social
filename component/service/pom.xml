@@ -22,7 +22,7 @@
   <parent>
     <artifactId>social-component</artifactId>
     <groupId>org.exoplatform.social</groupId>
-    <version>4.2.0-RC1</version>
+    <version>4.3.x-SNAPSHOT</version>
   </parent>
   <groupId>org.exoplatform.social</groupId>
   <artifactId>social-component-service</artifactId>
@@ -87,6 +87,12 @@
       <groupId>org.exoplatform.jcr</groupId>
       <artifactId>exo.jcr.component.ext</artifactId>
     </dependency>
+      <!-- remove it after migration to jcr 1.16.x-->
+      <dependency>
+          <groupId>org.exoplatform.kernel</groupId>
+          <artifactId>exo.kernel.component.ext.cache.impl.infinispan.v5</artifactId>
+      </dependency>
+      <!-- End remove-->
     <dependency>
       <groupId>org.exoplatform.kernel</groupId>
       <artifactId>exo.kernel.commons</artifactId>

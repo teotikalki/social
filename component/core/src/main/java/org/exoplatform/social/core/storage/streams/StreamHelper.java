@@ -352,6 +352,7 @@ public class StreamHelper {
       if (connections == null) return;
       
       for(Identity identity : connections) {
+        if (!identity.isEnable()) continue;
         moveTopStream(identity.getId(), activity, ActivityType.FEED);
         moveTopStream(identity.getId(), activity, ActivityType.CONNECTION);
       }
@@ -368,6 +369,8 @@ public class StreamHelper {
         return;
 
       for (String identityId : identityIds) {
+        Identity identity = getIdentityStorage().findIdentityById(identityId);
+        if (!identity.isEnable()) continue;
         moveTopStream(identityId, activity, ActivityType.FEED);
         moveTopStream(identityId, activity, ActivityType.USER);
       }
