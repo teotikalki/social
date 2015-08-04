@@ -1732,18 +1732,35 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
       LOG.warn("Probably was deleted activity by another session");
       return 0;
     }
+    //
+    try {
+      ActivityEntity activityEntity = _findById(ActivityEntity.class, existingActivity.getId());
+      String activityPath = activityEntity.getPath();
+
+      StringBuilder query = jcrPathLikeAndNotLike("soc:activity", activityPath);
+      query.append(" AND soc:isHidden = 'false'");
+      return (int) nodes(query.toString()).getSize();
+    } catch (Exception e) {
+      LOG.warn("Failed to get comments's size of activity " + existingActivity.getId(), e);
+    }
+    //
     List<String> commentIds = Arrays.asList(got.getReplyToId());
     int size = commentIds.size();
-
     //
     for(String commentId : commentIds) {
       if (isHidden(commentId)) {
         size--;
       }
     }
-
     //
     return size;
+  }
+  
+  private StringBuilder jcrPathLikeAndNotLike(String nodeType, String fullPath) {
+    StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ").append(nodeType)
+        .append(" WHERE (").append("jcr:path LIKE '").append(fullPath)
+        .append("/%' AND NOT jcr:path LIKE '").append(fullPath).append("/%/%'").append(")");
+    return sqlQuery;
   }
 
   /**
