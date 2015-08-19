@@ -660,6 +660,11 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
   public List<ExoSocialActivity> getConnections(Identity owner, int offset, int limit) {
     return getActivitiesNotQuery(ActivityRefType.CONNECTION, owner, offset, limit);
   }
+  
+  @Override
+  public List<String> getIdsConnections(Identity owner, int offset, int limit) {
+    return getIdsNotQuery(ActivityRefType.CONNECTION, owner, offset, limit);
+  }
 
   @Override
   public int getNumberOfConnections(Identity owner) {
@@ -670,6 +675,11 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
   public List<ExoSocialActivity> getMySpaces(Identity owner, int offset, int limit) {
     return getActivitiesNotQuery(ActivityRefType.MY_SPACES, owner, offset, limit);
   }
+  
+  @Override
+  public List<String> getIdsMySpaces(Identity owner, int offset, int limit) {
+    return getIdsNotQuery(ActivityRefType.MY_SPACES, owner, offset, limit);
+  }
 
   @Override
   public int getNumberOfMySpaces(Identity owner) {
@@ -679,6 +689,11 @@ public class ActivityStreamStorageImpl extends AbstractStorage implements Activi
   @Override
   public List<ExoSocialActivity> getSpaceStream(Identity owner, int offset, int limit) {
     return getActivitiesNotQuery(ActivityRefType.SPACE_STREAM, owner, offset, limit);
+  }
+  
+  @Override
+  public List<String> getIdsSpaceStream(Identity owner, int offset, int limit) {
+    return getIdsNotQuery(ActivityRefType.SPACE_STREAM, owner, offset, limit);
   }
 
   @Override
