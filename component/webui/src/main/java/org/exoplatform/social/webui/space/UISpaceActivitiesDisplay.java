@@ -18,16 +18,17 @@ package org.exoplatform.social.webui.space;
 
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.webui.Utils;
-import org.exoplatform.social.webui.activity.AbstractActivitiesDisplay;
 import org.exoplatform.social.webui.activity.UIActivitiesContainer;
 import org.exoplatform.social.webui.activity.UIActivitiesLoader;
 import org.exoplatform.social.webui.composer.UIComposer.PostContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
 
@@ -47,12 +48,13 @@ import org.exoplatform.webui.event.EventListener;
   }
 )
 
-public class UISpaceActivitiesDisplay extends AbstractActivitiesDisplay {
+public class UISpaceActivitiesDisplay extends UIContainer {
   static private final Log LOG = ExoLogger.getLogger(UISpaceActivitiesDisplay.class);
 
   private Space space;
   private static final int ACTIVITY_PER_PAGE = 20;
   private UIActivitiesLoader activitiesLoader;
+  private boolean isRenderFull = false;
 
   /**
    * Constructor
@@ -94,7 +96,8 @@ public class UISpaceActivitiesDisplay extends AbstractActivitiesDisplay {
       LOG.warn("space is null! Can not display spaceActivites");
       return;
     }
-
+    ConversationState.getCurrent().setAttribute(Utils.ACTIVITIES_DISPLAY_TYPE, getId());
+    //
     Identity spaceIdentity = Utils.getIdentityManager().getOrCreateIdentity(SpaceIdentityProvider.NAME, 
                                                                             space.getPrettyName(), false);
     
@@ -110,7 +113,14 @@ public class UISpaceActivitiesDisplay extends AbstractActivitiesDisplay {
     //
     String remoteId = Utils.getOwnerRemoteId();
     Utils.getSpaceService().updateSpaceAccessed(remoteId, space);
-    
+  }
+
+  public boolean isRenderFull() {
+    return isRenderFull;
+  }
+
+  public void setRenderFull(boolean isRenderFull) {
+    this.isRenderFull = isRenderFull;
   }
 
   public static class RefreshStreamActionListener extends EventListener<UISpaceActivitiesDisplay> {

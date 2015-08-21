@@ -27,6 +27,7 @@ import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.activity.ActivitiesRealtimeListAccess;
 import org.exoplatform.social.core.activity.filter.ActivityUpdateFilter;
 import org.exoplatform.social.core.activity.filter.ActivityUpdateFilter.ActivityFilterType;
@@ -36,7 +37,6 @@ import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvide
 import org.exoplatform.social.core.manager.ActivityManager;
 import org.exoplatform.social.webui.URLUtils;
 import org.exoplatform.social.webui.Utils;
-import org.exoplatform.social.webui.activity.AbstractActivitiesDisplay;
 import org.exoplatform.social.webui.activity.UIActivitiesContainer;
 import org.exoplatform.social.webui.activity.UIActivitiesLoader;
 import org.exoplatform.social.webui.composer.UIComposer.PostContext;
@@ -44,6 +44,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.core.UIDropDownControl;
 import org.exoplatform.webui.core.model.SelectItemOption;
 import org.exoplatform.webui.event.Event;
@@ -72,7 +73,7 @@ import org.exoplatform.webui.event.EventListener;
     }
   )
 })
-public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
+public class UIUserActivitiesDisplay extends UIContainer {
 
   static private final Log      LOG = ExoLogger.getLogger(UIUserActivitiesDisplay.class);
   private static final int      ACTIVITY_PER_PAGE = 20;
@@ -82,8 +83,9 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
   private Object locker = new Object();
   private boolean notChangedMode;
   private boolean postActivity;
+  private boolean isRenderFull = false;
   private int numberOfUpdatedActivities;
-  
+
   public enum DisplayMode {
     OWNER_STATUS,
     ALL_ACTIVITIES,
@@ -129,6 +131,14 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
     // set lastUpdatedNumber after init() method invoked inside setSelectedDisplayMode() method
     //int numberOfUpdates = this.getNumberOfUpdatedActivities();
     //setLastUpdatedNum(selectedDisplayMode.toString(), "" + numberOfUpdates);
+  }
+
+  public boolean isRenderFull() {
+    return isRenderFull;
+  }
+
+  public void setRenderFull(boolean isRenderFull) {
+    this.isRenderFull = isRenderFull;
   }
 
   public UIActivitiesLoader getActivitiesLoader() {
@@ -213,6 +223,8 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
       activitiesLoader = addChild(UIActivitiesLoader.class, null, "UIActivitiesLoader");
       activitiesLoader.getChild(UIActivitiesContainer.class).setRenderFull(isRenderFull(), true);
     }
+    ConversationState.getCurrent().setAttribute(Utils.ACTIVITIES_DISPLAY_TYPE, getId());
+    System.out.println("\n\n ConversationState===========> " + ConversationState.getCurrent().getAttribute("social:activityRenderFull"));
     //
     String activityId = Utils.getActivityID();
     if (activityId != null && activityId.length() > 0) {
@@ -230,10 +242,6 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
     activitiesLoader.setLoadingCapacity(ACTIVITY_PER_PAGE);
     activitiesLoader.setOwnerName(ownerName);
     activitiesLoader.setSelectedDisplayMode(selectedDisplayMode.toString());
-    
-    //
-//    UIActivitiesContainer activitiesContainer = activitiesLoader.getChild(UIActivitiesContainer.class);
-    
     //
     Identity ownerIdentity = Utils.getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, ownerName, false);
     

@@ -84,9 +84,7 @@ public class UIActivitiesLoader extends UIContainer {
   @Override
   public void processRender(WebuiRequestContext context) throws Exception {
     super.processRender(context);
-    if (getId().equals("UIActivitiesLoader")) {
-      getAncestorOfType(AbstractActivitiesDisplay.class).setRenderFull(false);
-    }
+//      ((AbstractActivitiesDisplay) getParent()).setRenderFull(false);
   }
 
   public ListAccess<ExoSocialActivity> getActivityListAccess() {

@@ -24,8 +24,10 @@ import java.util.ResourceBundle;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
@@ -50,6 +52,7 @@ import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 import org.exoplatform.webui.core.UIApplication;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.core.UIPortletApplication;
 import org.exoplatform.webui.core.lifecycle.WebuiBindingContext;
 import org.exoplatform.webui.event.Event;
@@ -798,7 +801,6 @@ public class BaseUIActivity extends UIForm {
   }
 
   public static class DeleteActivityActionListener extends EventListener<BaseUIActivity> {
-
     @Override
     public void execute(Event<BaseUIActivity> event) throws Exception {
       BaseUIActivity uiActivity = event.getSource();
@@ -815,9 +817,20 @@ public class BaseUIActivity extends UIForm {
       if (isEmptyListActivity) {
         event.getRequestContext().addUIComponentToUpdateByAjax(activitiesContainer.getParent().getParent());
       } else {
-        AbstractActivitiesDisplay uiActivitiesDisplay = activitiesContainer.getAncestorOfType(AbstractActivitiesDisplay.class);
+        UIPortletApplication uiPortlet = activitiesContainer.getAncestorOfType(UIPortletApplication.class);
+        String id = String.valueOf(ConversationState.getCurrent().getAttribute(Utils.ACTIVITIES_DISPLAY_TYPE));
+        System.out.println("uiActivitiesDisplay: " + id);
+        UIContainer container = uiPortlet.findComponentById(id);
         activitiesContainer.setRenderFull(true, true);
-        uiActivitiesDisplay.setRenderFull(true);
+        if(container != null) {
+          if (container instanceof UISpaceActivitiesDisplay) {
+            ((UISpaceActivitiesDisplay) container).setRenderFull(true);
+          } else if (container instanceof UIUserActivitiesDisplay) {
+            ((UIUserActivitiesDisplay) container).setRenderFull(true);
+          }
+        }
+        ConversationState.getCurrent().setAttribute("social:activityRenderFull", "TRUE");
+        //
         event.getRequestContext().addUIComponentToUpdateByAjax(activitiesContainer.getParent());
       }
       //

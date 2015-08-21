@@ -78,8 +78,9 @@ public class Utils {
   public static final String FROM = "from";
   public static final String OLD_FROM = "old_from";
   public static final String TO = "to";
-  private static final String   HOME = "home";
+  private static final String HOME = "home";
   
+  public static final String ACTIVITIES_DISPLAY_TYPE = "social:activityDisplay";
   /** . */
   public static final String NOT_SEEN_ACTIVITIES_COOKIES = "exo_social_not_seen_activities_%s";
   public static final String SEEN_ACTIVITIES_COOKIES = "exo_social_seen_activities_%s";
