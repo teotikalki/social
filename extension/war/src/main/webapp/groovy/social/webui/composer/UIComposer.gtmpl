@@ -65,11 +65,11 @@
   String searching = _ctx.appRes("Mentions.msg.searching");
   searching = searching.replaceAll("'","&#39;").replaceAll('"',"&#34;");
   jsManager.require("SHARED/uiForm")
-           .require("SHARED/jquery", "jq")
-           .require("SHARED/bts_tooltip").addScripts("jq('*[rel=\"tooltip\"]').tooltip();")
-           .require("SHARED/social-ui-activity-composer", "composer")
-           .addScripts("UIComposer.onLoadI18n({ helpSearch: \"$helpSearch\", searching: \"searching\", foundNoMatch: \"$foundNoMatch\"});") 
-           .addScripts("UIComposer.onLoad($params);");
+           .require("SHARED/jquery", "gj")
+           .require("SHARED/bts_tooltip").addScripts("gj('*[rel=\"tooltip\"]').tooltip();")
+           .require("SHARED/social-ui-activity-composer", "socialUIComposer")
+           .addScripts("socialUIComposer.onLoadI18n({ helpSearch: \"$helpSearch\", searching: \"searching\", foundNoMatch: \"$foundNoMatch\"});") 
+           .addScripts("socialUIComposer.onLoad($params);");
 %>
 <div class="uiComposer uiGrayLightBox">
   <% uiform.begin() %>

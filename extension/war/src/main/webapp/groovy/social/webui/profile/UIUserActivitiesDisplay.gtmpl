@@ -30,19 +30,19 @@
   def rcontext = _ctx.getRequestContext() ;
   def jsManager = rcontext.getJavascriptManager().require("SHARED/uiForm");
   
-  String script = "var dropDownBox = jq('#DisplayModesDropDown');" + 
+  String script = "(function(gj) { var dropDownBox = gj('#DisplayModesDropDown');" + 
                   "var btn = dropDownBox.find('div.btn');" +
-                  "jq(btn).removeClass('btn-primary');" +
-                  "var options = jq(dropDownBox).find('ul>li');" +
+                  "gj(btn).removeClass('btn-primary');" +
+                  "var options = gj(dropDownBox).find('ul>li');" +
                   "jq.each(options, function(idx, el) { " + 
-                  "var selectedVal = jq(btn).find('span').text();" +
-                  "var elVal = jq(el).find('a').text();" +
+                  "var selectedVal = gj(btn).find('span').text();" +
+                  "var elVal = gj(el).find('a').text();" +
                   " if( jq.trim(elVal) === jq.trim(selectedVal) ) {" +
-                  "   jq(el).hide();" +
+                  "   gj(el).hide();" +
                   " }" +
-                  "});"
+                  "}); })(gj);"
                   
-  jsManager.require("SHARED/jquery", "jq").addScripts(script);
+  jsManager.require("SHARED/jquery", "gj").addScripts(script);
   
   //
   def refreshTooltipButton = _ctx.appRes("UIActivity.label.Refresh");
@@ -101,7 +101,7 @@
             currentServerTime: $currentServerTime
     } """;
     //remove for TQA for profiling
-    //jsManager.require("SHARED/social-ui-activity-updates", "activityUpdates").addScripts("activityUpdates.init($inputs);");
+    //jsManager.require("SHARED/social-ui-activity-updates", "socialUIActivityUpdates").addScripts("socialUIActivityUpdates.init($inputs);");
   } 
   
   def hasActivities = uicomponent.getActivitiesLoader().getActivitiesContainer().getChildren().size() > 0;

@@ -609,8 +609,8 @@ public class UIEditUserProfileForm extends UIForm {
       //
       editUserProfile.resetActionFileds();
       RequireJS requireJs = event.getRequestContext().getJavascriptManager().getRequireJS();
-      requireJs.require("SHARED/user-profile", "profile")
-               .addScripts("profile.chechboxUtil('" + (FIELD_EXPERIENCE_SECTION + editUserProfile.index) + "');");
+      requireJs.require("SHARED/user-profile", "socialUIUserProfile")
+               .addScripts("socialUIUserProfile.chechboxUtil('" + (FIELD_EXPERIENCE_SECTION + editUserProfile.index) + "');");
       editUserProfile.initAboutMeTextArea(event.getRequestContext());
       event.getRequestContext().addUIComponentToUpdateByAjax(editUserProfile);
     }
@@ -648,14 +648,13 @@ public class UIEditUserProfileForm extends UIForm {
   private void initAboutMeTextArea(WebuiRequestContext context) throws Exception {
     String aboutMe = getUIInputSection(FIELD_ABOUT_SECTION).getUIFormTextAreaInput(Profile.ABOUT_ME).getValue();
     if (aboutMe == null || getLabel("aboutMePlaceholder").equals(aboutMe) || aboutMe.length() == 0) {
-      String scripts = new StringBuilder("(function(jq){jq(\"textarea#").append(Profile.ABOUT_ME)
+      String scripts = new StringBuilder("(function(gj){gj(\"textarea#").append(Profile.ABOUT_ME)
                                                                         .append("\").val('')")
                                                                         .append(".attr(\"placeholder\", \"")
                                                                         .append(getLabel("aboutMePlaceholder"))
-                                                                        .append("\");})(jq);").toString();
-      
+                                                                        .append("\");})(gj);").toString();
       context.getJavascriptManager().getRequireJS()
-             .require("SHARED/jquery", "jq")
+             .require("SHARED/jquery", "gj")
              .addScripts(scripts);
     }
   }   

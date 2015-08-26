@@ -44,16 +44,6 @@
   </module>
 
   <module>
-    <name>social-core</name> <!-- provides core utility for reuse (browser, dom level) -->
-    <script>
-      <path>/javascript/htmlparser.js</path>
-    </script>
-    <depends>
-      <module>base</module>
-    </depends>
-  </module>
-
-  <module>
     <name>social-ui-profile</name>
       <as>socialUIProfile</as>
     <script>
@@ -148,7 +138,7 @@
   
   <module>
     <name>social-ui-space-search</name>
-      <as>socialUiSpaceSearch</as>
+      <as>socialUISpaceSearch</as>
     <script>
        <path>/javascript/eXo/social/webui/UISpaceSearch.js</path>
     </script>
@@ -169,7 +159,7 @@
   
   <module>
     <name>social-ui-space-member-suggestion</name>
-    <as>socialUiSpaceMemberSuggestion</as>
+    <as>socialUISpaceMemberSuggestion</as>
     <script>
        <path>/javascript/eXo/social/webui/UISpaceMemberSuggestion.js</path>
     </script>
@@ -190,7 +180,7 @@
   
   <module>
     <name>social-ui-space-nav</name>
-      <as>socialUiSpaceNav</as>
+      <as>socialUISpaceNavigation</as>
     <script>
        <path>/javascript/eXo/social/webui/UISpaceNavigation.js</path>
     </script>
@@ -211,7 +201,7 @@
 
   <module>
     <name>social-ui-activity-composer</name>
-      <as>socialUiActivityComposer</as>
+      <as>socialUIComposer</as>
     <script>
        <path>/javascript/eXo/social/webui/UIComposer.js</path>
     </script>
@@ -236,7 +226,7 @@
 
   <module>
     <name>social-ui-activity</name>
-      <as>socialUiActivity</as>
+      <as>socialUIActivity</as>
     <script>
       <path>/javascript/eXo/social/webui/UIActivity.js</path>
     </script>
@@ -261,7 +251,7 @@
   
   <module>
     <name>social-ui-activities-loader</name>
-      <as>activitiesLoader</as>
+      <as>socialUIActivityLoader</as>
     <script>
       <path>/javascript/eXo/social/webui/UIActivityLoader.js</path>
     </script>
@@ -273,7 +263,7 @@
 
   <module>
     <name>social-ui-link-activity-composer</name>
-      <as>socialUiLinkActivityComposer</as>
+      <as>socialUIComposerLinkExtension</as>
     <script>
       <path>/javascript/eXo/social/webui/UIComposerLinkExtension.js</path>
     </script>
@@ -291,7 +281,7 @@
 
   <module>
     <name>social-ui-activity-updates</name>
-      <as>socialUiActivityUpdates</as>
+      <as>socialUIActivityUpdates</as>
     <script>
       <path>/javascript/eXo/social/webui/UIActivityUpdates.js</path>
     </script>
@@ -307,7 +297,7 @@
 
   <module>
     <name>social-ui-customize-control</name>
-      <as>socialUiCustomizeControl</as>
+      <as>socialUICustomizeControl</as>
     <script>
       <path>/javascript/eXo/social/webui/UICustomizeControl.js</path>
     </script>
@@ -329,7 +319,7 @@
   
   <module>
     <name>social-category-selector</name>
-      <as>socialCategorySelector</as>
+      <as>socialUIApplicationCategorySelector</as>
     <script>
       <path>/javascript/eXo/social/webui/UIApplicationCategorySelector.js</path>
     </script>
@@ -382,7 +372,7 @@
     </depends>
     <depends>
       <module>mentionsLib</module>
-      <as>mentions</as>
+      <as>mentionsLib</as>
     </depends>
   </module>
   <module>

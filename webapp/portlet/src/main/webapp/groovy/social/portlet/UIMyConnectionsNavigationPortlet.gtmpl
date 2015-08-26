@@ -33,8 +33,8 @@
   def isOwner = Utils.isOwner();
   
   def jsManager = _ctx.getRequestContext().getJavascriptManager();
-	jsManager.require("SHARED/jquery", "jq")
-	         .require("SHARED/bts_tooltip").addScripts("jq('*[rel=\"tooltip\"]').tooltip();");
+	jsManager.require("SHARED/jquery", "gj")
+	         .require("SHARED/bts_tooltip").addScripts("gj('*[rel=\"tooltip\"]').tooltip();");
 %>
 <div class="$uicomponent.id" id="$uicomponent.id">
   <div class="RelTitle"><%=_ctx.appRes(uicomponent.getId() + ".label.Relation")%></div>

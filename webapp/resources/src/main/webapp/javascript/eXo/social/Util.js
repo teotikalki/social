@@ -445,4 +445,4 @@
 	        this.shown = false;
 	    }
     };
-})(jQuery);
+})(gj);

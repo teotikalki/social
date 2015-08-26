@@ -242,4 +242,4 @@
 	};
  
   return UIComposerLinkExtension;
-})($);
+})(gj);

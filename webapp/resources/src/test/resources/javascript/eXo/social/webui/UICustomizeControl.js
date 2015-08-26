@@ -16,4 +16,4 @@
 	};
 
 	return UICustomizeControl;
-})($, uiForm);
+})(gj, uiForm);

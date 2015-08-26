@@ -139,4 +139,4 @@
 
   window.UIComposer = UIComposer;
   return UIComposer;
-})($, mentions._);
+})(gj, mentions._);

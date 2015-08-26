@@ -325,4 +325,4 @@
 	};
 
   return UIActivityUpdates;
-})($);
+})(gj);

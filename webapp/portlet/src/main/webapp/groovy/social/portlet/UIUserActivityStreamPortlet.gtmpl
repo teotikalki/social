@@ -30,7 +30,7 @@
   def currentServerTime = java.util.Calendar.getInstance().getTimeInMillis();
   
   def requireJs = _ctx.getRequestContext().getJavascriptManager().getRequireJS();
-  requireJs.require("SHARED/socialUtil", "socialUtil").require("SHARED/social-ui-activity", "activity")
+  requireJs.require("SHARED/socialUtil", "socialUtil").require("SHARED/social-ui-activity", "socialUIActivity")
            .addScripts("socialUtil.addfillUpFreeSpace('" + uicomponent.id + "');");
   uicomponent.refresh();
   String uiTabClazz = (Utils.isHomePage() == true) ? "uiTabPaneHomePage" : "";
@@ -48,10 +48,10 @@
 		      </div>
 		    </div>
 	    <%  
-	    requireJs.addScripts("activity.setPageTitle('"+ activityTitle +"');");
+	    requireJs.addScripts("socialUIActivity.setPageTitle('"+ activityTitle +"');");
 	    return;
     }
-    requireJs.addScripts("activity.setPageTitle(window.encodeURIComponent(\""+ activityTitle.replace("\"", "\\42") +"\").replace(/'/, '%27'));");
+    requireJs.addScripts("socialUIActivity.setPageTitle(window.encodeURIComponent(\""+ activityTitle.replace("\"", "\\42") +"\").replace(/'/, '%27'));");
   }
   
 %>

@@ -63,4 +63,4 @@ var UIProfile = {
 };
 
 return UIProfile;
-})($);
+})(gj);

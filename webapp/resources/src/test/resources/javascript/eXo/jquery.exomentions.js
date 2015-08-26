@@ -1170,7 +1170,6 @@
     // Public methods
     return {
       init : function(domTarget) {
-        window.jq = $;
         jElmTarget = $(domTarget);
         jElmTarget.css({
           'visibility' : 'hidden',
@@ -1404,4 +1403,4 @@
     });
   };
 
-})(jQuery, mentions._);
+})(gj, mentionsLib._);

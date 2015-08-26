@@ -27,8 +27,8 @@
   String registerURI = Utils.getURI("register");
   String homeURI = Utils.getURI("");
   def jsManager = _ctx.getRequestContext().getJavascriptManager();
-	jsManager.require("SHARED/jquery", "jq")
-	         .require("SHARED/bts_tooltip").addScripts("jq('*[rel=\"tooltip\"]').tooltip();");
+	jsManager.require("SHARED/jquery", "gj")
+	         .require("SHARED/bts_tooltip").addScripts("gj('*[rel=\"tooltip\"]').tooltip();");
 %>
 <div id="$portletId" class="UIBannerPortlet UIApplication">
   <div class="ApplicationMinWidth">

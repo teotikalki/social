@@ -338,16 +338,9 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
        uiUserActivities.init();
        
        uiUserActivities.setChangedMode(false);
-       
-       //int numberOfUpdates = uiUserActivities.getNumberOfUpdatedActivities();
-       
        //
        event.getRequestContext().getJavascriptManager()
-       .require("SHARED/social-ui-activity-updates", "activityUpdates").addScripts("activityUpdates.resetCookie('" + String.format(Utils.ACTIVITY_STREAM_TAB_SELECTED_COOKIED, Utils.getViewerRemoteId()) + "','" + selectedDisplayMode + "');");
-//       
-//       event.getRequestContext().getJavascriptManager()
-//       .require("SHARED/social-ui-activity-updates", "activityUpdates").addScripts("activityUpdates.resetCookie('" + String.format(Utils.LAST_UPDATED_ACTIVITIES_NUM, selectedDisplayMode, Utils.getViewerRemoteId()) + "','" + numberOfUpdates + "');");
-
+            .require("SHARED/social-ui-activity-updates", "socialUIActivityUpdates").addScripts("socialUIActivityUpdates.resetCookie('" + String.format(Utils.ACTIVITY_STREAM_TAB_SELECTED_COOKIED, Utils.getViewerRemoteId()) + "','" + selectedDisplayMode + "');");
      }
      
      requestContext.addUIComponentToUpdateByAjax(uiUserActivities);

@@ -48,10 +48,10 @@
   }
   
 	def jsManager = _ctx.getRequestContext().getJavascriptManager();
-	jsManager.require("SHARED/jquery", "jq")
+	jsManager.require("SHARED/jquery", "gj")
 					 .require("SHARED/bts_tooltip")
 					 .require("SHARED/socialUtil", "socialUtil")
-					 .addScripts("jq('*[rel=\"tooltip\"]').tooltip();")
+					 .addScripts("gj('*[rel=\"tooltip\"]').tooltip();")
 					 .addScripts("socialUtil.addDynamicItemLayout('" + uicomponent.id + "');");
 	Utils.initConfirmationPopup(uicomponent.id);
 %>

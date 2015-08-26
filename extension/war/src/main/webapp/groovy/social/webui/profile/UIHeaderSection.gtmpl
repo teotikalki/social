@@ -34,7 +34,7 @@
   } """
   
   jsmanager.require("SHARED/uiForm");
-  jsmanager.require("SHARED/social-ui-profile", "profile").addScripts("profile.init($params);");
+  jsmanager.require("SHARED/social-ui-profile", "socialUIProfile").addScripts("socialUIProfile.init($params);");
 
   def ownerIdentity = Utils.getOwnerIdentity(true);
   def viewerIdentity = Utils.getViewerIdentity();

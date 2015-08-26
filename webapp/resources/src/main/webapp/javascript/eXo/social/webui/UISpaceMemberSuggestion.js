@@ -56,4 +56,4 @@ var UISpaceMemberSuggest = {
 };	
 
 return UISpaceMemberSuggest;
-})($);
+})(gj);

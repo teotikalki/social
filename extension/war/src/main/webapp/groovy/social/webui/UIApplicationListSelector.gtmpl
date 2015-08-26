@@ -29,8 +29,8 @@ def installApplicationLabel = _ctx.appRes("${uicomponentId}.label.install_applic
 
 def applicationList = uicomponent.getApplicationList();
 def jsManager = _ctx.getRequestContext().getJavascriptManager();
-jsManager.require("SHARED/jquery", "jq")
-         .require("SHARED/bts_tooltip").addScripts("jq('*[rel=\"tooltip\"]').tooltip();");
+jsManager.require("SHARED/jquery", "gj")
+         .require("SHARED/bts_tooltip").addScripts("gj('*[rel=\"tooltip\"]').tooltip();");
 
 %>
 <div id="$uicomponent.id" class="itemDetailList roundCornerBoxWithTitle pull-left">

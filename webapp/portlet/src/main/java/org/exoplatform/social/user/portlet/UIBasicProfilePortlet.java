@@ -38,7 +38,7 @@ public class UIBasicProfilePortlet extends UIAbstractUserPortlet {
     super.beforeProcessRender(context);
     //
     RequireJS requireJs = context.getJavascriptManager().getRequireJS();
-    requireJs.require("SHARED/user-profile", "userprofile").addScripts("userprofile.init('" + getId() + "');");
+    requireJs.require("SHARED/user-profile", "socialUIUserProfile").addScripts("socialUIUserProfile.init('" + getId() + "');");
   }
 
   protected Map<String, Object> getProfileInfo() {

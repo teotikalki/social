@@ -95,4 +95,4 @@
   };
   //
   return UserProfile;
-})(jQuery, socialUtil);
+})(gj, socialUtil);

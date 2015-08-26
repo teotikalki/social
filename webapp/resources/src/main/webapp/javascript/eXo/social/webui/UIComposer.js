@@ -142,6 +142,9 @@
     }
   };
 
-  window.UIComposer = UIComposer;
+  window.UIComposer = {};
+  window.UIComposer.post = UIComposer.post;
+  window.UIComposer.showLink = UIComposer.showLink;
+  window.UIComposer.setCurrentValue = UIComposer.setCurrentValue;
   return UIComposer;
-})($, mentions._);
+})(gj, mentions._);

@@ -58,13 +58,13 @@ public class UISpaceSettings extends UIFormInputSet {
     ResourceBundle resourceBundle = context.getApplicationResourceBundle();
     getUIStringInput(SPACE_DISPLAY_NAME).setHTMLAttribute(HTML_ATTRIBUTE_PLACEHOLDER, resourceBundle.getString("UISpaceSettings.label.spaceDisplayName"));
     //Fix bug SOC-4821
-    String scripts = new StringBuilder("(function(jq){jq(\"textarea#") 
+    String scripts = new StringBuilder("(function(gj){gj(\"textarea#") 
                         .append(SPACE_DESCRIPTION)
                         .append("\").attr(\"placeholder\", \"")
                         .append(resourceBundle.getString("UISpaceSettings.label.spaceDescription"))
-                        .append("\");})(jq);").toString();
+                        .append("\");})(gj);").toString();
     context.getJavascriptManager().getRequireJS()
-           .require("SHARED/jquery", "jq")
+           .require("SHARED/jquery", "gj")
            .addScripts(scripts);
     super.processRender(context);
   }

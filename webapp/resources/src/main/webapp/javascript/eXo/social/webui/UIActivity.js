@@ -286,4 +286,4 @@ var UIActivity = {
 };
 
 return UIActivity;
-})($, mentions._);
+})(gj, mentions._);

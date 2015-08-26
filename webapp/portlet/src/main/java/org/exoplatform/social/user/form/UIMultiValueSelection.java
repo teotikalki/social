@@ -207,8 +207,8 @@ public class UIMultiValueSelection extends UIFormInputSet {
     UIForm uiForm = getAncestorOfType(UIForm.class);
     String addItem = UserProfileHelper.getLabel(context, "UIFormMultiValueInputSet.label.add");
     String removeItem = UserProfileHelper.getLabel(context, "UIFormMultiValueInputSet.label.remove");
-    context.getJavascriptManager().require("SHARED/jquery", "jq").require("SHARED/bts_tooltip")
-           .addScripts("jq('.uiMulti-select').find('a[rel=\"tooltip\"]').tooltip();");
+    context.getJavascriptManager().require("SHARED/jquery", "gj").require("SHARED/bts_tooltip")
+           .addScripts("gj('.uiMulti-select').find('a[rel=\"tooltip\"]').tooltip();");
     //
     Writer w = context.getWriter();
     w.append("<div class=\"uiMulti-select\" id=\"").append(getId()).append("\">") ;

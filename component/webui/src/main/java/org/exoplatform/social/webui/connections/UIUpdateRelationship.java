@@ -82,8 +82,8 @@ public class UIUpdateRelationship extends UIContainer {
             .append("data-bt-class=\"").append(btClass).append("\">")
             .append(label).append("</div>");
       //
-      context.getJavascriptManager().getRequireJS().require("SHARED/socialUtil", "utils")
-             .addScripts("utils.updateRelationship('" + identity.getId() + "' );");
+      context.getJavascriptManager().getRequireJS().require("SHARED/socialUtil", "socialUtil")
+             .addScripts("socialUtil.updateRelationship('" + identity.getId() + "' );");
     }
     identity = null;
     writer.append("</div>");

@@ -137,4 +137,4 @@
   };
   Notification.onload();
   return Notification;
-})(socialUtil, jQuery);
+})(socialUtil, gj);

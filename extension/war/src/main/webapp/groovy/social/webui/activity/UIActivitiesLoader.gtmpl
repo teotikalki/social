@@ -5,12 +5,12 @@
   def requireJS = _ctx.getRequestContext().getJavascriptManager().getRequireJS();
   if(uicomponent.id.equals("UIActivitiesLoader")) {
     boolean hasMore = uicomponent.isHasMore();
-    requireJS.require("SHARED/social-ui-activities-loader", "activitiesLoader");
-    requireJS.addScripts("activitiesLoader.init('$uicomponent.id', $hasMore);");
+    requireJS.require("SHARED/social-ui-activities-loader", "socialUIActivityLoader");
+    requireJS.addScripts("socialUIActivityLoader.init('$uicomponent.id', $hasMore);");
     
-    requireJS.require("SHARED/social-ui-activity", "activity").require("SHARED/jquery", "jq");
+    requireJS.require("SHARED/social-ui-activity", "socialUIActivity").require("SHARED/jquery", "gj");
     requireJS.addScripts("activity.displayLikes();");
-    requireJS.addScripts("jq(window).resize(function() {activity.displayLikes();});");
+    requireJS.addScripts("gj(window).resize(function() {socialUIActivity.displayLikes();});");
   }
   boolean hasActivities = uicomponent.getActivitiesContainer().getChildren().size() > 0;
 
@@ -30,7 +30,7 @@
     Ignore: '${ignoreLabel}'
   } """
   
-  requireJS.require("SHARED/social-ui-profile", "profile").addScripts("profile.initUserProfilePopup('$uicomponent.id', $labels);");
+  requireJS.require("SHARED/social-ui-profile", "socialUIProfile").addScripts("socialUIProfile.initUserProfilePopup('$uicomponent.id', $labels);");
   String clearClass = "clearBG";
   if(hasActivities && !uicomponent.isExtendLoader() && (!uicomponent.isUIUserActivityDisplay() || Utils.isHomePage())) {
     clearClass = "clearfix";

@@ -21,7 +21,7 @@
       </depends>
       <depends>
         <module>jquery</module>
-        <as>jQuery</as>
+        <as>gj</as>
       </depends>
     </module>
   </portlet>

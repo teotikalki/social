@@ -55,7 +55,7 @@
   def jsmanager = rcontext.getJavascriptManager();
 
   jsmanager.require("SHARED/uiForm");
-  jsmanager.require("SHARED/social-ui-space-member-suggestion", "memberSuggestion").addScripts("memberSuggestion.onLoad($params);");
+  jsmanager.require("SHARED/social-ui-space-member-suggestion", "socialUISpaceMemberSuggestion").addScripts("socialUISpaceMemberSuggestion.onLoad($params);");
   
   def invitedUserNames = uicomponent.invitedUserNames;
   
@@ -69,8 +69,8 @@
 	String searchGroupAction = uicomponent.event("SearchGroup") + "; return false;";
 	String inviteAction = uicomponent.event("Invite") + "; return false;";
 	def jsManager = _ctx.getRequestContext().getJavascriptManager();
-	jsManager.require("SHARED/jquery", "jq")
-	         .require("SHARED/bts_tooltip").addScripts("jq('*[rel=\"tooltip\"]').tooltip();");
+	jsManager.require("SHARED/jquery", "gj")
+	         .require("SHARED/bts_tooltip").addScripts("gj('*[rel=\"tooltip\"]').tooltip();");
 	%>
 	<div class="addInvite">
 		<% uiform.renderField("user") %>

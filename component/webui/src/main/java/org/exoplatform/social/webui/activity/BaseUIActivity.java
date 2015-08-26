@@ -679,7 +679,7 @@ public class BaseUIActivity extends UIForm {
       event.getRequestContext().addUIComponentToUpdateByAjax(uiActivity);
       
       JavascriptManager jm = event.getRequestContext().getJavascriptManager();
-      jm.require("SHARED/social-ui-activity", "activity").addScripts("activity.loadLikes('#ContextBox" + activityId + "');");
+      jm.require("SHARED/social-ui-activity", "socialUIActivity").addScripts("socialUIActivity.loadLikes('#ContextBox" + activityId + "');");
       
       Utils.initUserProfilePopup(uiActivity.getId());
       Utils.resizeHomePage();
@@ -700,7 +700,7 @@ public class BaseUIActivity extends UIForm {
       uiActivity.setLike(Boolean.parseBoolean(isLikedStr));
       //
       JavascriptManager jm = requestContext.getJavascriptManager();
-      jm.require("SHARED/social-ui-activity", "activity").addScripts("activity.displayLike('#ContextBox" + activityId + "');");      
+      jm.require("SHARED/social-ui-activity", "socialUIActivity").addScripts("socialUIActivity.displayLike('#ContextBox" + activityId + "');");      
       
       requestContext.addUIComponentToUpdateByAjax(uiActivity);
       
@@ -855,12 +855,12 @@ public class BaseUIActivity extends UIForm {
       super.processRender(context);
       String focusActivityId = Utils.getActivityID();
       if (getActivity().getId().equals(focusActivityId)) {
-        context.getJavascriptManager().require("SHARED/social-ui-activity", "activity")
+        context.getJavascriptManager().require("SHARED/social-ui-activity", "socialUIActivity")
                .addScripts("setTimeout(function() { " +
-                            "activity.hightlightComment('"+ focusActivityId + "');" +
-                            "activity.focusToComment();" +
-                            ((Utils.isFocusCommentBox()) ? "activity.replyByURL('"+ focusActivityId + "');" : "") +
-                            ((Utils.isExpandLikers()) ? "activity.loadLikersByURL();" : "") +
+                            "socialUIActivity.hightlightComment('"+ focusActivityId + "');" +
+                            "socialUIActivity.focusToComment();" +
+                            ((Utils.isFocusCommentBox()) ? "socialUIActivity.replyByURL('"+ focusActivityId + "');" : "") +
+                            ((Utils.isExpandLikers()) ? "socialUIActivity.loadLikersByURL();" : "") +
                            "}, 100);");
       }
     } catch (Exception e) {

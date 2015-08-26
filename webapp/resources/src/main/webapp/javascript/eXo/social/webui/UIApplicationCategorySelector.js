@@ -19,4 +19,4 @@ var UIApplicationCategorySelector = {
 };
 
 return UIApplicationCategorySelector;
-})($, selector);
+})(gj, selector);

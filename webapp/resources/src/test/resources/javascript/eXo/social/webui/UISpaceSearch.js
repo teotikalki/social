@@ -87,5 +87,4 @@
 };
 
 return UISpaceSearch;
-})($);
-
+})(gj);

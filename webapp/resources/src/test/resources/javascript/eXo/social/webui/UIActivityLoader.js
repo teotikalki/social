@@ -116,4 +116,4 @@
     }
   };
   return UIActivityLoader;
-})($);
+})(gj);

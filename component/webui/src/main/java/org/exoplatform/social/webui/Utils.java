@@ -736,13 +736,13 @@ public class Utils {
     JavascriptManager jm = pContext.getJavascriptManager();
 
     StringBuilder script = new StringBuilder("setTimeout(function() {")
-      .append("jq('.LeftNavigationTDContainer:first').css('height', 'auto');")
-      .append("jq('#UIUserActivityStreamPortlet').css('height', 'auto');")
-      .append("jq('#UIProfile').css('height', 'auto');")
+      .append("gj('.LeftNavigationTDContainer:first').css('height', 'auto');")
+      .append("gj('#UIUserActivityStreamPortlet').css('height', 'auto');")
+      .append("gj('#UIProfile').css('height', 'auto');")
       .append("platformLeftNavigation.resize();")
       .append("}, 200);");
     
-    jm.require("SHARED/jquery", "jq")
+    jm.require("SHARED/jquery", "gj")
       .require("SHARED/platform-left-navigation", "platformLeftNavigation")
       .addScripts(script.toString());
   }
@@ -756,8 +756,8 @@ public class Utils {
   public static void initUserProfilePopup(String uiActivityId) {
     PortletRequestContext pContext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
     JavascriptManager jm = pContext.getJavascriptManager();
-    jm.require("SHARED/social-ui-profile", "profile")
-      .addScripts("profile.initUserProfilePopup('" + uiActivityId + "', null);");
+    jm.require("SHARED/social-ui-profile", "socialUIProfile")
+      .addScripts("socialUIProfile.initUserProfilePopup('" + uiActivityId + "', null);");
   }
   
   /**
@@ -769,8 +769,8 @@ public class Utils {
   public static void clearUserProfilePopup() {
     PortletRequestContext pContext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
     JavascriptManager jm = pContext.getJavascriptManager();
-    jm.require("SHARED/social-ui-profile", "profile")
-      .addScripts("profile.clearUserProfilePopup();");
+    jm.require("SHARED/social-ui-profile", "socialUIProfile")
+      .addScripts("socialUIProfile.clearUserProfilePopup();");
   }
   
   public static Space getSpaceByContext() {

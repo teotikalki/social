@@ -154,4 +154,4 @@ var UIProfileUserSearch = {
 $(window).on('resize', UIProfileUserSearch.resizeForm );
 
 return UIProfileUserSearch;
-})($);
+})(gj);

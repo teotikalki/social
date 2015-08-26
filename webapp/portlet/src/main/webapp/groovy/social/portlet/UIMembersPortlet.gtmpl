@@ -45,10 +45,10 @@ String searchAll = _ctx.appRes("UIMembersPortlet.label.SearchAll");
 String selectedStartChar = uicomponent.getSelectedChar();
 //
 def jsManager = _ctx.getRequestContext().getJavascriptManager();
-jsManager.require("SHARED/jquery", "jq")
+jsManager.require("SHARED/jquery", "gj")
      .require("SHARED/bts_tooltip")
      .require("SHARED/socialUtil", "socialUtil")
-     .addScripts("jq('*[rel=\"tooltip\"]').tooltip(); socialUtil.addfillUpFreeSpace('" + uicomponent.id + "');")
+     .addScripts("gj('*[rel=\"tooltip\"]').tooltip(); socialUtil.addfillUpFreeSpace('" + uicomponent.id + "');")
      .addScripts("socialUtil.addDynamicItemLayout('spaceManagerListBox');")
      .addScripts("socialUtil.addDynamicItemLayout('spaceMemberListBox');");
 %>

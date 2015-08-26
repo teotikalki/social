@@ -66,8 +66,8 @@
 
   String moreLabel = _ctx.appRes("${uicomponentId}.label.More").replace("'", "\\47");
   _ctx.getRequestContext().getJavascriptManager()
-  	  .require("SHARED/social-ui-space-nav", "spacenav")
-  	  .addScripts("spacenav.addEditability('" + uicomponent.id + "','" + moreLabel + "');");
+  	  .require("SHARED/social-ui-space-nav", "socialUISpaceNavigation")
+  	  .addScripts("socialUISpaceNavigation.addEditability('" + uicomponent.id + "','" + moreLabel + "');");
   
   String srcAppIcon;
   String appName;
