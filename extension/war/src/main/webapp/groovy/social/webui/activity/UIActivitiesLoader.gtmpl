@@ -5,6 +5,7 @@
   def requireJS = _ctx.getRequestContext().getJavascriptManager().getRequireJS();
   if(uicomponent.id.equals("UIActivitiesLoader")) {
     boolean hasMore = uicomponent.isHasMore();
+    System.out.println("\n\n Add js check load more....................... " + hasMore);
     requireJS.require("SHARED/social-ui-activities-loader", "activitiesLoader");
     requireJS.addScripts("activitiesLoader.init('$uicomponent.id', $hasMore);");
     
