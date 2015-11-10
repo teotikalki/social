@@ -324,7 +324,99 @@ var UIActivity = {
         closeLink.trigger('click');
       }
     }
-  }, 
+  },
+  onViewActivity: function(responsiveId) {
+    var root = $('#'+responsiveId);
+    if(root.length > 0 && eXo.social.SocialUtil.checkDevice().isMobile === true) {
+    root.find('.activityStream').off('click').on('click', function(evt) {
+        var parent = root;
+        //only display the current activity
+        var activity = $(this);                  
+        if(activity.hasClass('block-activity')) {
+          return true;
+        }
+        
+        //hide all of activities
+        parent.find('.activityStream').addClass('hidden-phone');
+        //only show current
+        activity.removeClass('hidden-phone').addClass('block-activity');
+        //reset size of the stream
+        $.publish("exo_social_activityStream_responsive_resetRightHeight");
+        //
+        $.publish("exo_social_activityStream_responsive_hide_top");
+
+        var activityDisplay = parent.find('div.uiActivitiesDisplay:first').addClass('activityDisplay');   
+        if(activityDisplay.find('.iconReturn').length === 0) {
+          activityDisplay.prepend($('<div class="visible-phone" style="cursor:pointer"><i class="uiIconEcmsDarkGray uiIconEcmsReturn iconReturn"></i></div>').click(function() {
+            var parent = root;
+            //TODO raise event
+            parent.find('div.uiActivitiesDisplay:first').removeClass('activityDisplay');
+            parent.find('.activityStream').removeClass('hidden-phone');           
+            var activity = parent.find('.block-activity').removeClass('block-activity');
+            //
+            $('.footComment').html('');
+            $(this).remove();
+
+            $.publish("exo_social_activityStream_responsive_show");
+          }));
+        }
+        //
+        
+        //
+        var footComment = $('.footComment');
+        if(footComment.length === 0) {
+          footComment = $('<div class="footComment visible-phone" style="z-index:1000"></div>');
+          $('body').append(footComment);
+        }
+        var input = activity.find('.inputContainer:first').clone().removeClass('hidden-phone');
+        window.inputId = input.attr('id');
+        input.attr('id', 'CurrentCommentInput');
+        input.find('.exo-mentions').remove();
+        input.find('button.btn:first').attr('id', 'CurrentCommentButton');
+        footComment.html('').append(input);
+        footComment.find('textarea.textarea:first').attr('id', 'CurrentCommentTextare').exoMentions({
+          onDataRequest:function (mode, query, callback) {
+            var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/getprofile/data.json?search='+query;
+            $.getJSON(url, function(responseData) {
+              responseData = _.filter(responseData, function(item) { 
+                return item.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
+              });
+              callback.call(this, responseData);
+            });
+          },
+          idAction : ('CurrentCommentButton'),
+          elasticStyle : {
+            maxHeight : '42px',
+            minHeight : '32px',
+            marginButton: '4px',
+            enableMargin: false
+          },
+          messages : window.eXo.social.I18n.mentions
+        });
+        //
+        var widthBtn = footComment.find('#CurrentCommentButton').on('click keyup', function(evt) {
+          if(evt.type === 'keyup' && evt.keyCode !== 13) {
+            return false;
+          }
+          var value = $(this).parents('.footComment').find('textarea.textarea:first').val();
+          $('#' + window.inputId).find('textarea.textarea:first').val(value);
+          var t = setTimeout(function() {
+            clearTimeout(t);
+            $.globalEval($('#' + window.inputId).find('button.btn:first').data('action-link'));
+          }, 100);
+        }).outerWidth();
+        footComment.find('.commentInput:first').css('margin-right', widthBtn + 18 + 'px');
+        //
+        var commentList = activity.find('.commentListInfo:first');
+        if(commentList.length > 0 && commentList.find('a:first').length > 0) {
+          var action = commentList.find('a:first').attr('onclick');
+          if(action && action.length > 0) {
+            $.globalEval(action.replace('objectId=none', 'objectId=all'));
+          }
+        }
+    }); 
+  }
+},
   responsiveMobile : function(id) {
     //
     if (typeof id === 'undefined' && UIActivity.responsiveId) {
@@ -336,67 +428,16 @@ var UIActivity = {
     if(deviceInfo.isMobile === true || deviceInfo.isTablet === true ||  deviceInfo.isTabletL === true  ) {
       UIActivity.resetRightHeight();
     }
+    $.subscribe("exo_social_activity_view", UIActivity.onViewActivity);
     var root = $('#'+id);
-    if(root.length > 0 && deviceInfo.isMobile === true) {
-      var hidenComposer = function(elm) {
-        UIActivity.hideLink();
-        root.find('.uiActivitiesDisplay:first').removeClass('hidden-phone');
-        return elm.parents('.uiComposer:first').addClass('hidden-phone');
-      };
-      //
-      root.find('.changeStatus').click(function(evt) {
-        UIActivity.resetRightHeight();
-        //
-        var parent = root;
-        parent.find('.uiActivitiesDisplay:first').addClass('hidden-phone');
-        if(parent.find('div.uiComposer.hidden-phone').length > 0) {
-          parent.find('div.uiComposer.hidden-phone').removeClass('hidden-phone');
-        }
-        
-        var composer = parent.find('.uiComposer:first');
-        composer.find('.replaceTextArea').focus();
-        composer.find('.button-group').find('.btn-cancel').off('click').click(function() {
-          hidenComposer($(this));
-        });
-        composer.find('.button-group').find('.btn-submit').prop('disabled', true).off('click').click(function() {
-          parent.find('#ShareButton').trigger('mousedown');
-          hidenComposer($(this));
-        });
-        //
-        composer.find('textarea#composerInput').exoMentions('registerControlButton', function(status) {
-          var btnSubmit = $('#' + UIActivity.responsiveId).find('.uiComposer:first').find('.btn-submit');
-          if(status === true) {
-            btnSubmit.removeAttr('disabled');
-          } else {
-            btnSubmit.prop('disabled', true);
-          }
-        });
-      });
-      //
-      var btnGroup = root.find('.button-group');
-      if (btnGroup) {
-        btnGroup.find('.btn-cancel').off('click').click(function() {
-          hidenComposer($(this));
-        });
-        btnGroup.find('.btn-submit').off('click').click(function() {
-          root.find('#ShareButton').trigger('mousedown');
-          hidenComposer($(this));
-        });
-      }
-      //
+    if(root.length > 0 && deviceInfo.isMobile === true) {     
       if ($('.activityDisplay').length === 0) {
         $('.inputContainer').addClass('hidden-phone');
       }
-      //activityStream
-      var activities = root.find('.activityStream');
-      if(activities.length === 0) {
-        activities = root.find('.uiActivityLoader');
-      }
       //
-      activities.off('click').click(eXo.social.SocialUtil.onViewActivity(UIActivity.responsiveId));
+      UIActivity.onViewActivity(UIActivity.responsiveId);
     }
   }
-  
 };
 //
 eXo.social.SocialUtil.addOnResizeWidth(function(evt){UIActivity.responsiveMobile()});

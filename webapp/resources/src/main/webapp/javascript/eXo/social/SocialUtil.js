@@ -58,6 +58,43 @@
       }
   };
 
+  //pub/sub
+  // the topic/subscription hash
+  var cache = {};
+  $.publish = function(topic, args) {
+    // example:
+    //    Publish stuff on '/some/topic'. Anything subscribed will be called
+    //    with a function signature like: function(a,b,c){ ... }
+    //
+    //  |   $.publish("/some/topic", ["a","b","c"]);
+    cache[topic] && $.each(cache[topic], function(){
+      this.apply($, args || []);
+    });
+  };
+
+  $.subscribe = function(topic, callback) {
+     // example:
+     // | $.subscribe("/some/topic", function(a, b, c){ /* handle data */ });
+     //
+     if(!cache[topic]){
+       cache[topic] = [];
+     }
+     cache[topic].push(callback);
+     return [topic, callback]; // Array
+  };
+
+  $.unsubscribe = function(handle) {
+    // example:
+    //  | var handle = $.subscribe("/something", function(){});
+    //  | $.unsubscribe(handle);  
+    var t = handle[0];
+    cache[t] && $.each(cache[t], function(idx){
+    if(this == handle[1]){
+      cache[t].splice(idx, 1);
+    }
+    });
+  };
+
   var SocialUtils = {
     /**
      * Constants
@@ -441,105 +478,8 @@
         body.addClass('tabletLDisplay');
       }
       return {'isMobile' : isMobile, 'isTablet' : isTablet, 'isTabletL' : isTabletL};
-    },
-    onViewActivity: function(responsiveId) {
-      var root = $('#'+responsiveId);
-      if(root.length > 0 && eXo.social.SocialUtil.checkDevice().isMobile === true) {
-      root.find('.activityStream').off('click').on('click', function(evt) {     
-          var activity = $(this);                  
-          if(activity.hasClass('block-activity')) {
-            return true;
-          }
-          var parent = root;
-          parent.find('.activityStream').addClass('hidden-phone');
-          //
-          var activityLoadMore = $('#ActivitiesLoader');
-          if (activityLoadMore != null) {
-             this.isLoadMore = (activityLoadMore.css('display') !== 'none');
-             activityLoadMore.hide();
-       
-          }
-          //
-          var activityDisplay = parent.find('div.uiActivitiesDisplay:first').addClass('activityDisplay');
-          activityDisplay.find('.activityTop').addClass('hidden-phone');
-
-      
-          if(activityDisplay.find('.iconReturn').length === 0) {
-            activityDisplay.prepend($('<div class="visible-phone" style="cursor:pointer"><i class="uiIconEcmsDarkGray uiIconEcmsReturn iconReturn"></i></div>').click(function() {
-              var parent = root;
-              parent.find('div.uiActivitiesDisplay:first').removeClass('activityDisplay');
-              parent.find('.activityStream').removeClass('hidden-phone');
-              parent.find('.activityTop').removeClass('hidden-phone');
-              var activity = parent.find('.block-activity').removeClass('block-activity');
-              $('.footComment').html('');
-              $(this).remove();
-              if (this.isLoadMore) {
-                var activityLoadMore = $('#ActivitiesLoader');
-                if (activityLoadMore != null) {
-                  activityLoadMore.show();
-                }
-                
-              }
-            }));
-          }
-          //
-          activity.removeClass('hidden-phone').addClass('block-activity');
-          //
-          var footComment = $('.footComment');
-          if(footComment.length === 0) {
-            footComment = $('<div class="footComment visible-phone" style="z-index:1000"></div>');
-            $('body').append(footComment);
-          }
-          var input = activity.find('.inputContainer:first').clone().removeClass('hidden-phone');
-          window.inputId = input.attr('id');
-          input.attr('id', 'CurrentCommentInput');
-          input.find('.exo-mentions').remove();
-          input.find('button.btn:first').attr('id', 'CurrentCommentButton');
-          footComment.html('').append(input);
-          footComment.find('textarea.textarea:first').attr('id', 'CurrentCommentTextare').exoMentions({
-            onDataRequest:function (mode, query, callback) {
-              var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/getprofile/data.json?search='+query;
-              $.getJSON(url, function(responseData) {
-                responseData = _.filter(responseData, function(item) { 
-                  return item.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
-                });
-                callback.call(this, responseData);
-              });
-            },
-            idAction : ('CurrentCommentButton'),
-            elasticStyle : {
-              maxHeight : '42px',
-              minHeight : '32px',
-              marginButton: '4px',
-              enableMargin: false
-            },
-            messages : window.eXo.social.I18n.mentions
-          });
-          //
-          var widthBtn = footComment.find('#CurrentCommentButton').on('click keyup', function(evt) {
-            if(evt.type === 'keyup' && evt.keyCode !== 13) {
-              return false;
-            }
-            var value = $(this).parents('.footComment').find('textarea.textarea:first').val();
-            $('#' + window.inputId).find('textarea.textarea:first').val(value);
-            var t = setTimeout(function() {
-              clearTimeout(t);
-              $.globalEval($('#' + window.inputId).find('button.btn:first').data('action-link'));
-            }, 100);
-          }).outerWidth();
-          footComment.find('.commentInput:first').css('margin-right', widthBtn + 18 + 'px');
-          //
-          var commentList = activity.find('.commentListInfo:first');
-          if(commentList.length > 0 && commentList.find('a:first').length > 0) {
-            var action = commentList.find('a:first').attr('onclick');
-            if(action && action.length > 0) {
-              $.globalEval(action.replace('objectId=none', 'objectId=all'));
-            }
-          }
-      }); 
-      }
-       
     }
+    
   };
 
   PopupConfirmation = {

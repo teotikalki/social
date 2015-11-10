@@ -38,6 +38,7 @@
     },
     init : function() {
     
+      UIComposer.composer = $('#' + UIComposer.composerId);
       // add @ button using js
 			var mentionButton = $('<a />', {
 				'href' : 'javascript:void(0);',
@@ -51,8 +52,6 @@
 			'class':'uiIconSocMention uiIconSocLightGray'
 			}));
 			$('div#ActivityComposerExt>a:last-child').before(mentionButton);
-
-      UIComposer.composer = $('#' + UIComposer.composerId);
 
       $(document).ready(function() {
         var actionLink = $('#actionLink');
@@ -97,7 +96,84 @@
         },
         messages : window.eXo.social.I18n.mentions
       });
+
+      UIComposer.responsive();
+
     },
+    responsive : function() {
+      var deviceInfo = eXo.social.SocialUtil.checkDevice();
+      if(deviceInfo.isMobile === true || deviceInfo.isTablet === true ||  deviceInfo.isTabletL === true  ) {
+        //register subcriber
+        $.subscribe("exo_social_composer_hide", UIComposer.hideComposer);
+        //register subcriber
+        $.subscribe("exo_social_composer_show", UIComposer.showComposer);
+        //register subcriber
+        $.subscribe("exo_social_composer_register_events", UIComposer.registerEvents);
+        
+        UIComposer.registerEvents();
+      }
+      
+    },
+    hideComposer : function() {
+      UIComposer.resetComposer();
+      //hide composer
+      UIComposer.composer.parents("div.uiComposer").addClass('hidden-phone');
+      //show stream
+      $.publish("exo_social_activityStream_responsive_show");
+    },
+    showComposer : function() {
+      //hide stream
+      $.publish("exo_social_activityStream_responsive_hide");
+      //
+      UIComposer.composer.parents("div.uiComposer.hidden-phone").removeClass('hidden-phone');
+      //
+      UIComposer.composer.find('.replaceTextArea').focus();     
+      //
+      UIComposer.registerEvents();
+      
+    },
+    registerEvents : function() {
+      var btnGroup = UIComposer.composer.find('.button-group');
+      if (btnGroup) {
+        //
+        btnGroup.find('.btn-cancel').off('click').click(function() {
+          UIComposer.hideComposer();
+        });
+
+        btnGroup.find('.btn-submit').prop('disabled', true).off('click').click(function() {
+          UIComposer.composer.find('#ShareButton').trigger('mousedown');
+          UIComposer.hideComposer();
+        });
+
+        //
+        UIComposer.composer.find('textarea#composerInput').exoMentions('registerControlButton', function(status) {
+          var btnSubmit = btnGroup.find('.btn-submit');
+          if(status === true) {
+            btnSubmit.removeAttr('disabled');
+          } else {
+            btnSubmit.prop('disabled', true);
+          }
+        });
+      }
+    },
+    resetComposer : function() {
+      $('textarea#composerInput').exoMentions('reset');
+      var container = $('#ComposerContainer')
+      var link = container.find('#LinkExtensionContainer');
+      if (link.length > 0) {
+        if (link.css('display') !== 'none') {
+          link.hide();
+        }
+      } 
+
+      var cmp = container.find('.uiLinkShareDisplay');
+      if (cmp.length > 0) {
+        var closeLink = cmp.find('a.uiIconClose');
+        if (closeLink) {
+          closeLink.trigger('click');
+        }
+      }
+    }, 
     post : function() {
       UIComposer.isReady = false;
       UIComposer.currentValue = "";

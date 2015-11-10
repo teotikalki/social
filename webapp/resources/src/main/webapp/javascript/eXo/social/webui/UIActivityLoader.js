@@ -5,6 +5,7 @@
     numberOfReqsPerSec : 10,//Perfect range: 5 -> 20
     hasMore: false,
     parentContainer : $('#UIActivitiesLoader'),
+    activitiesDisplay : $('.uiActivitiesDisplay:first'),
     scrollBottom : function() {
     return $(document).height() - $(window).scrollTop() - $(window).height();  
     },
@@ -19,7 +20,62 @@
         }
         UIActivityLoader.processBottomTimeLine();
       });
-  
+
+      UIActivityLoader.responsiveUI();
+      
+
+    },
+    responsiveUI: function() {
+      var deviceInfo = eXo.social.SocialUtil.checkDevice();
+      if(deviceInfo.isMobile === true || deviceInfo.isTablet === true ||  deviceInfo.isTabletL === true  ) {
+        UIActivityLoader.resetRightHeight();
+        //
+        UIActivityLoader.activitiesDisplay.find('.changeStatus').off('click').click(function(evt) {
+          $.publish("exo_social_composer_show");
+        });
+
+        //TODO moved to SocialUtils.js and using each to remove or add class
+        $.subscribe("exo_social_activityStream_responsive_hide", function() {
+          UIActivityLoader.activitiesDisplay.addClass('hidden-phone');
+          //hide activity loader
+          var activityLoadMore = UIActivityLoader.activitiesDisplay.find('#ActivitiesLoader');
+          if (activityLoadMore != null) {
+             activityLoadMore.hide();      
+          }
+        });
+
+        $.subscribe("exo_social_activityStream_responsive_hide_top", function() {
+          UIActivityLoader.activitiesDisplay.find('.activityTop').addClass('hidden-phone');
+          //hide activity loader
+          var activityLoadMore = UIActivityLoader.activitiesDisplay.find('#ActivitiesLoader');
+          if (activityLoadMore != null) {
+             activityLoadMore.hide();      
+          }
+        });
+
+        $.subscribe("exo_social_activityStream_responsive_show", function() {
+          UIActivityLoader.activitiesDisplay.find('.activityTop').removeClass('hidden-phone');
+          UIActivityLoader.activitiesDisplay.removeClass('hidden-phone');
+
+          var activityLoadMore = UIActivityLoader.activitiesDisplay.find('#ActivitiesLoader');
+          if (activityLoadMore != null) {
+             activityLoadMore.show();      
+          }
+        });
+
+        $.subscribe("exo_social_activityStream_responsive_resetRightHeight", UIActivityLoader.resetRightHeight);
+      }
+
+    },
+    resetRightHeight : function() {
+      var wHeight = $(window).height();
+      var leftBody = $('td.LeftNavigationTDContainer.TDContainer:first').height('auto');
+      var rightTD = $('td.RightBodyTDContainer.TDContainer:first').attr('style', '');
+      $('#UIUserActivityStreamPortlet').height('auto');
+      var T = setTimeout(function(){
+        rightTD.css('min-height', Math.max(wHeight, leftBody.height()) + 'px');
+        clearTimeout(T);
+      }, 1200);
     },
     setStatus : function(hasMore) {
       var me = UIActivityLoader;
@@ -58,7 +114,7 @@
         window.ajaxGet(url, function(data) {
           activityItem.attr('style', '').removeClass('activity-loadding');
           if (UIActivityLoader.responsiveId) {
-            eXo.social.SocialUtil.onViewActivity(UIActivityLoader.responsiveId);
+            $.publish("exo_social_activity_view", [UIActivityLoader.responsiveId]);
           }
         });
       }

@@ -119,7 +119,9 @@
   jsManager.require("SHARED/jquery", "jq").addScripts(hint_text_script);
 %>
 <div id="$uicomponent.id" class="uiUserActivitiesDisplay uiActivitiesDisplay clearfix"> <!-- use js to add beside one class that named "notSeen" if having some new updates  -->
-<% if (uicomponent.isWelcomeActivity()) { %>
+<% if (uicomponent.isWelcomeActivity()) { 
+   jsManager.require("SHARED/social-ui-activities-loader", "activitiesLoader").addScripts("activitiesLoader.responsiveUI();");
+%>
   <div class="composerHintCont">
 	<span class="arrowLeft"></span>
 	<a id="ComposerHintCloseBtn" href="javascript:void(0);" class="iconBorder"><i class="uiIconClose uiIconLightGray"></i></a>								

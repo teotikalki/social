@@ -5,6 +5,18 @@
       return this.replace(/^\s+|\s+$/g,'');
     };
   }
+  if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(searchElement) {
+      if (this == null) {
+        throw new TypeError();
+      }
+      return $.inArray(searchElement, this);
+    };
+  }
+
+  if (!window.location.origin) {
+    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+  }
   
   eXo.social = eXo.social || {};
   
@@ -12,9 +24,9 @@
     var portal = eXo.env.portal
     
     eXo.social.portal = {
-      rest : (portal.rest) ? portal.rest : 'rest-socialdemo',
-      portalName : (portal.portalName) ? portal.portalName : 'classic',
-      context : (portal.context) ? portal.context : '/socialdemo',
+      rest : (portal.rest) ? portal.rest : 'rest',
+      portalName : (portal.portalName) ? portal.portalName : 'intranet',
+      context : (portal.context) ? portal.context : '/portal',
       accessMode : (portal.accessMode) ? portal.accessMode : 'public',
       userName : (portal.userName) ? portal.userName : ''
     };
@@ -26,7 +38,63 @@
     foundNoMatch : 'Found no matching users for '
   };
 
+  // Disable json cache on IE11
+  if (!!navigator.userAgent.match(/Trident\/7\./)) { // Browser is IE11 
+    $.ajaxSetup({
+      cache:false
+    });
+  }
   
+  // Parse URL Queries Method
+  $.getQuery = function( query ) {
+      query = query.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+      var expr = "[\\?&]"+query+"=([^&#]*)";
+      var regex = new RegExp( expr );
+      var results = regex.exec( window.location.href );
+      if( results !== null ) {
+          return decodeURIComponent(results[1].replace(/\+/g, " "));
+      } else {
+          return "";
+      }
+  };
+
+  //pub/sub
+  // the topic/subscription hash
+  var cache = {};
+  $.publish = function(topic, args) {
+    // example:
+    //    Publish stuff on '/some/topic'. Anything subscribed will be called
+    //    with a function signature like: function(a,b,c){ ... }
+    //
+    //  |   $.publish("/some/topic", ["a","b","c"]);
+    cache[topic] && $.each(cache[topic], function(){
+      this.apply($, args || []);
+    });
+  };
+
+  $.subscribe = function(topic, callback) {
+     // example:
+     // | $.subscribe("/some/topic", function(a, b, c){ /* handle data */ });
+     //
+     if(!cache[topic]){
+       cache[topic] = [];
+     }
+     cache[topic].push(callback);
+     return [topic, callback]; // Array
+  };
+
+  $.unsubscribe = function(handle) {
+    // example:
+    //  | var handle = $.subscribe("/something", function(){});
+    //  | $.unsubscribe(handle);  
+    var t = handle[0];
+    cache[t] && $.each(cache[t], function(idx){
+    if(this == handle[1]){
+      cache[t].splice(idx, 1);
+    }
+    });
+  };
+
   var SocialUtils = {
     /**
      * Constants
@@ -35,6 +103,7 @@
     ITEM_BOX_MAX_WIDTH : 380,
     ITEM_BOX_MIN_WIDTH : 300,
     
+    isLoadMore : false,
     currentBrowseWidth : 0,
     onResizeWidth : new Array(),
     upFreeSpace : new Array(),
@@ -125,19 +194,17 @@
         gadgets.window.adjustHeight();
       }
     },
-    
-    applyConfirmPopup : function(id) { 
-      $('#' + id).find('.confirmPopup').on('click', function() {
-          var thizz = $(this);
-          var action_ = thizz.attr('data-onclick'); 
-          var label_ = thizz.attr('data-labelAction') || 'OK';
-          var close_ = thizz.attr('data-labelClose') || 'Close'; 
-          var title_ = thizz.attr('data-title') || 'Confirmation';
-          var message_ = thizz.attr('data-message');
-          eXo.social.PopupConfirmation.confirm('demo', [{action: action_, label : label_}], title_, message_, close_);
-        }); 
-      },
-      
+    applyConfirmPopup : function(confirmatioPopupParams) {
+      $('#' + confirmatioPopupParams.componentId).find('.confirmPopup').on('click', function() {
+        var thizz = $(this);
+        var action_ = thizz.attr('data-onclick'); 
+        var label_ = thizz.attr('data-labelAction') || confirmatioPopupParams.OK;
+        var close_ = thizz.attr('data-labelClose') || confirmatioPopupParams.Cancel; 
+        var title_ = thizz.attr('data-title') || confirmatioPopupParams.Caption;
+        var message_ = thizz.attr('data-message');
+        eXo.social.PopupConfirmation.confirm('demo', [{action: action_, label : label_}], title_, message_, close_);
+      }); 
+    },
     feedbackMessagePopup : function(title, message, closeLabel) { 
       var popup = PopupConfirmation.makeTemplate();
       popup.find('.popupTitle').html(title);
@@ -148,7 +215,6 @@
       //
       PopupConfirmation.show(popup);
      },
-     
      feedbackMessageInline : function(parentId, message) { 
        message = message.replace("${simpleQuote}", "'");
 
@@ -215,7 +281,7 @@
           identityBox.removeClass('checkedBox');
         }
       }
-      identityBox.find('button.btn-confirm:first').hide();
+      identityBox.find('button.btn-confirm:first').remove();
     },
     addOnResizeWidth : function(callback) {
       if (callback && String(typeof callback) === "function") {
@@ -241,13 +307,12 @@
       if(item.length > 0) {
         var lineNumbers = parseInt(item.attr('data-line'));
         if(lineNumbers) {
-          var originalText = item.text().trim();
-          if(item.attr('data-text') == null) {
-            item.attr('data-text', originalText);
-          } else {
-            originalText = item.attr('data-text');
-            item.text(originalText);
-          }
+          var originalText = item.attr('data-text') || item.text().trim();
+          item.attr('data-text', originalText);
+          item.text(originalText);
+          var wText = item.attr('data-width-text') || SocialUtils.getTextWidth(originalText);
+          item.attr('data-width-text', wText);
+          //
           var originalSize = originalText.length;
           if(originalText.indexOf(' ') < 0) {
             item.css({'word-break': 'break-word', 'word-wrap':'break-word'});
@@ -255,13 +320,13 @@
           //
           var key = item.attr('data-key') + lineNumbers;
           var maxSize = eXo.social.DATA_LIMIT_TEXT[key] || 0;
-          var sizeOk = eXo.social.DATA_LIMIT_TEXT[key + 'previousSize'] || 0;
+          var wTextOk = eXo.social.DATA_LIMIT_TEXT[key + 'previousWidth'] || 0;
           var threeDots = '...';
           if (maxSize > 0) {
             if (originalSize > maxSize) {
               item.text(originalText.substring(0, maxSize - threeDots.length) + threeDots);
             }
-          } else if (originalSize > sizeOk) {
+          } else if (wText > wTextOk) {
             // set default height for text container.
             item.css({
               'margin-top' : '0px', 'margin-bottom' : '0px',
@@ -277,7 +342,7 @@
               eXo.social.DATA_LIMIT_TEXT[key] = decreaseSize;
             }
             //
-            eXo.social.DATA_LIMIT_TEXT[key + 'previousSize'] = decreaseSize;
+            eXo.social.DATA_LIMIT_TEXT[key + 'previousWidth'] = SocialUtils.getTextWidth(item.text());
             // reset CSS height style for text container
             item.css({
               'margin-top' : '', 'margin-bottom' : '',
@@ -287,6 +352,15 @@
           }
         }
       }
+    },
+    getTextWidth : function(text) {
+      var jtext = $('body').find('> .sampleText');
+      if (jtext.length == 0) {
+        jtext = $('<div class="sampleText" style="display:inline-block;visibility:hidden"></div>');
+        jtext.appendTo($('body'));
+      }
+      jtext.text(text);
+      return jtext.width();
     },
     dynamicItemLayout : function(comId) {
       var container = $('#'+comId);
@@ -388,7 +462,24 @@
         fake.remove();
         parent.css('position', '');
       }
+    },
+    checkDevice : function() {
+      var body = $('body:first').removeClass('phoneDisplay').removeClass('tabletDisplay').removeClass('tabletLDisplay');
+      var isMobile = body.find('.visible-phone:first').css('display') !== 'none';
+      var isTablet = body.find('.visible-tablet:first').css('display') !== 'none';
+      var isTabletL = body.find('.visible-tabletL:first').css('display') !== 'none';
+      if (isMobile) {
+        body.addClass('phoneDisplay');
+      }
+      if (isTablet) {
+        body.addClass('tabletDisplay');
+      }
+      if (isTabletL) {
+        body.addClass('tabletLDisplay');
+      }
+      return {'isMobile' : isMobile, 'isTablet' : isTablet, 'isTabletL' : isTabletL};
     }
+    
   };
 
   PopupConfirmation = {
@@ -433,6 +524,8 @@
   
     show : function(popup) {
       $('#UIPortalApplication').append(popup);
+      $(document.body).addClass('modal-open');
+      popup = popup.show().find('.UIPopupWindow:first');
       popup.css({
         height : 'auto',
         width : '400px',
@@ -449,16 +542,18 @@
         'visibility' : 'visible',
         'overflow' : 'hidden'
       });
-      popup.animate({ height : pHeight + 'px' }, 500, function() { });
+      popup.animate({ height : pHeight + 'px' }, 500, function() {
+        $('.MaskLayer').click(PopupConfirmation.hiden);
+      });
       uiMaskLayer.createMask(popup[0].parentNode, popup[0], 1);
       popupWindow.initDND(popup.find('.popupTitle')[0], popup[0]);
     },
   
     hiden : function(e) {
       var thiz = $(this);
+      $(document.body).removeClass('modal-open');
       var popup = thiz.parents('#UISocialPopupConfirmation')
       if (popup.length > 0) {
-        uiMaskLayer.removeMask(popup[0].previousSibling);
         popup.animate({
           height : '0px'
         }, 300, function() {
@@ -481,7 +576,7 @@
       }
     }
   };
-  
+
   gj(window).resize(function(evt) {
     eXo.core.Browser.managerResize();
     if (SocialUtils.currentBrowseWidth != document.documentElement.clientWidth) {
