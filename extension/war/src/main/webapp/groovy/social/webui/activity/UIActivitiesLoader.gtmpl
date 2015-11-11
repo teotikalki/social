@@ -5,8 +5,9 @@
   def requireJS = _ctx.getRequestContext().getJavascriptManager().getRequireJS();
   if(uicomponent.id.equals("UIActivitiesLoader")) {
     boolean hasMore = uicomponent.isHasMore();
+    String portletId = uicomponent.getUIParentId();
     requireJS.require("SHARED/social-ui-activities-loader", "activitiesLoader");
-    requireJS.addScripts("activitiesLoader.init('$uicomponent.id', $hasMore);");
+    requireJS.addScripts("activitiesLoader.init('$portletId', $hasMore);");
     
     requireJS.require("SHARED/social-ui-activity", "activity").require("SHARED/jquery", "jq");
     requireJS.addScripts("activity.displayLikes();");

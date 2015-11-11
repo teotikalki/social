@@ -40,6 +40,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.UIContainer;
+import org.exoplatform.webui.core.UIPortletApplication;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.event.EventListener;
 
@@ -79,6 +80,10 @@ public class UIActivitiesLoader extends UIContainer {
     } catch (Exception e) {
       LOG.error(e);
     }
+  }
+  
+  public String getUIParentId() {
+    return this.getAncestorOfType(UIPortletApplication.class).getId();
   }
 
   @Override

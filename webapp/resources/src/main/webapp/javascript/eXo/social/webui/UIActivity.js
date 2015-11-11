@@ -341,8 +341,6 @@ var UIActivity = {
       if ($('.activityDisplay').length === 0) {
         $('.inputContainer').addClass('hidden-phone');
       }
-      //
-      $.publish("exo_social_activity_view", [UIActivity.responsiveId]);
     }
   }
 };

@@ -6,13 +6,15 @@
     hasMore: false,
     parentContainer : $('#UIActivitiesLoader'),
     activitiesDisplay : $('.uiActivitiesDisplay:first'),
+    portletId: null,
     scrollBottom : function() {
     return $(document).height() - $(window).scrollTop() - $(window).height();  
     },
     init: function (parentId, hasMore) {
+      UIActivityLoader.portletId = parentId;
       UIActivityLoader.hasMore = (hasMore === true || hasMore === 'true') ? true : false;
       UIActivityLoader.initIndicator();
-  
+
       $(document).ready(function() {
         // check onLoad page.
         if(UIActivityLoader.scrollBottom() <= UIActivityLoader.delta) {
@@ -67,6 +69,8 @@
         $.subscribe("exo_social_activity_view", UIActivityLoader.onViewActivity);
 
         $.subscribe("exo_social_activityStream_responsive_resetRightHeight", UIActivityLoader.resetRightHeight);
+
+        UIActivityLoader.onViewActivity(UIActivityLoader.portletId);
       }
 
     },
