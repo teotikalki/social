@@ -31,8 +31,8 @@
         UIActivityLoader.parentContainer = $('#UIActivitiesLoader');
         UIActivityLoader.activitiesDisplay = $('.uiActivitiesDisplay:first');
         UIActivityLoader.resetRightHeight();
-        
-        $('#UIActivitiesLoader').find('.changeStatus').off('click').click(function(evt) {
+
+        UIActivityLoader.parentContainer.parent().find('.changeStatus').off('click').click(function(evt) {
           $.publish("exo_social_composer_show");
         });
         //TODO moved to SocialUtils.js and using each to remove or add class
