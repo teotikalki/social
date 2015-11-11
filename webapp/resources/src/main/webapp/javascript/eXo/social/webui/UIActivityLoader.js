@@ -28,12 +28,13 @@
     responsiveUI: function() {
       var deviceInfo = eXo.social.SocialUtil.checkDevice();
       if(deviceInfo.isMobile === true || deviceInfo.isTablet === true ||  deviceInfo.isTabletL === true  ) {
+        UIActivityLoader.parentContainer = $('#UIActivitiesLoader');
+        UIActivityLoader.activitiesDisplay = $('.uiActivitiesDisplay:first');
         UIActivityLoader.resetRightHeight();
-        //
-        UIActivityLoader.activitiesDisplay.find('.changeStatus').off('click').click(function(evt) {
+        
+        $('#UIActivitiesLoader').find('.changeStatus').off('click').click(function(evt) {
           $.publish("exo_social_composer_show");
         });
-
         //TODO moved to SocialUtils.js and using each to remove or add class
         $.subscribe("exo_social_activityStream_responsive_hide", function() {
           UIActivityLoader.activitiesDisplay.addClass('hidden-phone');
@@ -62,6 +63,8 @@
              activityLoadMore.show();      
           }
         });
+
+        $.subscribe("exo_social_activity_view", UIActivityLoader.onViewActivity);
 
         $.subscribe("exo_social_activityStream_responsive_resetRightHeight", UIActivityLoader.resetRightHeight);
       }
@@ -114,7 +117,7 @@
         window.ajaxGet(url, function(data) {
           activityItem.attr('style', '').removeClass('activity-loadding');
           if (UIActivityLoader.responsiveId) {
-            $.publish("exo_social_activity_view", [UIActivityLoader.responsiveId]);
+            UIActivityLoader.onViewActivity(UIActivityLoader.responsiveId);
           }
         });
       }
@@ -175,7 +178,100 @@
           UIActivityLoader.renderActivity(activityItem);
         }
       }
+    },
+    onViewActivity: function(responsiveId) {
+        var root = $('#'+responsiveId);
+        if(root.length > 0 && eXo.social.SocialUtil.checkDevice().isMobile === true) {
+        root.find('.activityStream').off('click').on('click', function(evt) {
+            var parent = root;
+            //only display the current activity
+            var activity = $(this);                  
+            if(activity.hasClass('block-activity')) {
+              return true;
+            }
+            
+            //hide all of activities
+            parent.find('.activityStream').addClass('hidden-phone');
+            //only show current
+            activity.removeClass('hidden-phone').addClass('block-activity');
+            //reset size of the stream
+            $.publish("exo_social_activityStream_responsive_resetRightHeight");
+            //
+            $.publish("exo_social_activityStream_responsive_hide_top");
+
+            var activityDisplay = parent.find('div.uiActivitiesDisplay:first').addClass('activityDisplay');   
+            if(activityDisplay.find('.iconReturn').length === 0) {
+              activityDisplay.prepend($('<div class="visible-phone" style="cursor:pointer"><i class="uiIconEcmsDarkGray uiIconEcmsReturn iconReturn"></i></div>').click(function() {
+                var parent = root;
+                //TODO raise event
+                parent.find('div.uiActivitiesDisplay:first').removeClass('activityDisplay');
+                parent.find('.activityStream').removeClass('hidden-phone');           
+                var activity = parent.find('.block-activity').removeClass('block-activity');
+                //
+                $('.footComment').html('');
+                $(this).remove();
+
+                $.publish("exo_social_activityStream_responsive_show");
+              }));
+            }
+            //
+            
+            //
+            var footComment = $('.footComment');
+            if(footComment.length === 0) {
+              footComment = $('<div class="footComment visible-phone" style="z-index:1000"></div>');
+              $('body').append(footComment);
+            }
+            var input = activity.find('.inputContainer:first').clone().removeClass('hidden-phone');
+            window.inputId = input.attr('id');
+            input.attr('id', 'CurrentCommentInput');
+            input.find('.exo-mentions').remove();
+            input.find('button.btn:first').attr('id', 'CurrentCommentButton');
+            footComment.html('').append(input);
+            footComment.find('textarea.textarea:first').attr('id', 'CurrentCommentTextare').exoMentions({
+              onDataRequest:function (mode, query, callback) {
+                var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/getprofile/data.json?search='+query;
+                $.getJSON(url, function(responseData) {
+                  responseData = _.filter(responseData, function(item) { 
+                    return item.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
+                  });
+                  callback.call(this, responseData);
+                });
+              },
+              idAction : ('CurrentCommentButton'),
+              elasticStyle : {
+                maxHeight : '42px',
+                minHeight : '32px',
+                marginButton: '4px',
+                enableMargin: false
+              },
+              messages : window.eXo.social.I18n.mentions
+            });
+            //
+            var widthBtn = footComment.find('#CurrentCommentButton').on('click keyup', function(evt) {
+              if(evt.type === 'keyup' && evt.keyCode !== 13) {
+                return false;
+              }
+              var value = $(this).parents('.footComment').find('textarea.textarea:first').val();
+              $('#' + window.inputId).find('textarea.textarea:first').val(value);
+              var t = setTimeout(function() {
+                clearTimeout(t);
+                $.globalEval($('#' + window.inputId).find('button.btn:first').data('action-link'));
+              }, 100);
+            }).outerWidth();
+            footComment.find('.commentInput:first').css('margin-right', widthBtn + 18 + 'px');
+            //
+            var commentList = activity.find('.commentListInfo:first');
+            if(commentList.length > 0 && commentList.find('a:first').length > 0) {
+              var action = commentList.find('a:first').attr('onclick');
+              if(action && action.length > 0) {
+                $.globalEval(action.replace('objectId=none', 'objectId=all'));
+              }
+            }
+        }); 
+      }
     }
+
   };
   return UIActivityLoader;
 })($);
