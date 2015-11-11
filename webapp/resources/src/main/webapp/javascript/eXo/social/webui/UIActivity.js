@@ -342,7 +342,7 @@ var UIActivity = {
         $('.inputContainer').addClass('hidden-phone');
       }
       //
-      //$.publish("exo_social_activity_view", [UIActivity.responsiveId]);
+      $.publish("exo_social_activity_view", [UIActivity.responsiveId]);
     }
   }
 };
