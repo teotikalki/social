@@ -47,6 +47,7 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.User;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityConstants;
@@ -149,21 +150,28 @@ public class PeopleRestService implements ResourceContainer{
                     @PathParam("format") String format) throws Exception {
     String[] mediaTypes = new String[] { "json", "xml" };
     MediaType mediaType = Util.getMediaType(format, mediaTypes);
-    
     List<Identity> excludedIdentityList = new ArrayList<Identity>();
+    ConversationState state = ConversationState.getCurrent();
+    User user = (User) state.getAttribute("UserProfile");
+    if (currentUser == null || (state != null && state.getIdentity() != null && !IdentityConstants.ANONIM.equals(state.getIdentity().getUserId()))) {
+        currentUser = user.getUserName();
+      } else {
+          LOG.error("currentUser can not be null");
+          return Util.getResponse("currentUser can not be null", uriInfo, mediaType, Response.Status.OK);
+    }
     excludedIdentityList.add(Util.getViewerIdentity(currentUser));
     UserNameList nameList = new UserNameList();
     ProfileFilter filter = new ProfileFilter();
-    
-    filter.setName(name);
+    if(name != null) {
+       filter.setName(name);
+     }else{
+       filter.setName("");
+    }
     filter.setCompany("");
     filter.setPosition("");
     filter.setSkills("");
     filter.setExcludedIdentityList(excludedIdentityList);
-    
-    Identity currentIdentity = getIdentityManager().getOrCreateIdentity(
-                                 OrganizationIdentityProvider.NAME, currentUser, false);
-
+    Identity currentIdentity = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, currentUser, false);
     Identity[] result;
     if (PENDING_STATUS.equals(typeOfRelation)) {
       ListAccess<Identity> listAccess = getRelationshipManager().getOutgoingByFilter(currentIdentity, filter);
