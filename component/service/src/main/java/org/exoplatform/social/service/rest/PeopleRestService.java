@@ -41,6 +41,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shindig.social.opensocial.model.Activity;
+import org.exoplatform.commons.api.localization.LocalizationService;
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -306,6 +307,11 @@ public class PeopleRestService implements ResourceContainer{
       if (isAnonymous) {
         entitys.add(new ConnectionInfoRestOut(identity));
         continue;
+      }
+
+      if(lang==null) {
+        LocalizationService localizationService = (LocalizationService)  Util.getPortalContainerByName(portalName).getComponentInstanceOfType(LocalizationService.class);
+        lang= localizationService.getLanguage(Util.getPortalContainerByName(portalName),ConversationState.getCurrent().getIdentity(),Util.getCurrentServletRequest());
       }
       
       HashMap<String, Object> temp = getIdentityInfo(identity, lang);
