@@ -122,7 +122,10 @@ public class PeopleRestService implements ResourceContainer{
   private RelationshipManager relationshipManager;
   private SpaceService spaceService;
 
-  public PeopleRestService() {
+  private LocalizationService localizationService;
+
+  public PeopleRestService(LocalizationService localizationService) {
+    this.localizationService=localizationService;
   }
 
   /**
@@ -309,9 +312,8 @@ public class PeopleRestService implements ResourceContainer{
         continue;
       }
 
-      if(lang==null) {
-        LocalizationService localizationService = (LocalizationService)  Util.getPortalContainerByName(portalName).getComponentInstanceOfType(LocalizationService.class);
-        lang= localizationService.getLanguage(Util.getPortalContainerByName(portalName),ConversationState.getCurrent().getIdentity(),Util.getCurrentServletRequest());
+      if(lang==null || lang=="") {
+        lang= localizationService.getLocale(Util.getPortalContainerByName(portalName),ConversationState.getCurrent().getIdentity(),Util.getCurrentServletRequest()).getLanguage();
       }
       
       HashMap<String, Object> temp = getIdentityInfo(identity, lang);
