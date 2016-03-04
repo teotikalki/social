@@ -102,7 +102,7 @@ public class ActivityStorageImpl extends AbstractStorage implements ActivityStor
   /** Logger */
   private static final Log LOG = ExoLogger.getLogger(ActivityStorageImpl.class);
   private static final Pattern MENTION_PATTERN = Pattern.compile("@([^\\s]+)|@([^\\s]+)$");
-  public static final Pattern USER_NAME_VALIDATOR_REGEX = Pattern.compile("^[\\p{L}][\\p{L}._\\-\\d]+$");
+  public static final Pattern USER_NAME_VALIDATOR_REGEX = Pattern.compile("^[\\p{Alnum}][\\p{Alnum}._\\-\\d]+$");
   private ActivityStorage activityStorage;
 
   private final SortedSet<ActivityProcessor> activityProcessors;
