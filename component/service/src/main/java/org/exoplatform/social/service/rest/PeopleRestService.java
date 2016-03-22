@@ -20,8 +20,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -51,7 +56,9 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.social.common.RealtimeListAccess;
+import org.exoplatform.social.core.activity.model.ActivityStream;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.identity.SpaceMemberFilterListAccess;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.model.Profile;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
@@ -154,7 +161,8 @@ public class PeopleRestService implements ResourceContainer{
     excludedIdentityList.add(Util.getViewerIdentity(currentUser));
     UserNameList nameList = new UserNameList();
     ProfileFilter filter = new ProfileFilter();
-    
+
+    String keyword = name.toLowerCase();
     filter.setName(name);
     filter.setCompany("");
     filter.setPosition("");
@@ -181,16 +189,44 @@ public class PeopleRestService implements ResourceContainer{
       List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int)SUGGEST_LIMIT));
       Space space = getSpaceService().getSpaceByUrl(spaceURL);
       addSpaceUserToList(identities, nameList, space, typeOfRelation);
-    } else if (USER_TO_INVITE.equals(typeOfRelation)) { 
-      List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int)SUGGEST_LIMIT));
+    } else if (USER_TO_INVITE.equals(typeOfRelation)) {
       Space space = getSpaceService().getSpaceByUrl(spaceURL);
-      addSpaceUserToList(identities, nameList, space, typeOfRelation);
+
+      // Search in connections first
+      ListAccess<Identity> connections = getIdentityManager().getConnectionsWithListAccess(currentIdentity);
+      if (connections != null && connections.getSize() > 0) {
+        int start = 0;
+        int size = connections.getSize();
+        Profile profile;
+        while (start < size && (nameList.getNames() == null || nameList.getNames().size() < SUGGEST_LIMIT)) {
+          Identity[] ids = connections.load(0, (int)SUGGEST_LIMIT);
+          for (Identity id : ids) {
+            profile = getIdentityManager().getProfile(id);
+            if (isMatch(keyword, profile) && !isInList(nameList, id.getRemoteId())) {
+              addSpaceUserToList(Arrays.asList(id), nameList, space, typeOfRelation);
+            }
+
+            if (nameList.getNames() != null && nameList.getNames().size() >= SUGGEST_LIMIT) break;
+          }
+          start += SUGGEST_LIMIT;
+        }
+      }
+
+      long remain = SUGGEST_LIMIT - nameList.getNames().size();
+      if (remain > 0) {
+        List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) remain));
+        addSpaceUserToList(identities, nameList, space, typeOfRelation);
+      }
     } else { // Identities that match the keywords.
       ListAccess<Identity> listAccess = getIdentityManager().getIdentitiesByProfileFilter(currentIdentity.getProviderId(), filter, false);
       result = listAccess.load(0, (int)SUGGEST_LIMIT);
       addToNameList(nameList, result);
     }
     return Util.getResponse(nameList, uriInfo, mediaType, Response.Status.OK);
+  }
+
+  private boolean isInList(UserNameList nameList, String username) {
+    return nameList.getNames() != null && nameList.getNames().contains(username);
   }
   
   /**
@@ -209,26 +245,116 @@ public class PeopleRestService implements ResourceContainer{
   @Path("getprofile/data.json")
   public Response suggestUsernames(@Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext,
-                    @QueryParam("search") String query) throws Exception {
+                                   @QueryParam("search") String query,
+                                   @QueryParam("space") String spaceId,
+                                   @QueryParam("activity") String activityId) throws Exception {
     MediaType mediaType = Util.getMediaType("json", new String[]{"json"});
-    List<Identity> excludedIdentityList = new ArrayList<Identity>();
+    String userType = ConversationState.getCurrent().getIdentity().getUserId();
+    boolean isAnonymous = IdentityConstants.ANONIM.equals(userType);
+
+    Space space = null;
+
+    Map<String, Identity> result = new LinkedHashMap<>();
+
+    Profile profile;
+    String keyword = query.toLowerCase();
+
+    // Activity
+    ExoSocialActivity activity = null;
+    if (activityId != null && !activityId.isEmpty()) {
+      activity = getActivityManager().getActivity(activityId);
+    }
+    if (activity != null) {
+      Identity id = getIdentityManager().getIdentity(activity.getPosterId(), true);
+      if (OrganizationIdentityProvider.NAME.equals(id.getProviderId())) {
+        profile = id.getProfile();
+        if (isMatch(keyword, profile)) {
+          result.put(id.getRemoteId(), id);
+        }
+      }
+
+      // Commenter
+      addUsers(result, keyword, activity.getCommentedIds());
+      if (result.size() < SUGGEST_LIMIT) {
+        addUsers(result, keyword, activity.getMentionedIds());
+      }
+      if (result.size() < SUGGEST_LIMIT) {
+        addUsers(result, keyword, activity.getLikeIdentityIds());
+      }
+
+      if (activity.getActivityStream().getType() == ActivityStream.Type.SPACE && (spaceId == null || spaceId.isEmpty())) {
+        space = getSpaceService().getSpaceByPrettyName(activity.getActivityStream().getPrettyId());
+      }
+    }
+
+    long remainItem = SUGGEST_LIMIT - result.size();
+
     ProfileFilter filter = new ProfileFilter();
-    
     filter.setName(query);
     filter.setCompany("");
     filter.setPosition("");
     filter.setSkills("");
-    filter.setExcludedIdentityList(excludedIdentityList);
-    List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(
-                                  OrganizationIdentityProvider.NAME, filter, false).load(0, (int)SUGGEST_LIMIT));
-    
-    List<UserInfo> userInfos = new ArrayList<PeopleRestService.UserInfo>(identities.size());
+    filter.setExcludedIdentityList(new ArrayList<>());
+
+    ListAccess<Identity> list;
+
+    // Space
+    if (remainItem > 0) {
+      if (spaceId != null && !spaceId.isEmpty()) {
+        space = getSpaceService().getSpaceById(spaceId);
+      }
+      if (space != null) {
+        list = getIdentityManager().getSpaceIdentityByProfileFilter(space, filter, SpaceMemberFilterListAccess.Type.MEMBER, true);
+        if (list != null) {
+          for (Identity identity : list.load(0, (int) remainItem)) {
+            if (!result.containsKey(identity.getRemoteId())) {
+              result.put(identity.getRemoteId(), identity);
+            }
+          }
+          remainItem = SUGGEST_LIMIT - result.size();
+        }
+      }
+    }
+
+    // Connection
+    if (!isAnonymous && remainItem > 0) {
+      // Get Connection
+      Identity id = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, userType, false);
+      ListAccess<Identity> connections = getIdentityManager().getConnectionsWithListAccess(id);
+      if (connections != null && connections.getSize() > 0) {
+        int start = 0;
+        int size = connections.getSize();
+        while (start < size && result.size() < SUGGEST_LIMIT) {
+          Identity[] ids = connections.load(0, (int)SUGGEST_LIMIT - 1);
+          for (Identity identity : ids) {
+            profile = getIdentityManager().getProfile(identity);
+            if (!result.containsKey(identity.getRemoteId()) && isMatch(keyword, profile)) {
+              result.put(identity.getRemoteId(), identity);
+            }
+            if (result.size() >= SUGGEST_LIMIT) break;
+          }
+          start += SUGGEST_LIMIT;
+        }
+        remainItem = SUGGEST_LIMIT - result.size();
+      }
+    }
+
+    // Search in hole world
+    if (remainItem > 0) {
+      list = getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, true);
+      if (list != null) {
+        for (Identity identity : list.load(0, (int) remainItem)) {
+          if (!result.containsKey(identity.getRemoteId())) {
+            result.put(identity.getRemoteId(), identity);
+          }
+        }
+      }
+    }
+
+    List<UserInfo> userInfos = new ArrayList<>(result.size());
+
     UserInfo userInfo;
-    String userType = ConversationState.getCurrent().getIdentity().getUserId();
-    boolean isAnonymous = IdentityConstants.ANONIM.equals(userType) 
-      || securityContext.getUserPrincipal() == null;
-    
-    for (Identity identity : identities) {
+    for (Identity identity : result.values()) {
       userInfo = new UserInfo();
       if (!isAnonymous) {
         userInfo.setId(identity.getRemoteId());
@@ -238,8 +364,40 @@ public class PeopleRestService implements ResourceContainer{
       userInfo.setType("contact"); //hardcode for test
       userInfos.add(userInfo);
     }
-    
+
     return Util.getResponse(userInfos, uriInfo, mediaType, Response.Status.OK);
+  }
+
+  private void addUsers(Map<String, Identity> map, String keyword, String[] users) {
+    if (users != null && users.length > 0) {
+      Identity id;
+      Profile profile;
+      for (String u : users) {
+        if (map.size() >= SUGGEST_LIMIT) return;
+        if (u != null && u.length() > 0) {
+          int index = u.indexOf('@');
+          if (index != -1) {
+            u = u.substring(0, index);
+          }
+          id = getIdentityManager().getIdentity(u, true);
+          if (id != null && OrganizationIdentityProvider.NAME.equals(id.getProviderId())
+                  && !map.containsKey(id.getRemoteId())) {
+            profile = id.getProfile();
+            if (isMatch(keyword, profile)) {
+              map.put(id.getRemoteId(), id);
+            }
+          }
+        }
+      }
+    }
+  }
+  private boolean isMatch(String keyword, Profile profile) {
+    String fullName = profile.getFullName();
+    String firstName = (String)profile.getProperty(Profile.FIRST_NAME);
+    String lastName = (String)profile.getProperty(Profile.FIRST_NAME);
+    return ((fullName != null && fullName.toLowerCase().contains(keyword))
+            || (firstName != null && firstName.toLowerCase().contains(keyword))
+            || (lastName != null && lastName.toLowerCase().contains(keyword)));
   }
   
   /**
@@ -653,7 +811,7 @@ public class PeopleRestService implements ResourceContainer{
         nameList.addAvatar(getAvatarURL(identity));
         continue;
       } else if (USER_TO_INVITE.equals(typeOfRelation) && !spaceSrv.isInvited(space, userName)
-                 && !spaceSrv.isPending(space, userName) && !spaceSrv.isMember(space, userName)) {
+                 && !spaceSrv.isPending(space, userName) && !spaceSrv.isMember(space, userName) && !isInList(nameList, userName)) {
         nameList.addName(userName);
         nameList.addFullName(fullName);
         nameList.addAvatar(getAvatarURL(identity));

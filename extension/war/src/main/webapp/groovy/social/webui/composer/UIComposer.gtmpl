@@ -49,12 +49,14 @@
   }
 
   def composerId = uicomponent.getChild(UIFormTextAreaInput.class).getId();
+  def currentSpaceId = uicomponent.getSpaceId();
 
   def params = """
     {
       composerId:'$uicomponent.id', 
       textareaId:'${uicomponent.COMPOSER_TEXT_AREA_INPUT}', 
-      mentionBtnLabel:'$mentionBtnLabel'
+      mentionBtnLabel:'$mentionBtnLabel',
+	  currentSpace: '$currentSpaceId'
     }
   """
 

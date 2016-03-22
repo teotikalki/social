@@ -64,6 +64,7 @@ var UIActivity = {
     }
   },
   init: function() {
+    var activityId = UIActivity.activityId;
     UIActivity.commentLinkEl = $("#"+UIActivity.commentLinkId);
     UIActivity.commentFormBlockEl = $("#" + UIActivity.commentFormBlockId);
     UIActivity.commentTextareaEl = $("#" + UIActivity.commentTextareId);
@@ -125,6 +126,7 @@ var UIActivity = {
     $('textarea#CommentTextarea' + UIActivity.activityId).exoMentions({
         onDataRequest:function (mode, query, callback) {
           var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/getprofile/data.json?search='+query;
+          url += '&activity=' + activityId;
           $.getJSON(url, function(responseData) {
             responseData = _.filter(responseData, function(item) { 
               return item.name.toLowerCase().indexOf(query.toLowerCase()) > -1;

@@ -31,10 +31,12 @@
       UIComposer.init();
     },
     configure : function(params) {
+      console.error("This is called, I don't know from where");
       UIComposer.composerId = params.composerId;
       UIComposer.textareaId = params.textareaId;
       UIComposer.mentionBtnLabel = params.mentionBtnLabel;
       UIComposer.userTyped = false;
+      UIComposer.currentSpace = params.currentSpace;
     },
     init : function() {
     
@@ -79,6 +81,9 @@
       $('textarea#' + UIComposer.textareaId).exoMentions({
         onDataRequest : function(mode, query, callback) {
           var url = window.location.protocol + '//' + window.location.host + '/' + eXo.social.portal.rest + '/social/people/getprofile/data.json?search=' + query;
+          if (UIComposer.currentSpace != '') {
+            url += '&space=' + UIComposer.currentSpace;
+          }
           $.getJSON(url, function(responseData) {
             responseData = _.filter(responseData, function(item) {
               return item.name.toLowerCase().indexOf(query.toLowerCase()) > -1;

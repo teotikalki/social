@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.webui.Utils;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
 import org.exoplatform.social.webui.activity.UIActivitiesContainer;
@@ -176,6 +177,15 @@ public class UIComposer extends UIForm {
     b.append("javascript:eXo.webui.UIForm.submitForm('").append(activityComposerFormId).append("','");
     b.append("Activate").append("',true)");
     return b.toString();
+  }
+
+  public String getSpaceId() {
+    Space space =  Utils.getSpaceByContext();
+    if (space == null) {
+      return "";
+    } else {
+      return space.getId();
+    }
   }
 
   public static class PostMessageActionListener extends EventListener<UIComposer> {
