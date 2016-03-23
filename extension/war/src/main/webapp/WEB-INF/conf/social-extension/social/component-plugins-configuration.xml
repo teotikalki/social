@@ -234,7 +234,8 @@
     <component-plugin>
       <name>addPaths</name>
       <set-method>addPlugin</set-method>
-      <type>org.exoplatform.services.jcr.ext.hierarchy.impl.AddPathPlugin</type>
+      <!-- if social workspaces not exists, this plugin will not init jcrPaths -->
+      <type>org.exoplatform.social.common.jcr.SocialAddPathPlugin</type>
       <init-params>
         <object-param>
           <name>cms.configuration</name>

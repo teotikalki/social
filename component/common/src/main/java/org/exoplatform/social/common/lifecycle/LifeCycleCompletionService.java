@@ -24,8 +24,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.exoplatform.commons.chromattic.ChromatticLifeCycle;
+import org.exoplatform.commons.chromattic.SessionContext;
+import org.exoplatform.commons.chromattic.SynchronizationListener;
+import org.exoplatform.commons.chromattic.SynchronizationStatus;
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 
 /**
  * Process the callable request out of the http request.
@@ -41,7 +48,7 @@ public class LifeCycleCompletionService {
 
   private Executor executor;
 
-  private ExecutorCompletionService ecs;
+  protected ExecutorCompletionService ecs;
 
   private final int DEFAULT_THREAD_NUMBER = 1;
 
@@ -50,6 +57,8 @@ public class LifeCycleCompletionService {
   private int configThreadNumber;
 
   private boolean configAsyncExecution;
+  
+  private static final Log LOG = ExoLogger.getLogger(LifeCycleCompletionService.class);
 
   public LifeCycleCompletionService(InitParams params) {
 
@@ -73,7 +82,6 @@ public class LifeCycleCompletionService {
       this.configAsyncExecution = DEFAULT_ASYNC_EXECUTION;
     }
 
-
     //
     if (configAsyncExecution) {
       this.executor = Executors.newFixedThreadPool(this.configThreadNumber);
@@ -87,8 +95,28 @@ public class LifeCycleCompletionService {
 
   }
 
-  public void addTask(Callable callable) {
-    ecs.submit(callable);
+  public void addTask(final Callable callable) {
+    if (isAsync()) {
+      SessionContext ctx = getLifecycle().getContext();
+      
+      ctx.addSynchronizationListener(new SynchronizationListener() {
+        public void beforeSynchronization() {}
+        
+        @SuppressWarnings("unchecked")
+        public void afterSynchronization(SynchronizationStatus status) {
+          if (status == SynchronizationStatus.SAVED) {
+            ecs.submit(callable);
+          }
+        }
+      });
+    } else {
+      ecs.submit(callable);
+    }
+  }
+
+  private ChromatticLifeCycle getLifecycle() {
+    PortalContainer container = PortalContainer.getInstance();
+    return container.getComponentInstanceOfType((ChromatticLifeCycle.class));
   }
 
   public void waitCompletionFinished() {

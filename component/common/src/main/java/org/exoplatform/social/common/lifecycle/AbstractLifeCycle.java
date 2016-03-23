@@ -22,9 +22,6 @@ import java.util.concurrent.Callable;
 
 import org.exoplatform.commons.chromattic.ChromatticLifeCycle;
 import org.exoplatform.commons.chromattic.ChromatticManager;
-import org.exoplatform.commons.chromattic.SessionContext;
-import org.exoplatform.commons.chromattic.SynchronizationListener;
-import org.exoplatform.commons.chromattic.SynchronizationStatus;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -88,23 +85,8 @@ public abstract class AbstractLifeCycle<T extends LifeCycleListener<E>, E extend
    * @param event
    */
   protected void broadcast(final E event) {
-
-    //
-    SessionContext ctx = lifeCycle.getContext();
     if (completionService.isAsync()) {
-      ctx.addSynchronizationListener(new SynchronizationListener() {
-
-        public void beforeSynchronization() {}
-
-        public void afterSynchronization(SynchronizationStatus status) {
-          if (status == SynchronizationStatus.SAVED) {
-
-            addTasks(event);
-
-          }
-        }
-
-      });
+      addTasks(event);
     }
     else {
       for (T listener : listeners) {
@@ -142,7 +124,6 @@ public abstract class AbstractLifeCycle<T extends LifeCycleListener<E>, E extend
 
   protected void begin() {
     manager.beginRequest();
-    lifeCycle.getChromattic().openSession();
   }
 
   protected void end() {
