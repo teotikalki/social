@@ -41,6 +41,7 @@ public class IdentityFilterKey extends ScopeCacheKey {
   private final String company;
   private final String skills;
   private final char firstChar;
+  private final List<String> searchIn;
   private final List<IdentityKey> excluded;
   private final List<String> onlineRemoteIds;
   private final String all;
@@ -67,6 +68,12 @@ public class IdentityFilterKey extends ScopeCacheKey {
     }
 
     this.excluded = Collections.unmodifiableList(keys);
+
+    List<String> searchIn = new ArrayList<>();
+    if (filter.getSearchInIdentities() != null && filter.getSearchInIdentities().size() > 0) {
+      filter.getSearchInIdentities().forEach(s -> searchIn.add(s));
+    }
+    this.searchIn = Collections.unmodifiableList(searchIn);
     
     this.onlineRemoteIds = Collections.unmodifiableList(filter.getOnlineRemoteIds());
     this.all = filter.getAll();
@@ -89,6 +96,12 @@ public class IdentityFilterKey extends ScopeCacheKey {
       keys.add(new IdentityKey(i));
     }
     this.excluded = Collections.unmodifiableList(keys);
+
+    List<String> searchIn = new ArrayList<>();
+    if (filter.getSearchInIdentities() != null && filter.getSearchInIdentities().size() > 0) {
+      filter.getSearchInIdentities().forEach(s -> searchIn.add(s));
+    }
+    this.searchIn = Collections.unmodifiableList(searchIn);
     
     this.onlineRemoteIds = Collections.unmodifiableList(filter.getOnlineRemoteIds());
     this.all = filter.getAll();
@@ -124,6 +137,10 @@ public class IdentityFilterKey extends ScopeCacheKey {
     return excluded;
   }
 
+  public List<String> getSearchIn() {
+    return searchIn;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -143,6 +160,7 @@ public class IdentityFilterKey extends ScopeCacheKey {
     if (remoteId != null ? !remoteId.equals(that.remoteId) : that.remoteId != null) return false;
     if (skills != null ? !skills.equals(that.skills) : that.skills != null) return false;
     if (sorting != null ? !sorting.equals(that.sorting) : that.sorting != null) return false;
+    if (searchIn != null ? !searchIn.equals(that.searchIn) : that.searchIn != null) return false;
 
     return true;
   }
@@ -161,6 +179,7 @@ public class IdentityFilterKey extends ScopeCacheKey {
     result = 31 * result + (onlineRemoteIds != null ? onlineRemoteIds.hashCode() : 0);
     result = 31 * result + (all != null ? all.hashCode() : 0);
     result = 31 * result + (sorting != null ? sorting.hashCode() : 0);
+    result = 31 * result + (searchIn != null ? searchIn.hashCode() : 0);
     return result;
   }
 

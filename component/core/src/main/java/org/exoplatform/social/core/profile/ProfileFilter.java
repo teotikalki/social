@@ -44,6 +44,11 @@ public class ProfileFilter {
   /** Used for unified search */
   private String all;
 
+  /**
+   * List of Identity IDs to be search in
+   */
+  private List<String> searchInIdentities;
+
   /** the list of identity to be excluded from profile filter **/
   private List<Identity> excludedIdentityList;
   
@@ -135,6 +140,14 @@ public class ProfileFilter {
    * @return the name
    */
   public String getName() { return name; }
+
+  public List<String> getSearchInIdentities() {
+    return searchInIdentities;
+  }
+
+  public void setSearchInIdentities(List<String> searchInIdentities) {
+    this.searchInIdentities = searchInIdentities;
+  }
 
   /**
    * Sets the excludedIdentityList

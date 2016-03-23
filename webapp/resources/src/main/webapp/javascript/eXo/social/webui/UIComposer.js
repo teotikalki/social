@@ -31,7 +31,6 @@
       UIComposer.init();
     },
     configure : function(params) {
-      console.error("This is called, I don't know from where");
       UIComposer.composerId = params.composerId;
       UIComposer.textareaId = params.textareaId;
       UIComposer.mentionBtnLabel = params.mentionBtnLabel;

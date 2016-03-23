@@ -368,25 +368,43 @@ public class PeopleRestService implements ResourceContainer{
     return Util.getResponse(userInfos, uriInfo, mediaType, Response.Status.OK);
   }
 
-  private void addUsers(Map<String, Identity> map, String keyword, String[] users) {
+  private void addUsers(Map<String, Identity> map, String keyword, String[] users) throws Exception {
+    if (map.size() >= SUGGEST_LIMIT) return;
+    int remain = (int)(SUGGEST_LIMIT - map.size());
+
     if (users != null && users.length > 0) {
-      Identity id;
-      Profile profile;
+      List<String> ids = new ArrayList<>(users.length);
       for (String u : users) {
-        if (map.size() >= SUGGEST_LIMIT) return;
-        if (u != null && u.length() > 0) {
-          int index = u.indexOf('@');
-          if (index != -1) {
-            u = u.substring(0, index);
-          }
-          id = getIdentityManager().getIdentity(u, true);
-          if (id != null && OrganizationIdentityProvider.NAME.equals(id.getProviderId())
-                  && !map.containsKey(id.getRemoteId())) {
-            profile = id.getProfile();
-            if (isMatch(keyword, profile)) {
+        int index = u.indexOf('@');
+        if (index != -1) {
+          u = u.substring(0, index);
+        }
+        ids.add(u);
+      }
+
+      ProfileFilter filter = new ProfileFilter();
+      filter.setName(keyword);
+      filter.setCompany("");
+      filter.setPosition("");
+      filter.setSkills("");
+      filter.setSearchInIdentities(ids);
+      filter.setExcludedIdentityList(new ArrayList<>());
+
+      ListAccess<Identity> searchResult = identityManager.getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false);
+      int count;
+      if (searchResult != null && (count = searchResult.getSize()) > 0) {
+        int start = 0;
+        while (start < count && remain > 0) {
+          for (Identity id : searchResult.load(start, (int) SUGGEST_LIMIT)) {
+            if (!map.containsKey(id.getRemoteId())) {
               map.put(id.getRemoteId(), id);
+              remain--;
+            }
+            if (remain == 0) {
+              break;
             }
           }
+          start += SUGGEST_LIMIT;
         }
       }
     }

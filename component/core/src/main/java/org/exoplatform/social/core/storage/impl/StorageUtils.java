@@ -85,6 +85,20 @@ public class StorageUtils {
     String skills = addAsteriskToStringInput(StringEscapeUtils.escapeHtml(profileFilter.getSkills()).trim()).replace(ASTERISK_STR, PERCENT_STR);
     String company = addAsteriskToStringInput(StringEscapeUtils.escapeHtml(profileFilter.getCompany()).trim()).replace(ASTERISK_STR, PERCENT_STR);
 
+    if (profileFilter.getSearchInIdentities() != null && profileFilter.getSearchInIdentities().size() > 0) {
+      whereExpression.and().startGroup();
+      boolean isFirst = true;
+      for (String id : profileFilter.getSearchInIdentities()) {
+        if (isFirst) {
+          whereExpression.like(ProfileEntity.parentId, id);
+          isFirst = false;
+        } else {
+          whereExpression.or().like(ProfileEntity.parentId, id);
+        }
+      }
+      whereExpression.endGroup();
+    }
+
     //
     if (firstChar != '\u0000') {
       whereExpression.and().like(
