@@ -71,7 +71,7 @@ public class IdentityFilterKey extends ScopeCacheKey {
 
     List<String> searchIn = new ArrayList<>();
     if (filter.getSearchInIdentities() != null && filter.getSearchInIdentities().size() > 0) {
-      filter.getSearchInIdentities().forEach(s -> searchIn.add(s));
+      searchIn.addAll(filter.getSearchInIdentities());
     }
     this.searchIn = Collections.unmodifiableList(searchIn);
     
@@ -99,7 +99,7 @@ public class IdentityFilterKey extends ScopeCacheKey {
 
     List<String> searchIn = new ArrayList<>();
     if (filter.getSearchInIdentities() != null && filter.getSearchInIdentities().size() > 0) {
-      filter.getSearchInIdentities().forEach(s -> searchIn.add(s));
+      searchIn.addAll(filter.getSearchInIdentities());
     }
     this.searchIn = Collections.unmodifiableList(searchIn);
     
