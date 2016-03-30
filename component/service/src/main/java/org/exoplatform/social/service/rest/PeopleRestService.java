@@ -20,13 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -193,26 +190,18 @@ public class PeopleRestService implements ResourceContainer{
       Space space = getSpaceService().getSpaceByUrl(spaceURL);
 
       // Search in connections first
-      ListAccess<Identity> connections = getIdentityManager().getConnectionsWithListAccess(currentIdentity);
+      ListAccess<Identity> connections = getRelationshipManager().getConnectionsByFilter(currentIdentity, filter);
       if (connections != null && connections.getSize() > 0) {
-        int start = 0;
         int size = connections.getSize();
-        Profile profile;
-        while (start < size && (nameList.getNames() == null || nameList.getNames().size() < SUGGEST_LIMIT)) {
-          Identity[] ids = connections.load(0, (int)SUGGEST_LIMIT);
-          for (Identity id : ids) {
-            profile = getIdentityManager().getProfile(id);
-            if (isMatch(keyword, profile) && !isInList(nameList, id.getRemoteId())) {
-              addSpaceUserToList(Arrays.asList(id), nameList, space, typeOfRelation);
-            }
-
-            if (nameList.getNames() != null && nameList.getNames().size() >= SUGGEST_LIMIT) break;
-          }
-          start += SUGGEST_LIMIT;
+        for (Identity id : connections.load(0, size < SUGGEST_LIMIT ? size : (int)SUGGEST_LIMIT)) {
+          addSpaceUserToList(Arrays.asList(id), nameList, space, typeOfRelation);
+          excludedIdentityList.add(id);
         }
       }
 
       long remain = SUGGEST_LIMIT - nameList.getNames().size();
+      filter.setExcludedIdentityList(excludedIdentityList);
+
       if (remain > 0) {
         List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) remain));
         addSpaceUserToList(identities, nameList, space, typeOfRelation);
@@ -255,9 +244,7 @@ public class PeopleRestService implements ResourceContainer{
     Space space = null;
 
     Map<String, Identity> result = new LinkedHashMap<>();
-
-    Profile profile;
-    String keyword = query.toLowerCase();
+    List<Identity> excluded = new ArrayList<>();
 
     // Activity
     ExoSocialActivity activity = null;
@@ -267,19 +254,16 @@ public class PeopleRestService implements ResourceContainer{
     if (activity != null) {
       Identity id = getIdentityManager().getIdentity(activity.getPosterId(), true);
       if (OrganizationIdentityProvider.NAME.equals(id.getProviderId())) {
-        profile = id.getProfile();
-        if (isMatch(keyword, profile)) {
-          result.put(id.getRemoteId(), id);
-        }
+        addUsers(result, excluded,  query, new String[] {id.getId()});
       }
 
       // Commenter
-      addUsers(result, keyword, activity.getCommentedIds());
+      addUsers(result, excluded, query, activity.getCommentedIds());
       if (result.size() < SUGGEST_LIMIT) {
-        addUsers(result, keyword, activity.getMentionedIds());
+        addUsers(result, excluded, query, activity.getMentionedIds());
       }
       if (result.size() < SUGGEST_LIMIT) {
-        addUsers(result, keyword, activity.getLikeIdentityIds());
+        addUsers(result, excluded, query, activity.getLikeIdentityIds());
       }
 
       if (activity.getActivityStream().getType() == ActivityStream.Type.SPACE && (spaceId == null || spaceId.isEmpty())) {
@@ -287,16 +271,17 @@ public class PeopleRestService implements ResourceContainer{
       }
     }
 
-    long remainItem = SUGGEST_LIMIT - result.size();
+    int remainItem = (int)SUGGEST_LIMIT - result.size();
 
     ProfileFilter filter = new ProfileFilter();
     filter.setName(query);
     filter.setCompany("");
     filter.setPosition("");
     filter.setSkills("");
-    filter.setExcludedIdentityList(new ArrayList<>());
+    filter.setExcludedIdentityList(excluded);
 
     ListAccess<Identity> list;
+    int size;
 
     // Space
     if (remainItem > 0) {
@@ -305,13 +290,15 @@ public class PeopleRestService implements ResourceContainer{
       }
       if (space != null) {
         list = getIdentityManager().getSpaceIdentityByProfileFilter(space, filter, SpaceMemberFilterListAccess.Type.MEMBER, true);
-        if (list != null) {
-          for (Identity identity : list.load(0, (int) remainItem)) {
+        if (list != null && (size = list.getSize()) > 0) {
+          for (Identity identity : list.load(0, size < remainItem ? size : remainItem)) {
             if (!result.containsKey(identity.getRemoteId())) {
               result.put(identity.getRemoteId(), identity);
+              excluded.add(identity);
             }
           }
-          remainItem = SUGGEST_LIMIT - result.size();
+          remainItem = (int)SUGGEST_LIMIT - result.size();
+          filter.setExcludedIdentityList(excluded);
         }
       }
     }
@@ -320,30 +307,24 @@ public class PeopleRestService implements ResourceContainer{
     if (!isAnonymous && remainItem > 0) {
       // Get Connection
       Identity id = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, userType, false);
-      ListAccess<Identity> connections = getIdentityManager().getConnectionsWithListAccess(id);
-      if (connections != null && connections.getSize() > 0) {
-        int start = 0;
-        int size = connections.getSize();
-        while (start < size && result.size() < SUGGEST_LIMIT) {
-          Identity[] ids = connections.load(0, (int)SUGGEST_LIMIT - 1);
-          for (Identity identity : ids) {
-            profile = getIdentityManager().getProfile(identity);
-            if (!result.containsKey(identity.getRemoteId()) && isMatch(keyword, profile)) {
-              result.put(identity.getRemoteId(), identity);
-            }
-            if (result.size() >= SUGGEST_LIMIT) break;
+      ListAccess<Identity> connections = getRelationshipManager().getConnectionsByFilter(id, filter);
+      if (connections != null && (size = connections.getSize()) > 0) {
+        for (Identity identity : connections.load(0, size < remainItem ? size : remainItem)) {
+          if (!result.containsKey(identity.getRemoteId())) {
+            result.put(identity.getRemoteId(), identity);
+            excluded.add(identity);
           }
-          start += SUGGEST_LIMIT;
         }
-        remainItem = SUGGEST_LIMIT - result.size();
+        remainItem = (int)SUGGEST_LIMIT - result.size();
+        filter.setExcludedIdentityList(excluded);
       }
     }
 
     // Search in hole world
     if (remainItem > 0) {
       list = getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, true);
-      if (list != null) {
-        for (Identity identity : list.load(0, (int) remainItem)) {
+      if (list != null && (size = list.getSize()) > 0) {
+        for (Identity identity : list.load(0, size < remainItem ? size : remainItem)) {
           if (!result.containsKey(identity.getRemoteId())) {
             result.put(identity.getRemoteId(), identity);
           }
@@ -368,7 +349,7 @@ public class PeopleRestService implements ResourceContainer{
     return Util.getResponse(userInfos, uriInfo, mediaType, Response.Status.OK);
   }
 
-  private void addUsers(Map<String, Identity> map, String keyword, String[] users) throws Exception {
+  private void addUsers(Map<String, Identity> map, List<Identity> excluded, String keyword, String[] users) throws Exception {
     if (map.size() >= SUGGEST_LIMIT) return;
     int remain = (int)(SUGGEST_LIMIT - map.size());
 
@@ -388,34 +369,25 @@ public class PeopleRestService implements ResourceContainer{
       filter.setPosition("");
       filter.setSkills("");
       filter.setSearchInIdentities(ids);
-      filter.setExcludedIdentityList(new ArrayList<>());
+      filter.setExcludedIdentityList(excluded == null ? new ArrayList<>() : excluded);
 
       ListAccess<Identity> searchResult = identityManager.getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false);
       int count;
       if (searchResult != null && (count = searchResult.getSize()) > 0) {
-        int start = 0;
-        while (start < count && remain > 0) {
-          for (Identity id : searchResult.load(start, (int) SUGGEST_LIMIT)) {
-            if (!map.containsKey(id.getRemoteId())) {
-              map.put(id.getRemoteId(), id);
-              remain--;
-            }
-            if (remain == 0) {
-              break;
+        for (Identity id : searchResult.load(0, count < remain ? count : remain)) {
+          if (!map.containsKey(id.getRemoteId())) {
+            map.put(id.getRemoteId(), id);
+            remain--;
+            if (excluded != null) {
+              excluded.add(id);
             }
           }
-          start += SUGGEST_LIMIT;
+          if (remain == 0) {
+            break;
+          }
         }
       }
     }
-  }
-  private boolean isMatch(String keyword, Profile profile) {
-    String fullName = profile.getFullName();
-    String firstName = (String)profile.getProperty(Profile.FIRST_NAME);
-    String lastName = (String)profile.getProperty(Profile.FIRST_NAME);
-    return ((fullName != null && fullName.toLowerCase().contains(keyword))
-            || (firstName != null && firstName.toLowerCase().contains(keyword))
-            || (lastName != null && lastName.toLowerCase().contains(keyword)));
   }
   
   /**
