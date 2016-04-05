@@ -47,7 +47,6 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.User;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.IdentityConstants;
@@ -153,57 +152,56 @@ public class PeopleRestService implements ResourceContainer{
     List<Identity> excludedIdentityList = new ArrayList<Identity>();
     UserNameList nameList = new UserNameList();
     ConversationState state = ConversationState.getCurrent();
-    User user = (User) state.getAttribute("UserProfile");
     if (state == null){
-        LOG.error("Cannot get current state while getting suggestions for connections");
-        return Util.getResponse("Cannot get the current state while getting suggestions for connections", uriInfo, mediaType, Response.Status.OK);
+      LOG.error("Cannot get current state while getting suggestions for connections");
+      return Util.getResponse("Cannot get the current state while getting suggestions for connections", uriInfo, mediaType, Response.Status.OK);
     } else {
-        if (currentUser == null || state.getIdentity().getUserId() != null) {
-            currentUser = state.getIdentity().getUserId();
-        } else {
-            LOG.error("Cannot get authenticated user while getting suggestions for connections");
-            return Util.getResponse("Cannot get authenticated user while getting suggestions for connections", uriInfo, mediaType, Response.Status.OK);
-        }
-        excludedIdentityList.add(Util.getViewerIdentity(currentUser));
-        ProfileFilter filter = new ProfileFilter();
-        if (name != null) {
-            filter.setName(name);
-        } else {
-            filter.setName("");
-        }
-        filter.setCompany("");
-        filter.setPosition("");
-        filter.setSkills("");
-        filter.setExcludedIdentityList(excludedIdentityList);
-        Identity currentIdentity = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, currentUser, false);
-        Identity[] result;
-        if (PENDING_STATUS.equals(typeOfRelation)) {
-            ListAccess<Identity> listAccess = getRelationshipManager().getOutgoingByFilter(currentIdentity, filter);
-            result = listAccess.load(0, (int) SUGGEST_LIMIT);
-            addToNameList(nameList, result);
-        } else if (INCOMING_STATUS.equals(typeOfRelation)) {
-            ListAccess<Identity> listAccess = getRelationshipManager().getIncomingByFilter(currentIdentity, filter);
-            result = listAccess.load(0, (int) SUGGEST_LIMIT);
-            addToNameList(nameList, result);
-        } else if (CONFIRMED_STATUS.equals(typeOfRelation)) {
-            ListAccess<Identity> listAccess = getRelationshipManager().getConnectionsByFilter(currentIdentity, filter);
-            result = listAccess.load(0, (int) SUGGEST_LIMIT);
-            addToNameList(nameList, result);
-        } else if (SPACE_MEMBER.equals(typeOfRelation)) {  // Use in search space member
-            List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) SUGGEST_LIMIT));
-            Space space = getSpaceService().getSpaceByUrl(spaceURL);
-            addSpaceUserToList(identities, nameList, space, typeOfRelation);
-        } else if (USER_TO_INVITE.equals(typeOfRelation)) {
-            List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) SUGGEST_LIMIT));
-            Space space = getSpaceService().getSpaceByUrl(spaceURL);
-            addSpaceUserToList(identities, nameList, space, typeOfRelation);
-        } else { // Identities that match the keywords.
-            ListAccess<Identity> listAccess = getIdentityManager().getIdentitiesByProfileFilter(currentIdentity.getProviderId(), filter, false);
-            result = listAccess.load(0, (int) SUGGEST_LIMIT);
-            addToNameList(nameList, result);
-        }
+      if (currentUser == null || state.getIdentity().getUserId() != null) {
+         currentUser = state.getIdentity().getUserId();
+      } else {
+         LOG.error("Cannot get authenticated user while getting suggestions for connections");
+         return Util.getResponse("Cannot get authenticated user while getting suggestions for connections", uriInfo, mediaType, Response.Status.OK);
+      }
+      excludedIdentityList.add(Util.getViewerIdentity(currentUser));
+      ProfileFilter filter = new ProfileFilter();
+      if (name != null) {
+         filter.setName(name);
+      } else {
+         filter.setName("");
+      }
+      filter.setCompany("");
+      filter.setPosition("");
+      filter.setSkills("");
+      filter.setExcludedIdentityList(excludedIdentityList);
+      Identity currentIdentity = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, currentUser, false);
+      Identity[] result;
+      if (PENDING_STATUS.equals(typeOfRelation)) {
+         ListAccess<Identity> listAccess = getRelationshipManager().getOutgoingByFilter(currentIdentity, filter);
+         result = listAccess.load(0, (int) SUGGEST_LIMIT);
+         addToNameList(nameList, result);
+      } else if (INCOMING_STATUS.equals(typeOfRelation)) {
+         ListAccess<Identity> listAccess = getRelationshipManager().getIncomingByFilter(currentIdentity, filter);
+         result = listAccess.load(0, (int) SUGGEST_LIMIT);
+         addToNameList(nameList, result);
+      } else if (CONFIRMED_STATUS.equals(typeOfRelation)) {
+         ListAccess<Identity> listAccess = getRelationshipManager().getConnectionsByFilter(currentIdentity, filter);
+         result = listAccess.load(0, (int) SUGGEST_LIMIT);
+         addToNameList(nameList, result);
+      } else if (SPACE_MEMBER.equals(typeOfRelation)) {  // Use in search space member
+         List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) SUGGEST_LIMIT));
+         Space space = getSpaceService().getSpaceByUrl(spaceURL);
+         addSpaceUserToList(identities, nameList, space, typeOfRelation);
+      } else if (USER_TO_INVITE.equals(typeOfRelation)) {
+         List<Identity> identities = Arrays.asList(getIdentityManager().getIdentitiesByProfileFilter(OrganizationIdentityProvider.NAME, filter, false).load(0, (int) SUGGEST_LIMIT));
+         Space space = getSpaceService().getSpaceByUrl(spaceURL);
+         addSpaceUserToList(identities, nameList, space, typeOfRelation);
+      } else { // Identities that match the keywords.
+         ListAccess<Identity> listAccess = getIdentityManager().getIdentitiesByProfileFilter(currentIdentity.getProviderId(), filter, false);
+         result = listAccess.load(0, (int) SUGGEST_LIMIT);
+         addToNameList(nameList, result);
+      }
     }
-    return Util.getResponse(nameList, uriInfo, mediaType, Response.Status.OK);
+   return Util.getResponse(nameList, uriInfo, mediaType, Response.Status.OK);
   }
   
   /**
