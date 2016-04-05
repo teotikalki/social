@@ -199,7 +199,7 @@ public class PeopleRestService implements ResourceContainer{
         }
       }
 
-      long remain = SUGGEST_LIMIT - nameList.getNames().size();
+      long remain = SUGGEST_LIMIT - (nameList.getNames() != null ? nameList.getNames().size() : 0);
       filter.setExcludedIdentityList(excludedIdentityList);
 
       if (remain > 0) {
