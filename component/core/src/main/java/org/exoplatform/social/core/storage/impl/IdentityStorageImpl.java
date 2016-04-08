@@ -1456,7 +1456,7 @@ public class IdentityStorageImpl extends AbstractStorage implements IdentityStor
     if (searchCondition != null && searchCondition.length() != 0) {
       if (this.isValidInput(searchCondition)) {
 
-        List<String> unifiedSearchConditions = StorageUtils.processUnifiedSearchCondition(searchCondition);
+        List<String> unifiedSearchConditions = StorageUtils.processUnifiedSearchCondition(searchCondition, profileFilter.isEnabledAnalyser());
         if (unifiedSearchConditions.size() > 0) {
           whereExpression.and().startGroup();
         }

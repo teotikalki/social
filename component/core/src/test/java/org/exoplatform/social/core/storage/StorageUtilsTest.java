@@ -39,7 +39,7 @@ public class StorageUtilsTest extends TestCase {
     result.add("%three%%");
     result.add("%%four%%");
     result.add("%%five%%");
-    assertEquals(result, StorageUtils.processUnifiedSearchCondition("first *two three% %four* *five*"));
+    assertEquals(result, StorageUtils.processUnifiedSearchCondition("first *two three% %four* *five*", false));
   }
   
   public void testSortMapByValue() throws Exception {

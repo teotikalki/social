@@ -44,6 +44,9 @@ public class SpaceFilter {
   private static char CHAR_DEFAULT_VALUE = '\u0000';
 
   private Sorting sorting;
+
+  /** enabled search analyser */
+  private boolean enabledAnalyser;
   
   /**
    * The constructor.
@@ -138,6 +141,22 @@ public class SpaceFilter {
    */
   public String getAppId() {
     return appId;
+  }
+
+  /**
+   * indicating whether analyzer is configured or none
+   *
+   * @return the enabledAnalyser
+   */
+  public boolean isEnabledAnalyser(){
+    return enabledAnalyser;
+  }
+  /**
+   * Sets enabledAnalyser to filter
+   * @param enabledAnalyser
+   */
+  public void setEnabledAnalyser(boolean enabledAnalyser){
+    this.enabledAnalyser = enabledAnalyser;
   }
 
   /**

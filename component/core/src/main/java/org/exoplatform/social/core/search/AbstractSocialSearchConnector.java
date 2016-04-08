@@ -16,7 +16,10 @@ import org.exoplatform.commons.api.search.data.SearchResult;
 import org.exoplatform.commons.chromattic.ChromatticManager;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.services.jcr.core.ManageableRepository;
 import org.exoplatform.services.jcr.impl.core.query.QueryImpl;
+import org.exoplatform.services.jcr.impl.core.query.SearchManager;
+import org.exoplatform.services.jcr.impl.core.query.lucene.SearchIndex;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.common.lifecycle.SocialChromatticLifeCycle;
@@ -212,6 +215,16 @@ public abstract class AbstractSocialSearchConnector extends SearchServiceConnect
       return 0;
     }
     
+  }
+
+  protected boolean hasConfiguredAnalyser() {
+    SearchManager searchManager;
+    SearchIndex searchIndex;
+
+    ManageableRepository repository = (ManageableRepository)getJCRSession().getRepository();
+    searchManager = (SearchManager)repository.getWorkspaceContainer(getJCRSession().getWorkspace().getName()).getComponent(SearchManager.class);
+    searchIndex = (SearchIndex)(searchManager.getHandler());
+    return searchIndex.hasConfiguredAnalyser();
   }
   
   protected abstract Collection<SearchResult> search(SearchContext context, String query, Range range, Sorting sort);
