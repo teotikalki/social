@@ -536,7 +536,7 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
       
       //
       conditionValue = conditionValue.replace(StorageUtils.ASTERISK_STR, StorageUtils.PERCENT_STR);
-      if(hasConfiguredAnalyser) {
+      if(hasConfiguredAnalyser && !(conditionValue.contains(StorageUtils.PERCENT_STR))) {
         searchConditionBuffer.append(conditionValue);
       }
       else {

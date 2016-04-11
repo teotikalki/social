@@ -269,7 +269,7 @@ public class StorageUtils {
       searchConditionBuffer = new StringBuffer();
       //
       conditionValue = conditionValue.replace(ASTERISK_STR, PERCENT_STR);
-      if(enableAnalyser) {
+      if(enableAnalyser && !(conditionValue.contains(PERCENT_STR))) {
         searchConditionBuffer.append(conditionValue);
       }
       else{
