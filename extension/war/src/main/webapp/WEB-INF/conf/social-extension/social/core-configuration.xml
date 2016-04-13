@@ -677,10 +677,6 @@
         </value-param>
       </init-params>
     </component-plugin>
-  </external-component-plugins>
-  
-  <external-component-plugins>
-    <target-component>org.exoplatform.commons.upgrade.UpgradeProductService</target-component>
     <component-plugin>
       <name>UserActivityStreamUpdaterPlugin</name>
       <set-method>addUpgradePlugin</set-method>
@@ -699,10 +695,6 @@
         </value-param>
       </init-params>
     </component-plugin>
-  </external-component-plugins>
-  
-   <external-component-plugins>
-    <target-component>org.exoplatform.commons.upgrade.UpgradeProductService</target-component>
     <component-plugin>
       <name>SpaceActivityStreamUpdaterPlugin</name>
       <set-method>addUpgradePlugin</set-method>
@@ -718,6 +710,24 @@
           <name>limit</name>
           <description>The number of activities will be migrated</description>
           <value>20</value>
+        </value-param>
+      </init-params>
+    </component-plugin>
+    <component-plugin>
+      <name>SocialMixinCleanerUpgradePlugin</name>
+      <set-method>addUpgradePlugin</set-method>
+      <type>org.exoplatform.social.core.updater.SocialMixinCleanerUpgradePlugin</type>
+      <description>eXo Social Nodes mixin cleaner</description>
+      <init-params>
+        <value-param>
+          <name>product.group.id</name>
+          <description>The groupId of the product</description>
+          <value>org.exoplatform.social</value>
+        </value-param>
+        <value-param>
+          <name>workspace</name>
+          <description>The workspace name</description>
+          <value>social</value>
         </value-param>
       </init-params>
     </component-plugin>
