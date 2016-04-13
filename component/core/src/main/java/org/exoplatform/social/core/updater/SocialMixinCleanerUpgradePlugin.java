@@ -175,7 +175,7 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
                     // definition of name "*" leads to an exception.
                     // That's why we exclude 'soc:profiledefinition'
                     if (!node.isNodeType("soc:profiledefinition") && !(("exo:datetime".equals(mixinName) || "exo:modify".equals(mixinName)) && (node.isNodeType("soc:spaceref")))) {
-                      log.debug("Proceed id: {}", id);
+                      log.debug("Proceed id: {}, remove mixin {}", id, mixinName);
                       node.removeMixin(mixinName);
                       node.save();
                     } else {
