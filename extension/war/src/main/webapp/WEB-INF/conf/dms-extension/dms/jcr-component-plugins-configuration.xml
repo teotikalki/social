@@ -155,6 +155,7 @@
                 <value>
                   <object type="org.exoplatform.services.jcr.impl.ext.action.ActionConfiguration">
                     <field  name="eventTypes"><string>addNode</string></field>                     
+	                <field  name="workspace"><string>portal-system,portal-work,knowledge,collaboration</string></field>	                  
                     <field  name="actionClassName"><string>org.exoplatform.services.cms.jcrext.AddNodeNameAction</string></field>
                   </object>
                 </value>
