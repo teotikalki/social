@@ -165,25 +165,35 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
                 if (node.getPath().equals("/")) {
                   continue;
                 }
-                // Remove all mixins from node
-                for (String mixinName : MIXIN_NAMES) {
-                  if (StringUtils.isBlank(mixinName)) {
-                    continue;
-                  }
-                  if (node.isNodeType(mixinName)) {
-                    // FIXME: JCR-2442, remove mixin on node using a property
-                    // definition of name "*" leads to an exception.
-                    // That's why we exclude 'soc:profiledefinition'
-                    if (!node.isNodeType("soc:profiledefinition") && !(("exo:datetime".equals(mixinName) || "exo:modify".equals(mixinName)) && (node.isNodeType("soc:spaceref")))) {
-                      log.debug("Proceed id: {}, remove mixin {}", id, mixinName);
+
+                boolean proceeded = false;
+
+                // FIXME: JCR-2442, remove mixin on node using a property
+                // definition of name "*" leads to an exception.
+                // That's why we exclude 'soc:profiledefinition'
+                if (node.isNodeType("soc:profiledefinition")) {
+                  log.debug("Ignore id: {}, nodetype = {}.", id, node.getPrimaryNodeType().getName());
+                } else {
+                  // Remove all mixins from nodes
+                  for (String mixinName : MIXIN_NAMES) {
+                    if (StringUtils.isBlank(mixinName) || !node.isNodeType(mixinName)) {
+                      continue;
+                    }
+                    // Ignore deletion of 'exo:datetime' and 'exo:modify' from nodes of type 'soc:spaceref'
+                    // Those mixins are used to sort spaces by access time
+                    if (node.isNodeType("soc:spaceref") && (("exo:datetime".equals(mixinName) || "exo:modify".equals(mixinName)))) {
+                      log.debug("Ignore id: {}, nodetype = {}, remove mixin '{}'", id, node.getPrimaryNodeType().getName(), mixinName);
+                    } else {
+                      log.debug("Proceed id: {}, nodetype = {}, remove mixin {}", id, node.getPrimaryNodeType().getName(), mixinName);
                       node.removeMixin(mixinName);
                       node.save();
-                    } else {
-                      log.debug("Ignore id: {}, nodetype = {}, operation: remove mixin '{}'", id, node.getPrimaryNodeType().getName(), mixinName);
+                      proceeded = true;
                     }
                   }
                 }
-                totalCount++;
+                if(proceeded) {
+                  totalCount++;
+                }
               } catch (Exception e) {
                 log.warn("Error updating node with id " + id, e);
                 if (node != null) {
