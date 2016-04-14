@@ -32,6 +32,35 @@
       <type>org.exoplatform.services.jcr.ext.distribution.impl.DataDistributionManagerImpl</type>     
   </component>
 
+  <component>
+  	<type>org.exoplatform.services.jcr.impl.ext.action.SessionActionCatalog</type>
+    <component-plugins>
+      <component-plugin>
+	    <name>addActions</name>
+	    <set-method>addPlugin</set-method>
+	    <type>org.exoplatform.services.jcr.impl.ext.action.AddActionsPlugin</type>
+	    <description>add actions plugin</description>
+	    <init-params>
+	      <object-param>
+	        <name>actions</name>
+	        <object type="org.exoplatform.services.jcr.impl.ext.action.AddActionsPlugin$ActionsConfig">
+	          <field  name="actions">
+	            <collection type="java.util.ArrayList">
+                <value>
+                  <object type="org.exoplatform.services.jcr.impl.ext.action.ActionConfiguration">
+                    <field  name="eventTypes"><string>addNode</string></field>
+                    <field  name="actionClassName"><string>org.exoplatform.social.core.updater.AddNodeNameAction</string></field>
+                  </object>
+                </value>
+	            </collection>
+	          </field>
+	        </object>
+	      </object-param>
+	    </init-params>
+	  </component-plugin>
+	</component-plugins>    
+  </component>
+
   <external-component-plugins>
     <target-component>org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator</target-component>
     <component-plugin>
@@ -131,5 +160,4 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-
 </configuration>

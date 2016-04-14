@@ -16,13 +16,15 @@
  */
 package org.exoplatform.social.core.updater;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.ServletContext;
 import javax.transaction.NotSupportedException;
@@ -36,14 +38,11 @@ import org.exoplatform.commons.version.util.VersionComparator;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.RootContainer.PortalContainerPostInitTask;
 import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.container.xml.ValuesParam;
 import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.jcr.config.WorkspaceEntry;
 import org.exoplatform.services.jcr.core.ManageableRepository;
-import org.exoplatform.services.jcr.core.WorkspaceContainerFacade;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
-import org.exoplatform.services.jcr.impl.core.SessionImpl;
-import org.exoplatform.services.jcr.impl.storage.jdbc.JDBCWorkspaceDataContainer;
-import org.exoplatform.services.jcr.impl.util.jdbc.DBInitializerHelper;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.transaction.TransactionService;
@@ -54,39 +53,39 @@ import org.exoplatform.services.transaction.TransactionService;
  */
 public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
 
-  private static final int         TRANSACTION_TIMEOUT_IN_SECONDS = 3600;
+  public static final String        DEFAULT_WORKSPACE_NAME         = "social";
 
-  private static final String      PLUGIN_PROCEED_VERSION         = "4.3.0";
+  private static final int          TRANSACTION_TIMEOUT_IN_SECONDS = 3600;
 
-  private static final String      QUERY                          = "select distinct PARENT_ID as id from JCR_SITEM"
-                                                                      + " where container_name = 'social'"
-                                                                      + " and (  NAME= '[http://www.exoplatform.com/jcr/exo/1.0]name' "
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]title'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]titlePublished'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]index'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/publication/1.1/]liveDate'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]owner'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]dateCreated'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]dateModified'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]lastModifiedDate'"
-                                                                      + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]lastModifier'"
-                                                                      + ");";
+  private static final String       PLUGIN_PROCEED_VERSION         = "4.3.0";
 
-  private static final Log         log                            = ExoLogger.getLogger(SocialMixinCleanerUpgradePlugin.class);
+  private static final Log          log                            = ExoLogger.getLogger(SocialMixinCleanerUpgradePlugin.class);
 
-  private static final String[]    MIXIN_NAMES                    = new String[] { "exo:modify", "exo:datetime", "exo:owneable",
-      "exo:sortable"                                             };
+  private static final int          FETCH_SIZE                     = 1000;
 
-  private static final String      WORKSPACE_NAME                 = "social";
+  private final PortalContainer     portalContainer;
 
-  private static final int         FETCH_SIZE                     = 1000;
+  private final RepositoryService   repositoryService;
 
-  private final PortalContainer    portalContainer;
+  private final TransactionService  txService;
 
-  private final RepositoryService  repositoryService;
+  private String                    workspaceName;
 
-  private final TransactionService txService;
+  private AtomicLong                totalCount                     = new AtomicLong(0);
 
+  private Map<String, List<String>> mixinNames                     = null;
+
+  private String                    jcrPath;
+
+  private boolean                   upgradeFinished                = false;
+
+  /**
+   * @param portalContainer
+   * @param repositoryService
+   * @param txService
+   * @param initParams workspace: workspace on which the operation will start.
+   *          mixins.to.clean, mixins.clean.exception
+   */
   public SocialMixinCleanerUpgradePlugin(PortalContainer portalContainer,
                                          RepositoryService repositoryService,
                                          TransactionService txService,
@@ -95,6 +94,50 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
     this.repositoryService = repositoryService;
     this.txService = txService;
     this.portalContainer = portalContainer;
+    ValueParam workspaceValueParam = initParams.getValueParam("workspace");
+    if (workspaceValueParam != null) {
+      workspaceName = workspaceValueParam.getValue();
+    }
+    if (StringUtils.isBlank(workspaceName)) {
+      workspaceName = DEFAULT_WORKSPACE_NAME;
+    }
+    ValueParam pathParam = initParams.getValueParam("path");
+    if (pathParam != null) {
+      jcrPath = pathParam.getValue();
+    }
+    if (StringUtils.isBlank(jcrPath)) {
+      jcrPath = "/";
+    }
+    ValuesParam mixinsValueParam = initParams.getValuesParam("mixins.to.clean");
+    if (mixinsValueParam != null) {
+      List<String> mixins = mixinsValueParam.getValues();
+      mixinNames = new HashMap<String, List<String>>();
+      for (String mixin : mixins) {
+        if (!StringUtils.isBlank(mixin)) {
+          mixinNames.put(mixin, null);
+        }
+      }
+    }
+    ValuesParam mixinsExceptionsValueParam = initParams.getValuesParam("mixins.clean.exception");
+    if (mixinsExceptionsValueParam != null) {
+      List<String> mixins = mixinsExceptionsValueParam.getValues();
+      // Values with value pattern MIXIN_TYPE;EXCEPTIONAL_NODE_TYPE_NAME
+      // where EXCEPTIONAL_NODE_TYPE_NAME is the nodeType for which we shouldn't
+      // clean up the mixin
+      for (String mixinException : mixins) {
+        String[] mixinExceptionParams = mixinException.split(";");
+        String mixinName = mixinExceptionParams[0];
+        String typeName = mixinExceptionParams[1];
+
+        if (mixinNames.containsKey(mixinName)) {
+          List<String> mixinExceptions = mixinNames.get(mixinName);
+          if (mixinExceptions == null) {
+            mixinExceptions = new ArrayList<String>();
+          }
+          mixinExceptions.add(typeName);
+        }
+      }
+    }
   }
 
   /**
@@ -112,6 +155,7 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
   @Override
   public void processUpgrade(String oldVersion, String newVersion) {
     PortalContainer.addInitTask(portalContainer.getPortalContext(), new PortalContainerPostInitTask() {
+      @Override
       public void execute(ServletContext context, PortalContainer portalContainer) {
         // Execute the task in an asynchrounous way
         new Thread(new Runnable() {
@@ -125,142 +169,115 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
             }
             doMigration();
           }
-        }, "SocialMixinCleanerUpgradePlugin").start();
+        }, SocialMixinCleanerUpgradePlugin.class.getSimpleName()).start();
       }
     });
+  }
+
+  /**
+   * @return whether the operation is finished or not
+   */
+  public boolean isUpgradeFinished() {
+    return upgradeFinished;
   }
 
   private void doMigration() {
     log.info("Start migration");
 
-    Connection jdbcConn = null;
-    SessionProvider sessionProvider = null;
-    Statement stmt = null;
-    ResultSet rs = null;
+    // Initialize counter
+    totalCount.set(0);
 
-    long totalCount = 0;
-
+    Session session = null;
     try {
-      ManageableRepository currentRepository = repositoryService.getCurrentRepository();
-      WorkspaceContainerFacade containerFacade = currentRepository.getWorkspaceContainer(WORKSPACE_NAME);
-      if (containerFacade == null) {
-        throw new IllegalStateException("Workspace with name '" + WORKSPACE_NAME + "' wasn't found");
-      }
-
       // Get JCR Session
-      sessionProvider = SessionProvider.createSystemProvider();
-      Session session = sessionProvider.getSession(WORKSPACE_NAME, currentRepository);
-
-      // Get JDBC Result Set
-      JDBCWorkspaceDataContainer dataContainer = (JDBCWorkspaceDataContainer) containerFacade.getComponent(JDBCWorkspaceDataContainer.class);
-      jdbcConn = dataContainer.connFactory.getJdbcConnection();
-      stmt = jdbcConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
-      stmt.setFetchSize(FETCH_SIZE);
-      stmt.setQueryTimeout(TRANSACTION_TIMEOUT_IN_SECONDS * 24);
-
-      WorkspaceEntry wEntry = getWorkspaceEntry(currentRepository);
-      String query = QUERY.replace("JCR_SITEM", DBInitializerHelper.getItemTableName(wEntry));
-      query = query.replace("'social'", "'" + WORKSPACE_NAME + "'");
-      rs = stmt.executeQuery(query);
+      ManageableRepository currentRepository = repositoryService.getCurrentRepository();
+      session = SessionProvider.createSystemProvider().getSession(workspaceName, currentRepository);
 
       // Begin transaction
       UserTransaction transaction = beginTransaction();
-      while (rs.next()) {
-        String id = rs.getString(1);
-        id = id.replaceAll(WORKSPACE_NAME, "");
 
-        try {
-          Node node = null;
-          try {
-            // Test if node exists
-            try {
-              node = ((SessionImpl) session).getNodeByIdentifier(id);
-            } catch (ItemNotFoundException e) {
-              log.warn("Item not found with id: '{}'", id);
-              continue;
-            }
-            // Avoid changing Root Node of Workspace
-            if (node.getPath().equals("/")) {
-              continue;
-            }
-
-            boolean proceeded = false;
-
-            // Remove all mixins from nodes
-            for (String mixinName : MIXIN_NAMES) {
-              if (StringUtils.isBlank(mixinName) || !node.isNodeType(mixinName)) {
-                continue;
-              }
-              // Ignore deletion of 'exo:datetime' and 'exo:modify' from
-              // nodes of type 'soc:spaceref'
-              // Those mixins are used to sort spaces by access time
-              if (node.isNodeType("soc:spaceref") && (("exo:datetime".equals(mixinName) || "exo:modify".equals(mixinName)))) {
-                log.debug("Ignore id: {}, nodetype = {}, remove mixin '{}'", id, node.getPrimaryNodeType().getName(), mixinName);
-              } else {
-                log.debug("Proceed id: {}, nodetype = {}, remove mixin {}", id, node.getPrimaryNodeType().getName(), mixinName);
-                node.removeMixin(mixinName);
-                node.save();
-                proceeded = true;
-              }
-            }
-            if (proceeded) {
-              totalCount++;
-            }
-          } catch (Exception e) {
-            log.warn("Error updating node with id " + id, e);
-            if (node != null) {
-              node.refresh(false);
-            }
-          }
-          if (totalCount > 0 && totalCount % FETCH_SIZE == 0) {
-            session.save();
-            transaction.commit();
-            log.info("Migration in progress, proceeded nodes count = {}", totalCount);
-
-            transaction = beginTransaction();
-          }
-        } catch (Exception e) {
-          transaction.rollback();
-          transaction = beginTransaction();
-        }
+      if (!session.itemExists(jcrPath)) {
+        throw new IllegalStateException("Cannot procced to upgrade, because doesn't exist in path " + workspaceName + ":"
+            + jcrPath + "'");
       }
+      Node parentNode = (Node) session.getItem(jcrPath);
+      transaction = cleanUpChildreNodes(parentNode, session, transaction);
       session.save();
       transaction.commit();
     } catch (Exception e) {
       log.error(e);
     } finally {
-      if (sessionProvider != null) {
-        sessionProvider.close();
-      }
-      try {
-        if (rs != null) {
-          rs.close();
-        }
-        if (stmt != null) {
-          stmt.close();
-        }
-        if (jdbcConn != null) {
-          jdbcConn.close();
-        }
-      } catch (SQLException e) {
-        log.error("Cannot close connection", e);
+      if (session != null) {
+        session.logout();
       }
     }
     log.info("Migration finished, proceeded nodes count = {}", totalCount);
+
+    upgradeFinished = true;
   }
 
-  private WorkspaceEntry getWorkspaceEntry(ManageableRepository currentRepo) {
-    WorkspaceEntry wEntry = null;
-    for (WorkspaceEntry entry : currentRepo.getConfiguration().getWorkspaceEntries()) {
-      if (entry.getName().equals(WORKSPACE_NAME)) {
-        wEntry = entry;
-        break;
+  private UserTransaction cleanUpChildreNodes(Node parentNode, Session session, UserTransaction transaction) throws Exception {
+    NodeIterator nodeIterator = parentNode.getNodes();
+    while (nodeIterator.hasNext()) {
+      try {
+        Node node = nodeIterator.nextNode();
+        try {
+          boolean proceeded = false;
+
+          // Remove all mixins from nodes
+          for (String mixinName : mixinNames.keySet()) {
+            if (!node.isNodeType(mixinName)) {
+              continue;
+            }
+            // Ignore deletion of 'exo:datetime' and 'exo:modify' from
+            // nodes of type 'soc:spaceref'
+            // Those mixins are used to sort spaces by access time
+            if (isNodeType(node, mixinNames.get(mixinName))) {
+              log.debug("Ignore id: '{}', nodetype = '{}', remove mixin '{}'", node.getPath(), node.getPrimaryNodeType()
+                                                                                                   .getName(), mixinName);
+            } else {
+              log.debug("Proceed path: '{}', nodetype = '{}', remove mixin '{}'", node.getPath(), node.getPrimaryNodeType()
+                                                                                                      .getName(), mixinName);
+              node.removeMixin(mixinName);
+              node.save();
+              proceeded = true;
+            }
+          }
+          if (proceeded) {
+            totalCount.incrementAndGet();
+          }
+        } catch (Exception e) {
+          log.warn("Error updating node " + (node == null ? "" : " with path " + node.getPath()), e);
+          if (node != null) {
+            node.refresh(false);
+          }
+        }
+        if (totalCount.get() > 0 && totalCount.get() % FETCH_SIZE == 0) {
+          session.save();
+          transaction.commit();
+          log.info("Migration in progress, proceeded nodes count = {}", totalCount);
+
+          transaction = beginTransaction();
+        }
+        transaction = cleanUpChildreNodes(node, session, transaction);
+      } catch (Exception e) {
+        transaction.rollback();
+        transaction = beginTransaction();
       }
     }
-    if (wEntry == null) {
-      throw new IllegalStateException("Worksapce \"" + WORKSPACE_NAME + "\" was not found.");
+    return transaction;
+  }
+
+  private boolean isNodeType(Node node, List<String> exceptionalNodeTypes) throws RepositoryException {
+    if (exceptionalNodeTypes == null) {
+      return false;
     }
-    return wEntry;
+    for (String nodeType : exceptionalNodeTypes) {
+      if (node.isNodeType(nodeType)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private UserTransaction beginTransaction() throws SystemException, NotSupportedException {
