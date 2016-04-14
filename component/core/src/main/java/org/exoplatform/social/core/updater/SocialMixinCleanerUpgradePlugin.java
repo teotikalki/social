@@ -133,6 +133,7 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
           List<String> mixinExceptions = mixinNames.get(mixinName);
           if (mixinExceptions == null) {
             mixinExceptions = new ArrayList<String>();
+            mixinNames.put(mixinName, mixinExceptions);
           }
           mixinExceptions.add(typeName);
         }
@@ -247,7 +248,8 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
             totalCount.incrementAndGet();
           }
         } catch (Exception e) {
-          log.warn("Error updating node " + (node == null ? "" : " with path " + node.getPath()), e);
+          log.warn("Error updating node "
+              + (node == null ? "" : " with path " + node.getPath() + ", nodetype = " + node.getPrimaryNodeType().getName()), e);
           if (node != null) {
             node.refresh(false);
           }

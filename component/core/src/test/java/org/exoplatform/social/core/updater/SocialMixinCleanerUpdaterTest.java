@@ -123,9 +123,14 @@ public class SocialMixinCleanerUpdaterTest extends AbstractCoreTest {
     mixinsParam.setName("mixins.to.clean");
     mixinsParam.setValues(Collections.singletonList("exo:sortable"));
 
+    ValuesParam mixinsExceptionParam = new ValuesParam();
+    mixinsExceptionParam.setName("mixins.clean.exception");
+    mixinsExceptionParam.setValues(Collections.singletonList("exo:sortable;soc:profiledefinition"));
+
     initParams.addParam(workspaceParam);
     initParams.addParam(groupIdParam);
     initParams.addParam(mixinsParam);
+    initParams.addParam(mixinsExceptionParam);
 
     SocialMixinCleanerUpgradePlugin socialMixinCleanerUpgradePlugin = new SocialMixinCleanerUpgradePlugin(PortalContainer.getInstance(),
                                                                                                           repositoryService,
@@ -137,12 +142,16 @@ public class SocialMixinCleanerUpdaterTest extends AbstractCoreTest {
       Thread.sleep(1000);
     }
 
+    // Get the number of nodes that wasn't updated
+    query = session.getWorkspace().getQueryManager().createQuery("select * from soc:profiledefinition", Query.SQL);
+    long exceptionalNodesCount = query.execute().getNodes().getSize();
+
     query = session.getWorkspace().getQueryManager().createQuery("select * from exo:sortable", Query.SQL);
     nodeIterator = query.execute().getNodes();
     LOG.info("Not cleaned up social nodes: '{}'.", nodeIterator.getSize());
 
     assertFalse("Social nodes wasn't cleaned up. It seems that there are some remaining nodes that uses exo:sortable",
-                nodeIterator.getSize() > 1);
+                nodeIterator.getSize() > (exceptionalNodesCount + 1));
   }
 
   private void createActivity(String activityTitle, Identity userIdentity) {
