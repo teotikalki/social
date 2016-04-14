@@ -144,14 +144,15 @@ public class SocialMixinCleanerUpdaterTest extends AbstractCoreTest {
 
     // Get the number of nodes that wasn't updated
     query = session.getWorkspace().getQueryManager().createQuery("select * from soc:profiledefinition", Query.SQL);
-    long exceptionalNodesCount = query.execute().getNodes().getSize();
+    // exceptional nodes = (soc:profiledefinition COUNT + 1 for root node)
+    long exceptionalNodesCount = query.execute().getNodes().getSize() + 1;
 
     query = session.getWorkspace().getQueryManager().createQuery("select * from exo:sortable", Query.SQL);
     nodeIterator = query.execute().getNodes();
     LOG.info("Not cleaned up social nodes: '{}'.", nodeIterator.getSize());
 
     assertFalse("Social nodes wasn't cleaned up. It seems that there are some remaining nodes that uses exo:sortable",
-                nodeIterator.getSize() > (exceptionalNodesCount + 1));
+                nodeIterator.getSize() > exceptionalNodesCount);
   }
 
   private void createActivity(String activityTitle, Identity userIdentity) {
