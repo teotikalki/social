@@ -54,7 +54,7 @@ import org.exoplatform.services.transaction.TransactionService;
 public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
 
   private static final int TRANSACTION_TIMEOUT_IN_SECONDS = 3600;
-  private static final String PLUGIN_PROCEED_VERSION = "4.3.1";
+  private static final String PLUGIN_PROCEED_VERSION = "4.3.0";
   private static final String QUERY = "select distinct PARENT_ID as id from JCR_SITEM" + " where container_name = 'social' and" + " (  NAME= '[http://www.exoplatform.com/jcr/exo/1.0]name' "
       + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]title'" + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]titlePublished'"
       + " or NAME= '[http://www.exoplatform.com/jcr/exo/1.0]index'" + " or NAME= '[http://www.exoplatform.com/jcr/publication/1.1/]liveDate'"
@@ -92,7 +92,7 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
    */
   @Override
   public boolean shouldProceedToUpgrade(String newVersion, String previousVersion) {
-    return VersionComparator.isAfter(newVersion, PLUGIN_PROCEED_VERSION) || VersionComparator.isSame(newVersion, PLUGIN_PROCEED_VERSION);
+    return VersionComparator.isAfter(newVersion, PLUGIN_PROCEED_VERSION);
   }
 
   /**
@@ -200,7 +200,7 @@ public class SocialMixinCleanerUpgradePlugin extends UpgradeProductPlugin {
                   node.refresh(false);
                 }
               }
-              if (totalCount % FETCH_SIZE == 0) {
+              if (totalCount > 0 && totalCount % FETCH_SIZE == 0) {
                 session.save();
                 transaction.commit();
                 log.info("Migration in progress, proceeded nodes count = {}", totalCount);
