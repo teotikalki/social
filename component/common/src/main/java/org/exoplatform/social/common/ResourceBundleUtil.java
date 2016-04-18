@@ -81,10 +81,10 @@ public class ResourceBundleUtil {
         break;
       }
       
-      temp = temp.replace("''", "'");
+      temp = temp.replace("''", "\"");
     }
     
-    return temp.replaceAll("'", "''");
+    return temp.replaceAll("\"", "''");
   }
 
 }
