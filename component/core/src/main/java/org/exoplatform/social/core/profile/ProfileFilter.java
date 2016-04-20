@@ -57,9 +57,6 @@ public class ProfileFilter {
   
   private boolean isEmpty;
 
-  /** enabled search analyser */
-  private boolean enabledAnalyser;
-
   public ProfileFilter() {
     this.name = "";
     this.position = "";
@@ -130,24 +127,6 @@ public class ProfileFilter {
   public void setName(String name) {
     this.name = name;
     this.isEmpty = false;
-  }
-
-  /**
-   * indicating whether analyzer is configured or none
-   *
-   * @return the enabledAnalyser
-   */
-  public boolean isEnabledAnalyser() {
-    return enabledAnalyser;
-  }
-
-  /**
-   * Sets the enabledAnalyse to filter.
-   *
-   * @param enabledAnalyser
-   */
-  public void setEnabledAnalyser(boolean enabledAnalyser){
-    this.enabledAnalyser = enabledAnalyser;
   }
 
   /**

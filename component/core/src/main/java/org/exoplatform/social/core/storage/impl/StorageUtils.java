@@ -259,24 +259,12 @@ public class StorageUtils {
    * @return List of conditions
    * @since 4.0.x
    */
-  public static List<String> processUnifiedSearchCondition(String searchCondition, boolean enableAnalyser) {
+  public static List<String> processUnifiedSearchCondition(String searchCondition) {
     String[] spaceConditions = searchCondition.split(" ");
     List<String> result = new ArrayList<String>(spaceConditions.length);
-    //
-    StringBuffer searchConditionBuffer = null;
+
     for (String conditionValue : spaceConditions) {
-      //
-      searchConditionBuffer = new StringBuffer();
-      //
-      conditionValue = conditionValue.replace(ASTERISK_STR, PERCENT_STR);
-      if(enableAnalyser && !(conditionValue.contains(PERCENT_STR))) {
-        searchConditionBuffer.append(conditionValue);
-      }
-      else{
-        searchConditionBuffer.append(PERCENT_STR).append(conditionValue).append(PERCENT_STR);
-      }
-      //
-      result.add(searchConditionBuffer.toString());
+      result.add(conditionValue);
     }
     return result;
   }
