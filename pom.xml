@@ -70,8 +70,7 @@
     <!-- Platform Project Dependencies -->
     <org.exoplatform.commons.version>4.4.x-SNAPSHOT</org.exoplatform.commons.version>
     <org.exoplatform.platform-ui.version>4.4.x-SNAPSHOT</org.exoplatform.platform-ui.version>
-    <!-- ECMS Project Dependencies -->
-    <org.exoplatform.ecms.version>4.4.x-SNAPSHOT</org.exoplatform.ecms.version>
+
     <!-- Platform Project 3rd party Dependencies -->
     <org.exoplatform.doc.doc-style.version>4.4.x-SNAPSHOT</org.exoplatform.doc.doc-style.version>
     <!-- For surefire and failsafe to be compatible with jacoco -->
@@ -249,11 +248,6 @@
         <groupId>org.gatein.common</groupId>
         <artifactId>common-logging</artifactId>
         <version>${org.gatein.common.version}</version>
-      </dependency>
-      <dependency>
-      <groupId>org.exoplatform.ecms</groupId>
-      <artifactId>ecms-core-services</artifactId>
-      <version>${org.exoplatform.ecms.version}</version>
       </dependency>
       <!-- To be replaced by an import of GateIn PC parent POM -->
       <dependency>
