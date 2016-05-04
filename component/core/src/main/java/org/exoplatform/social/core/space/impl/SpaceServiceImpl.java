@@ -1101,18 +1101,17 @@ public class SpaceServiceImpl implements SpaceService {
    * @return
    */
   @Override
-  public void addSpaceApplicationHandler(SpaceApplicationHandler spaceApplicationHandler) {
-    this.spaceApplicationHandlers.put(spaceApplicationHandler.getName(), spaceApplicationHandler);
+  public Map<String, SpaceApplicationHandler> getSpaceApplicationHandlers() {
+    return this.spaceApplicationHandlers;
   }
 
   /**
-   * Gets space application handlers
+   * Add space application handler
    * 
-   * @return
    */
   @Override
-  public Map<String, SpaceApplicationHandler> getSpaceApplicationHandlers() {
-    return this.spaceApplicationHandlers;
+  public void addSpaceApplicationHandler(SpaceApplicationHandler spaceApplicationHandler) {
+    this.spaceApplicationHandlers.put(spaceApplicationHandler.getName(), spaceApplicationHandler);
   }
 
   /**
