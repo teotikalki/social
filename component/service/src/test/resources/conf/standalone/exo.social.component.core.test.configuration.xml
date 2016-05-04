@@ -408,11 +408,6 @@
   </component>
 
   <component>
-    <key>org.exoplatform.social.core.space.spi.SpaceApplicationHandler</key>
-    <type>org.exoplatform.social.core.space.impl.DefaultSpaceApplicationHandler</type>
-  </component>
-
-  <component>
     <key>org.exoplatform.social.core.processor.MentionsProcessor</key>
     <type>org.exoplatform.social.core.processor.MentionsProcessor</type>
   </component>
@@ -442,6 +437,15 @@
     <type>org.exoplatform.social.webNotification.service.test.MockWebNotificationStorage</type>
   </component>
   
+  <external-component-plugins>
+    <target-component>org.exoplatform.social.core.space.spi.SpaceService</target-component>
+    <component-plugin>
+      <name>DefaultSpaceApplicationHandler</name>
+      <set-method>addSpaceApplicationHandler</set-method>
+      <type>org.exoplatform.social.core.space.impl.DefaultSpaceApplicationHandler</type>
+	</component-plugin>  
+  </external-component-plugins>
+
   <external-component-plugins>
     <target-component>org.exoplatform.social.core.manager.ActivityManager</target-component>
     <component-plugin>

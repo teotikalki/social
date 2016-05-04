@@ -77,11 +77,11 @@ public abstract class AbstractCoreTest extends BaseExoTestCase {
     session = getSession();
 
     // If is query number test, init byteman
-    if (getClass().isAnnotationPresent(QueryNumberTest.class)) {
-      count = 0;
-      maxQuery = 0;
-      BMUnit.loadScriptFile(getClass(), "queryCount", "src/test/resources");
-    }
+//    if (getClass().isAnnotationPresent(QueryNumberTest.class)) {
+//      count = 0;
+//      maxQuery = 0;
+//      BMUnit.loadScriptFile(getClass(), "queryCount", "src/test/resources");
+//    }
 
     //
     spaceService = (SpaceService) getContainer().getComponentInstanceOfType(SpaceService.class);

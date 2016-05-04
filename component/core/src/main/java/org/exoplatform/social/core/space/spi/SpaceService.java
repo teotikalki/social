@@ -26,6 +26,7 @@ import org.exoplatform.social.core.space.SpaceListenerPlugin;
 import org.exoplatform.social.core.space.model.Space;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides methods to work with Space.
@@ -1345,5 +1346,9 @@ public interface SpaceService {
    * @return
    */
   ListAccess<Space> getVisitedSpaces(String remoteId, String appId);
+
+  void addSpaceApplicationHandler(SpaceApplicationHandler spaceApplicationHandler);
   
+  Map<String, SpaceApplicationHandler> getSpaceApplicationHandlers();
+
 }

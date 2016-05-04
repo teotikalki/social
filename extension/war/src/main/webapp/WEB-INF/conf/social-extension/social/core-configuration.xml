@@ -355,11 +355,6 @@
   </component>
 
   <component>
-    <key>org.exoplatform.social.core.space.spi.SpaceApplicationHandler</key>
-    <type>org.exoplatform.social.core.space.impl.DefaultSpaceApplicationHandler</type>
-  </component>
-
-  <component>
     <key>org.exoplatform.social.core.processor.I18NActivityProcessor</key>
     <type>org.exoplatform.social.core.processor.I18NActivityProcessor</type>
     <component-plugins>
@@ -574,6 +569,15 @@
     <key>org.exoplatform.social.core.application.SpaceActivityPublisher</key>
     <type>org.exoplatform.social.core.application.SpaceActivityPublisher</type>
   </component>
+
+  <external-component-plugins>
+    <target-component>org.exoplatform.social.core.space.spi.SpaceService</target-component>
+    <component-plugin>
+      <name>DefaultSpaceApplicationHandler</name>
+      <set-method>addSpaceApplicationHandler</set-method>
+      <type>org.exoplatform.social.core.space.impl.DefaultSpaceApplicationHandler</type>
+	</component-plugin>  
+  </external-component-plugins>
 
   <external-component-plugins>
     <target-component>org.exoplatform.services.resources.ResourceBundleService</target-component>

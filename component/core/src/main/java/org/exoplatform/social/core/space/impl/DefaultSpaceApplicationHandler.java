@@ -29,6 +29,7 @@ import org.exoplatform.application.registry.ApplicationCategory;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.config.UserPortalConfigService;
@@ -75,7 +76,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
  * @since OCt 17, 2008
  */
 
-public class DefaultSpaceApplicationHandler implements SpaceApplicationHandler {
+public class DefaultSpaceApplicationHandler extends BaseComponentPlugin implements SpaceApplicationHandler {
   private static final Log LOG = ExoLogger.getLogger(DefaultSpaceApplicationHandler.class);
 
   public static final String NAME = "classic";

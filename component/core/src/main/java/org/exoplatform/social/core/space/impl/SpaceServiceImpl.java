@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
+
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.commons.utils.PageList;
 import org.exoplatform.container.ExoContainer;
@@ -82,7 +83,7 @@ public class SpaceServiceImpl implements SpaceService {
 
   private UserACL                              userACL                  = null;
 
-  private Map<String, SpaceApplicationHandler> spaceApplicationHandlers = null;
+  private Map<String, SpaceApplicationHandler> spaceApplicationHandlers = new HashMap<String, SpaceApplicationHandler>();
 
   private SpaceLifecycle                       spaceLifeCycle           = new SpaceLifecycle();
   
@@ -106,7 +107,6 @@ public class SpaceServiceImpl implements SpaceService {
    * @param params
    * @throws Exception
    */
-  @SuppressWarnings("unchecked")
   public SpaceServiceImpl(InitParams params, SpaceStorage spaceStorage, IdentityStorage identityStorage, ActivityStreamStorage streamStorage) throws Exception {
 
     this.spaceStorage = spaceStorage;
@@ -1100,16 +1100,18 @@ public class SpaceServiceImpl implements SpaceService {
    * 
    * @return
    */
-  @SuppressWarnings("unchecked")
-  private Map<String, SpaceApplicationHandler> getSpaceApplicationHandlers() {
-    if (this.spaceApplicationHandlers == null) {
-      this.spaceApplicationHandlers = new HashMap();
+  @Override
+  public void addSpaceApplicationHandler(SpaceApplicationHandler spaceApplicationHandler) {
+    this.spaceApplicationHandlers.put(spaceApplicationHandler.getName(), spaceApplicationHandler);
+  }
 
-      ExoContainer container = ExoContainerContext.getCurrentContainer();
-      SpaceApplicationHandler appHandler =
-         (DefaultSpaceApplicationHandler) container.getComponentInstanceOfType(DefaultSpaceApplicationHandler.class);
-      this.spaceApplicationHandlers.put(appHandler.getName(), appHandler);
-    }
+  /**
+   * Gets space application handlers
+   * 
+   * @return
+   */
+  @Override
+  public Map<String, SpaceApplicationHandler> getSpaceApplicationHandlers() {
     return this.spaceApplicationHandlers;
   }
 
