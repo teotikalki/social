@@ -2,9 +2,11 @@ package org.exoplatform.social.rest.impl.activity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.exoplatform.services.rest.impl.ContainerResponse;
+import org.exoplatform.services.security.MembershipEntry;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
 import org.exoplatform.social.core.identity.model.Identity;
@@ -35,6 +37,7 @@ public class ActivityRestResourcesTest extends AbstractResourceTest {
   private Identity johnIdentity;
   private Identity maryIdentity;
   private Identity demoIdentity;
+  private Identity apiIdentity;
 
   public void setUp() throws Exception {
     super.setUp();
@@ -51,11 +54,13 @@ public class ActivityRestResourcesTest extends AbstractResourceTest {
     johnIdentity = new Identity("organization", "john");
     maryIdentity = new Identity("organization", "mary");
     demoIdentity = new Identity("organization", "demo");
+    apiIdentity = new Identity("organization", "api");
     
     identityStorage.saveIdentity(rootIdentity);
     identityStorage.saveIdentity(johnIdentity);
     identityStorage.saveIdentity(maryIdentity);
     identityStorage.saveIdentity(demoIdentity);
+    identityStorage.saveIdentity(apiIdentity);
     
     activityRestResourcesV1 = new ActivityRestResourcesV1();
     registry(activityRestResourcesV1);
@@ -74,6 +79,7 @@ public class ActivityRestResourcesTest extends AbstractResourceTest {
     identityStorage.deleteIdentity(johnIdentity);
     identityStorage.deleteIdentity(maryIdentity);
     identityStorage.deleteIdentity(demoIdentity);
+    identityStorage.deleteIdentity(apiIdentity);
     
     super.tearDown();
     removeResource(activityRestResourcesV1.getClass());
@@ -191,6 +197,16 @@ public class ActivityRestResourcesTest extends AbstractResourceTest {
     assertEquals(200, response.getStatus());
     collections = (CollectionEntity) response.getEntity();
     assertEquals(5, collections.getEntities().size());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api",ms);
+    response = service("GET", "/" + VersionResources.VERSION_ONE + "/social/activities/" + rootActivity.getId() + "/comments", "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(5, collections.getEntities().size());
     
     //clean data
     activityManager.deleteActivity(rootActivity);
@@ -234,6 +250,16 @@ public class ActivityRestResourcesTest extends AbstractResourceTest {
     assertNotNull(response);
     assertEquals(200, response.getStatus());
     CollectionEntity collections = (CollectionEntity) response.getEntity();
+    assertEquals(1, collections.getEntities().size());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api",ms);
+    response = service("GET", "/" + VersionResources.VERSION_ONE + "/social/activities/" + rootActivity.getId() + "/likes", "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
     assertEquals(1, collections.getEntities().size());
     
     //clean data

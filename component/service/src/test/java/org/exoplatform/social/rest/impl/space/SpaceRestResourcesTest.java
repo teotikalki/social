@@ -40,6 +40,7 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
   private Identity johnIdentity;
   private Identity maryIdentity;
   private Identity demoIdentity;
+  private Identity apiIdentity;
 
   public void setUp() throws Exception {
     super.setUp();
@@ -57,6 +58,7 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
     johnIdentity = identityManager.getOrCreateIdentity("organization", "john", true);
     maryIdentity = identityManager.getOrCreateIdentity("organization", "mary", true);
     demoIdentity = identityManager.getOrCreateIdentity("organization", "demo", true);
+    apiIdentity = identityManager.getOrCreateIdentity("organization", "api", true);
     
     spaceRestResources = new SpaceRestResourcesV1(userACL);
     registry(spaceRestResources);
@@ -77,6 +79,7 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
     identityManager.deleteIdentity(johnIdentity);
     identityManager.deleteIdentity(maryIdentity);
     identityManager.deleteIdentity(demoIdentity);
+    identityManager.deleteIdentity(apiIdentity);
     
     super.tearDown();
     removeResource(spaceRestResources.getClass());
@@ -136,6 +139,15 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
 
     // Only the super user can see all the spaces.
     startSessionAs("root", ms);
+    response = service("GET", getURLResource("spaces?limit=5&offset=0"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(3, collections.getEntities().size());
+
+    // api-access user can get all the spaces.
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api", ms);
     response = service("GET", getURLResource("spaces?limit=5&offset=0"), "", null, null);
     assertNotNull(response);
     assertEquals(200, response.getStatus());
@@ -212,6 +224,16 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
     assertEquals(200, response.getStatus());
     collections = (CollectionEntity) response.getEntity();
     assertEquals(2, collections.getEntities().size());
+
+    //test api-access get space users
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api",ms);
+    response = service("GET", getURLResource("spaces/" + space.getId() + "/users"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(4, collections.getEntities().size());
   }
   
   public void testGetActivitiesSpaceById() throws Exception {
@@ -243,6 +265,16 @@ public class SpaceRestResourcesTest extends AbstractResourceTest {
     assertEquals(7, listAccess.getSize());
     ExoSocialActivity activity = listAccess.load(0, 10)[0];
     assertEquals("title6", activity.getTitle());
+
+   //test api-access get space activities
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api",ms);
+    response = service("GET", getURLResource("spaces/" + space.getId() + "/activities"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    activitiesCollections = (CollectionEntity) response.getEntity();
+    assertEquals(7, activitiesCollections.getEntities().size());
     
     //
     tearDownActivitiesList.add(activity);

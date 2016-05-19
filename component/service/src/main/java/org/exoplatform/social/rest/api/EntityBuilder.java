@@ -227,6 +227,53 @@ public class EntityBuilder {
     updateCachedEtagValue(getEtagValue(space.getId()));
     return spaceEntity;
   }
+
+  /**
+   * Get a hash map from a space in order to build a json object for the rest service
+   *
+   * @param space the provided space
+   * @param userId the user's remote id
+   * @return a hash map
+   */
+  public static SpaceEntity advancedBuildEntityFromSpace(Space space, String userId, String restPath, String expand) {
+    SpaceEntity spaceEntity = new SpaceEntity(space.getId());
+    IdentityManager identityManager = CommonsUtils.getService(IdentityManager.class);
+    if (ArrayUtils.contains(space.getMembers(), userId) || RestUtils.isMemberOfAdminGroup() ||RestUtils.isMemberOfAPIAccessGroup()) {
+      spaceEntity.setHref(RestUtils.getRestUrl(SPACES_TYPE, space.getId(), restPath));
+      Identity spaceIdentity = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, space.getPrettyName(), true);
+      LinkEntity identity;
+      if(RestProperties.IDENTITY.equals(expand)) {
+        identity = new LinkEntity(buildEntityIdentity(spaceIdentity, restPath, null));
+      } else {
+        identity = new LinkEntity(RestUtils.getRestUrl(IDENTITIES_TYPE, spaceIdentity.getId(), restPath));
+      }
+      spaceEntity.setIdentity(identity);
+      spaceEntity.setGroupId(space.getGroupId());
+      spaceEntity.setApplications(getSpaceApplications(space));
+      LinkEntity managers, memebers;
+      if(RestProperties.MANAGERS.equals(expand)) {
+        managers = new LinkEntity(buildEntityProfiles(space.getManagers(), restPath, expand));
+      } else {
+        managers = new LinkEntity(getMembersSpaceRestUrl(space.getId(), true, restPath));
+      }
+      spaceEntity.setManagers(managers);
+      if(RestProperties.MEMBERS.equals(expand)) {
+        memebers = new LinkEntity(buildEntityProfiles(space.getMembers(), restPath, expand));
+      } else {
+        memebers = new LinkEntity(getMembersSpaceRestUrl(space.getId(), false, restPath));
+      }
+      spaceEntity.setMembers(memebers);
+    }
+    spaceEntity.setDisplayName(space.getDisplayName());
+    spaceEntity.setDescription(space.getDescription());
+    spaceEntity.setUrl(LinkProvider.getSpaceUri(space.getPrettyName()));
+    spaceEntity.setAvatarUrl(space.getAvatarUrl());
+    spaceEntity.setVisibility(space.getVisibility());
+    spaceEntity.setSubscription(space.getRegistration());
+    //
+    updateCachedEtagValue(getEtagValue(space.getId()));
+    return spaceEntity;
+  }
   
   /**
    * Get a hash map from a space in order to build a json object for the rest service
@@ -420,7 +467,7 @@ public class EntityBuilder {
       if (! authentiatedUsed.getId().equals(activity.getPosterId()) //the viewer is not the poster
           && ! authentiatedUsed.getRemoteId().equals(activity.getStreamOwner()) //the viewer is not the owner
           && (relationship == null || ! relationship.getStatus().equals(Relationship.Type.CONFIRMED)) //the viewer has no relationship with the given user
-          && ! RestUtils.isMemberOfAdminGroup()) { //current user is not an administrator  
+          && ! RestUtils.isMemberOfAdminGroup()) { //current user is not an administrator
         return null;
       }
       as.put(RestProperties.TYPE, USER_ACTIVITY_TYPE);
@@ -429,6 +476,42 @@ public class EntityBuilder {
       owner = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, activity.getStreamOwner(), true);
       Space space = spaceService.getSpaceByPrettyName(owner.getRemoteId());
       if (space == null || !spaceService.isMember(space, authentiatedUsed.getRemoteId())) { //the viewer is not member of space
+        return null;
+      }
+      as.put(RestProperties.TYPE, SPACE_ACTIVITY_TYPE);
+    }
+    //
+    as.put(RestProperties.ID, owner.getRemoteId());
+    return as;
+  }
+
+  /**
+   * Get the activityStream's information related to the activity.
+   *
+   * @param activity
+   * @param authentiatedUsed the viewer
+   * @return activityStream object, null if the viewer has no permission to view activity
+   */
+  public static DataEntity getAllActivityStream(ExoSocialActivity activity, Identity authentiatedUsed) {
+    DataEntity as = new DataEntity();
+    IdentityManager identityManager = CommonsUtils.getService(IdentityManager.class);
+    Identity owner = identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME, activity.getStreamOwner(), true);
+    if (owner != null) { //case of user activity
+      Relationship relationship = CommonsUtils.getService(RelationshipManager.class).get(authentiatedUsed, owner);
+      if (! authentiatedUsed.getId().equals(activity.getPosterId()) //the viewer is not the poster
+         && ! authentiatedUsed.getRemoteId().equals(activity.getStreamOwner()) //the viewer is not the owner
+         && (relationship == null || ! relationship.getStatus().equals(Relationship.Type.CONFIRMED)) //the viewer has no relationship with the given user
+         && ! RestUtils.isMemberOfAdminGroup()//current user is not an administrator
+         && ! RestUtils.isMemberOfAPIAccessGroup()) { //current user is not member of space group api-access
+        return null;
+      }
+      as.put(RestProperties.TYPE, USER_ACTIVITY_TYPE);
+    } else { //case of space activity
+      SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
+      owner = identityManager.getOrCreateIdentity(SpaceIdentityProvider.NAME, activity.getStreamOwner(), true);
+      Space space = spaceService.getSpaceByPrettyName(owner.getRemoteId());
+      if (space == null || !(spaceService.isMember(space, authentiatedUsed.getRemoteId()) //the viewer is not member of space
+         ||RestUtils.isMemberOfAPIAccessGroup())) { //the viewer is not member of space group api-access
         return null;
       }
       as.put(RestProperties.TYPE, SPACE_ACTIVITY_TYPE);

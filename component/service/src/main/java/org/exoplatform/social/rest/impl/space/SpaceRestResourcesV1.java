@@ -113,14 +113,14 @@ public class SpaceRestResourcesV1 implements SpaceRestResources {
       spaceFilter.setSpaceNameSearchCondition(q);
     }
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
-    if (userACL.getSuperUser().equals(authenticatedUser)) {
+    if (userACL.getSuperUser().equals(authenticatedUser) ||RestUtils.isMemberOfAPIAccessGroup()) {
       listAccess = spaceService.getAllSpacesByFilter(spaceFilter);
     } else {
       listAccess = spaceService.getAccessibleSpacesByFilter(authenticatedUser, spaceFilter);
     }
     List<DataEntity> spaceInfos = new ArrayList<DataEntity>();
     for (Space space : listAccess.load(offset, limit)) {
-      SpaceEntity spaceInfo = EntityBuilder.buildEntityFromSpace(space, authenticatedUser, uriInfo.getPath(), expand);
+      SpaceEntity spaceInfo = EntityBuilder.advancedBuildEntityFromSpace(space, authenticatedUser, uriInfo.getPath(), expand);
       //
       spaceInfos.add(spaceInfo.getDataEntity()); 
     }
@@ -203,10 +203,10 @@ public class SpaceRestResourcesV1 implements SpaceRestResources {
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
     SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
     Space space = spaceService.getSpaceById(id);
-    if (space == null || (Space.HIDDEN.equals(space.getVisibility()) && ! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser))) {
+    if (space == null || (Space.HIDDEN.equals(space.getVisibility()) && ! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser)&& ! RestUtils.isMemberOfAPIAccessGroup())) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
-    return EntityBuilder.getResponse(EntityBuilder.buildEntityFromSpace(space, authenticatedUser, uriInfo.getPath(), expand), uriInfo, RestUtils.getJsonMediaType(), Response.Status.OK);
+    return EntityBuilder.getResponse(EntityBuilder.advancedBuildEntityFromSpace(space, authenticatedUser, uriInfo.getPath(), expand), uriInfo, RestUtils.getJsonMediaType(), Response.Status.OK);
   }
   
   /**
@@ -309,7 +309,7 @@ public class SpaceRestResourcesV1 implements SpaceRestResources {
     //
     SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
     Space space = spaceService.getSpaceById(id);
-    if (space == null || (! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser))) {
+    if (space == null || (! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser) && ! RestUtils.isMemberOfAPIAccessGroup())) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
     
@@ -357,7 +357,7 @@ public class SpaceRestResourcesV1 implements SpaceRestResources {
     //
     SpaceService spaceService = CommonsUtils.getService(SpaceService.class);
     Space space = spaceService.getSpaceById(id);
-    if (space == null || (! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser))) {
+    if (space == null || (! spaceService.isMember(space, authenticatedUser) && ! userACL.getSuperUser().equals(authenticatedUser)) && ! RestUtils.isMemberOfAPIAccessGroup()) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
     

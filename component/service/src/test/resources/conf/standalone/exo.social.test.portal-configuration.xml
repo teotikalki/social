@@ -102,6 +102,14 @@
                     <field  name="label"><string>Spaces</string></field>
                   </object>
                 </value>
+                <value>
+                  <object type="org.exoplatform.services.organization.OrganizationConfig$Group">
+                    <field  name="name"><string>api-access</string></field>
+                    <field  name="parentId"><string>/platform</string></field>
+                    <field  name="description"><string>tthe /platform/api-access group</string></field>
+                    <field  name="label"><string>api-access</string></field>
+                  </object>
+                </value>
               </collection>
             </field>
 
@@ -116,6 +124,18 @@
                     <field  name="email"><string>root@localhost</string></field>
                     <field  name="groups">
                       <string>manager:/platform/administrators,member:/platform/users</string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.services.organization.OrganizationConfig$User">
+                    <field  name="userName"><string>api</string></field>
+                    <field  name="password"><string>gtn</string></field>
+                    <field  name="firstName"><string>Api</string></field>
+                    <field  name="lastName"><string>Api</string></field>
+                    <field  name="email"><string>api@localhost</string></field>
+                    <field  name="groups">
+                      <string>member:/platform/users,member:/platform/api-access</string>
                     </field>
                   </object>
                 </value>

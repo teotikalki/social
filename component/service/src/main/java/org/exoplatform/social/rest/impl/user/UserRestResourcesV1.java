@@ -327,7 +327,7 @@ public class UserRestResourcesV1 implements UserRestResources {
     }
     //Check permission of authenticated user : he must be an admin or he is the given user
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
-    if (!userACL.getSuperUser().equals(authenticatedUser) && !authenticatedUser.equals(id) ) {
+    if (!userACL.getSuperUser().equals(authenticatedUser) && !authenticatedUser.equals(id) && !RestUtils.isMemberOfAPIAccessGroup() ) {
       throw new WebApplicationException(Response.Status.FORBIDDEN);
     }
     
@@ -335,7 +335,7 @@ public class UserRestResourcesV1 implements UserRestResources {
     ListAccess<Space> listAccess = CommonsUtils.getService(SpaceService.class).getMemberSpaces(id);
     
     for (Space space : listAccess.load(offset, limit)) {
-      SpaceEntity spaceInfo = EntityBuilder.buildEntityFromSpace(space, id, uriInfo.getPath(), expand);
+      SpaceEntity spaceInfo = EntityBuilder.advancedBuildEntityFromSpace(space, id, uriInfo.getPath(), expand);
       //
       spaceInfos.add(spaceInfo.getDataEntity()); 
     }
@@ -414,7 +414,7 @@ public class UserRestResourcesV1 implements UserRestResources {
     Identity currentUser = CommonsUtils.getService(IdentityManager.class).getOrCreateIdentity(OrganizationIdentityProvider.NAME, authenticatedUser, true);
     List<DataEntity> activityEntities = new ArrayList<DataEntity>();
     for (ExoSocialActivity activity : activities) {
-      DataEntity as = EntityBuilder.getActivityStream(activity, currentUser);
+      DataEntity as = EntityBuilder.getAllActivityStream(activity, currentUser);
       if (as == null) continue;
       ActivityEntity activityEntity = EntityBuilder.buildEntityFromActivity(activity, uriInfo.getPath(), expand);
       activityEntity.setActivityStream(as);

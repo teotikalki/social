@@ -47,6 +47,8 @@ public class RestUtils {
 
   public static final String SUPPORT_TYPE   = "json";
 
+  public static final String API_ACCESS_GROUP    = "/platform/api-access";
+
   public static final String ADMIN_GROUP    = "/platform/administrators";
   
   public static String formatISO8601(Date date) {
@@ -114,6 +116,15 @@ public class RestUtils {
    */
   public static boolean isMemberOfAdminGroup() {
     return ConversationState.getCurrent().getIdentity().isMemberOf(ADMIN_GROUP);
+  }
+
+  /**
+   * Check if the authenticated user is a member of the api access group
+   *
+   * @return
+   */
+  public static boolean isMemberOfAPIAccessGroup() {
+    return ConversationState.getCurrent().getIdentity().isMemberOf(API_ACCESS_GROUP);
   }
   
   /** 

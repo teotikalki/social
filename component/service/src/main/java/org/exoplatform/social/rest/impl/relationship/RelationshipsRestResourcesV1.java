@@ -95,7 +95,7 @@ public class RelationshipsRestResourcesV1 implements RelationshipsRestResources 
     
     List<Relationship> relationships = new ArrayList<Relationship>();
     int size = 0;
-    if (identityId != null & RestUtils.isMemberOfAdminGroup()) {
+    if (identityId != null & (RestUtils.isMemberOfAdminGroup() || RestUtils.isMemberOfAPIAccessGroup())) {
       Identity identity = CommonsUtils.getService(IdentityManager.class).getIdentity(identityId, false);
       if (identity == null) {
         throw new WebApplicationException(Response.Status.PRECONDITION_FAILED);

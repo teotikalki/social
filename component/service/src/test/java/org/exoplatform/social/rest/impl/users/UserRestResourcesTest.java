@@ -1,10 +1,12 @@
 package org.exoplatform.social.rest.impl.users;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.rest.impl.ContainerResponse;
+import org.exoplatform.services.security.MembershipEntry;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
 import org.exoplatform.social.core.identity.model.Identity;
@@ -38,6 +40,7 @@ public class UserRestResourcesTest extends AbstractResourceTest {
   private Identity johnIdentity;
   private Identity maryIdentity;
   private Identity demoIdentity;
+  private Identity apiIdentity;
 
   public void setUp() throws Exception {
     super.setUp();
@@ -55,6 +58,7 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     johnIdentity = identityManager.getOrCreateIdentity("organization", "john", true);
     maryIdentity = identityManager.getOrCreateIdentity("organization", "mary", true);
     demoIdentity = identityManager.getOrCreateIdentity("organization", "demo", true);
+    apiIdentity = identityManager.getOrCreateIdentity("organization", "api", true);
     
     userRestResourcesV1 = new UserRestResourcesV1(userACL);
     registry(userRestResourcesV1);
@@ -73,6 +77,7 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     identityManager.deleteIdentity(johnIdentity);
     identityManager.deleteIdentity(maryIdentity);
     identityManager.deleteIdentity(demoIdentity);
+    identityManager.deleteIdentity(apiIdentity);
     
     super.tearDown();
     removeResource(userRestResourcesV1.getClass());
@@ -84,7 +89,17 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     assertNotNull(response);
     assertEquals(200, response.getStatus());
     CollectionEntity collections = (CollectionEntity) response.getEntity();
-    assertEquals(4, collections.getEntities().size());
+    assertEquals(5, collections.getEntities().size());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api", ms);
+    response = service("GET", getURLResource("users?limit=5&offset=0"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(5, collections.getEntities().size());
   }
   
   public void testGetUserById() throws Exception {
@@ -93,6 +108,16 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     assertNotNull(response);
     assertEquals(200, response.getStatus());
     ProfileEntity userEntity = getBaseEntity(response.getEntity(), ProfileEntity.class);
+    assertEquals("john", userEntity.getUsername());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api", ms);
+    response = service("GET", getURLResource("users/john"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    userEntity = getBaseEntity(response.getEntity(), ProfileEntity.class);
     assertEquals("john", userEntity.getUsername());
   }
   
@@ -139,6 +164,17 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     assertEquals("demo activity", activityEntity.getTitle());
     activityEntity = getBaseEntity(collections.getEntities().get(1), ActivityEntity.class);
     assertEquals("root activity", activityEntity.getTitle());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api", ms);
+    response = service("GET", getURLResource("users/root/activities?limit=5&offset=0"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(2, collections.getEntities().size());
+
     
     activityManager.deleteActivity(maryActivity);
     activityManager.deleteActivity(demoActivity);
@@ -178,6 +214,16 @@ public class UserRestResourcesTest extends AbstractResourceTest {
     assertEquals(403, response.getStatus());
 
     startSessionAs("root");
+    response = service("GET", getURLResource("users/demo/spaces?limit=5&offset=0"), "", null, null);
+    assertNotNull(response);
+    assertEquals(200, response.getStatus());
+    collections = (CollectionEntity) response.getEntity();
+    assertEquals(2, collections.getEntities().size());
+
+    //api-access
+    HashSet<MembershipEntry> ms = new HashSet<MembershipEntry>();
+    ms.add(new MembershipEntry("/platform/api-access"));
+    startSessionAs("api", ms);
     response = service("GET", getURLResource("users/demo/spaces?limit=5&offset=0"), "", null, null);
     assertNotNull(response);
     assertEquals(200, response.getStatus());

@@ -1,12 +1,14 @@
 package org.exoplatform.social.rest.impl.spacemembership;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.exoplatform.services.rest.impl.ContainerResponse;
+import org.exoplatform.services.security.MembershipEntry;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.identity.provider.SpaceIdentityProvider;
 import org.exoplatform.social.core.manager.IdentityManager;
