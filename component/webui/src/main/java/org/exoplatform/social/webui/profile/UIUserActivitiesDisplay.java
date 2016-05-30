@@ -188,26 +188,6 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
   public String getCookiesKey(String displayMode) {
     return String.format(ACTIVITY_STREAM_VISITED_PREFIX_COOKIED, displayMode, Utils.getViewerRemoteId());
   }
-  
-  /**
-   * sets activity stream owner (user remote Id)
-   *
-   * @param ownerName
-   * @throws Exception
-   */
-  public void setOwnerName(String ownerName) throws Exception {
-    this.ownerName = ownerName;
-    viewerName = PortalRequestContext.getCurrentInstance().getRemoteUser();
-    isActivityStreamOwner = viewerName.equals(ownerName);
-    if (!isActivityStreamOwner) {
-      selectedDisplayMode = DisplayMode.OWNER_STATUS;
-    }
-    init();
-    
-    //
-    //int numberOfUpdates = this.getNumberOfUpdatedActivities();
-    //setLastUpdatedNum(selectedDisplayMode.toString(), "" + numberOfUpdates);
-  }
 
   public String getOwnerName() {
     return ownerName;
@@ -224,7 +204,13 @@ public class UIUserActivitiesDisplay extends AbstractActivitiesDisplay {
 
     Validate.notNull(ownerName, "ownerName must not be null.");
     Validate.notNull(viewerName, "viewerName must not be null.");
-    //
+
+
+    isActivityStreamOwner = viewerName.equals(ownerName);
+    if (!isActivityStreamOwner) {
+      selectedDisplayMode = DisplayMode.OWNER_STATUS;
+    }
+
     synchronized (locker) {
       removeChild(UIActivitiesLoader.class);
       activitiesLoader = addChild(UIActivitiesLoader.class, null, "UIActivitiesLoader");
