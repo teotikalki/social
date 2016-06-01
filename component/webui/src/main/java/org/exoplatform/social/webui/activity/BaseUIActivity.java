@@ -18,9 +18,9 @@ package org.exoplatform.social.webui.activity;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
@@ -70,8 +70,6 @@ public class BaseUIActivity extends UIForm {
   private int commentSize = 0;
 
   private static final int DEFAULT_LIMIT = 10;
-
-  private static final String ADMIN_GROUP = "/platform/administrators";
   
   protected static final int LIKES_NUM_DEFAULT = 0;
   
@@ -506,8 +504,8 @@ public class BaseUIActivity extends UIForm {
   }  
 
   public boolean isActivityDeletable() throws SpaceException {
-
-    if (Utils.getViewerIdentity().equals(getOwnerIdentity()) || Utils.getViewerIdentity().getRemoteId().equals(activity.getStreamOwner()) || ConversationState.getCurrent().getIdentity().isMemberOf(ADMIN_GROUP)) {
+    UserACL userACL = getApplicationComponent(UserACL.class);
+    if (Utils.getViewerIdentity().equals(getOwnerIdentity()) || Utils.getViewerIdentity().getRemoteId().equals(activity.getStreamOwner()) || userACL.isUserInGroup(userACL.getAdminGroups())) {
       return true;
     }
     
