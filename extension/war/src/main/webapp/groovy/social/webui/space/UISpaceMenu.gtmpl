@@ -105,7 +105,7 @@
     String []uriParts = nodeUri.split("/");
     String nodeName = uriParts[uriParts.length - 1];
     String pName = "";
-    if ((nodeIcon == null) && (node.getPageRef() != null )) {
+    if (node.getPageRef() != null ) {
       appName = node.getPageRef().getName();
       if (appName != null && nodeTitle == null) {
         def appLabelFromResourceBundle = org.exoplatform.social.webui.Utils.appRes(appName + ".label.name");
