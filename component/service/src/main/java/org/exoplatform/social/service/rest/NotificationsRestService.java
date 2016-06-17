@@ -19,6 +19,10 @@ package org.exoplatform.social.service.rest;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.core.ManageableRepository;
+import org.exoplatform.services.jcr.ext.app.SessionProviderService;
+import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.identity.model.Identity;
@@ -31,6 +35,7 @@ import org.exoplatform.social.core.service.LinkProvider;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,7 +52,7 @@ import java.util.List;
 import static org.exoplatform.social.service.rest.RestChecker.checkAuthenticatedRequest;
 
 /**
- * 
+ *
  * Provides REST Services for manipulating jobs related to notifications.
  *
  * @anchor NotificationRestService
@@ -55,28 +60,29 @@ import static org.exoplatform.social.service.rest.RestChecker.checkAuthenticated
 
 @Path("social/notifications")
 public class NotificationsRestService implements ResourceContainer {
-  
+
   private IdentityManager identityManager;
   private ActivityManager activityManager;
   private RelationshipManager relationshipManager;
   private SpaceService spaceService;
-  
-  private static String       ACTIVITY_ID_PREFIX = "activity";
+
+  private static String       ACTIVITY_ID_PREFIX  = "activity";
+  private static String       DOCUMENT_APP_PREFIX = "documents";
 
   public enum URL_TYPE {
     user, space, space_members, reply_activity, reply_activity_highlight_comment, view_full_activity,
-    view_full_activity_highlight_comment, view_likers_activity, portal_home, all_space,
+    view_file_activity, view_full_activity_highlight_comment, view_likers_activity, portal_home, all_space,
     connections, notification_settings, connections_request, space_invitation, user_activity_stream;
   }
-  
+
   public NotificationsRestService() {
   }
-  
+
   /**
    * Processes the "Invite to connect" action between two users, sender and receiver, then redirects to the receiver's profile page.
    *
    * @param senderId The sender's remote Id.
-   * @param receiverId The receiver's remote Id. 
+   * @param receiverId The receiver's remote Id.
    * @authentication
    * @request
    * GET: http://localhost:8080/rest/social/notifications/inviteToConnect/john/root
@@ -89,20 +95,20 @@ public class NotificationsRestService implements ResourceContainer {
                                   @PathParam("receiverId") String receiverId,
                                   @PathParam("senderId") String senderId) throws Exception {
     checkAuthenticatedRequest();
-    
+
     Identity sender = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, (senderId != null ? senderId : ConversationState.getCurrent().getIdentity().getUserId()), true);
     Identity receiver = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, receiverId, true);
     if (sender == null || receiver == null) {
       throw new WebApplicationException(Response.Status.BAD_REQUEST);
     }
     getRelationshipManager().inviteToConnect(sender, receiver);
-  
+
     String targetURL = Util.getBaseUrl() + LinkProvider.getUserProfileUri(receiver.getRemoteId());
-    
+
     // redirect to target page
    return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
    * Processes the "Accept the invitation to connect" action between 2 users, then redirects to the sender's activity stream.
    *
@@ -118,7 +124,7 @@ public class NotificationsRestService implements ResourceContainer {
   @Path("confirmInvitationToConnect/{senderId}/{receiverId}")
   public Response confirmInvitationToConnect(@PathParam("senderId") String senderId,
                                              @PathParam("receiverId") String receiverId) throws Exception {
-    Identity sender = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, senderId, true); 
+    Identity sender = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, senderId, true);
     Identity receiver = getIdentityManager().getOrCreateIdentity(OrganizationIdentityProvider.NAME, receiverId, true);
     if (sender == null || receiver == null) {
       throw new WebApplicationException(Response.Status.BAD_REQUEST);
@@ -127,11 +133,11 @@ public class NotificationsRestService implements ResourceContainer {
       getRelationshipManager().confirm(sender, receiver);
     }
     String targetURL = Util.getBaseUrl() + LinkProvider.getUserActivityUri(sender.getRemoteId());
-    
+
     // redirect to target page
    return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
    * Processes the "Deny the invitation to connect" action between 2 users, then redirects to the receiver's page of received invitations.
    * A message informing that the receiver ignored the sender's invitation will be displayed.
@@ -163,7 +169,7 @@ public class NotificationsRestService implements ResourceContainer {
     // redirect to target page
     return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
    * Processes the "Accept the invitation to join a space" action and redirects to the space homepage.
    *
@@ -191,7 +197,7 @@ public class NotificationsRestService implements ResourceContainer {
     // redirect to target page
     return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
    * Processes the "Deny the invitation to join a space" action, then redirects to the page of all spaces.
    * A message informing that the invitee has denied to join the space will be displayed.
@@ -222,15 +228,15 @@ public class NotificationsRestService implements ResourceContainer {
         targetURL = targetURL + LinkProvider.getRedirectUri("all-spaces?feedbackMessage=SpaceInvitationRefuse&spaceId=" + spaceId);
       }
     }
-    
+
     // redirect to target page
     return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
-   * Adds a member to a space, then redirects to the space's members page. 
+   * Adds a member to a space, then redirects to the space's members page.
    * A message informing the added user is already member of the space or not will be displayed.
-   * This action is only for the space manager. 
+   * This action is only for the space manager.
    *
    * @param userId The remote Id of the user who requests for joining the space.
    * @param spaceId Id of the space.
@@ -247,17 +253,17 @@ public class NotificationsRestService implements ResourceContainer {
     checkAuthenticatedRequest();
 
     Space space = getSpaceService().getSpaceById(spaceId);
-    
+
     if (space == null) {
       throw new WebApplicationException(Response.Status.BAD_REQUEST);
     }
-    
+
     //check user permission
     String authenticatedUser = ConversationState.getCurrent().getIdentity().getUserId();
     if (! getSpaceService().isManager(space, authenticatedUser)) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
-    
+
     StringBuilder sb = new StringBuilder().append("?feedbackMessage=");
     if (getSpaceService().isMember(space, userId)) {
       sb.append("SpaceRequestAlreadyMember&spaceId=").append(spaceId);
@@ -274,10 +280,10 @@ public class NotificationsRestService implements ResourceContainer {
     // redirect to target page
     return Response.seeOther(URI.create(targetURL)).build();
   }
-  
+
   /**
-   * Refuses a user's request for joining a space, then redirects to 
-   * the space's members page. This action is only for the space manager. 
+   * Refuses a user's request for joining a space, then redirects to
+   * the space's members page. This action is only for the space manager.
    *
    * @param userId The remote Id of the user who requests for joining the space.
    * @param spaceId Id of the space.
@@ -302,7 +308,7 @@ public class NotificationsRestService implements ResourceContainer {
     if (! getSpaceService().isManager(space, authenticatedUser)) {
       throw new WebApplicationException(Response.Status.UNAUTHORIZED);
     }
-    
+
     String baseUrl = Util.getBaseUrl();
     String spaceHomeUrl = LinkProvider.getActivityUriForSpace(space.getPrettyName(), space.getGroupId().replace("/spaces/", ""));
     StringBuilder targetURL = new StringBuilder().append(baseUrl).append(spaceHomeUrl).append("/settings/members?feedbackMessage=");
@@ -317,7 +323,64 @@ public class NotificationsRestService implements ResourceContainer {
     // redirect to target page
     return Response.seeOther(URI.create(targetURL.toString())).build();
   }
-  
+
+  /**
+   * Redirects the current user to an associated page, such as user activity stream, portal homepage,
+   * space homepage and user profile.
+   *
+   * @param type Type of the redirected page.
+   * @param workspace Workspace of the stored content.
+   * @param objectId Id of the associated type that can be file Id, TODO
+   * @authentication
+   * @request
+   * GET: localhost:8080/social/notifications/redirectUrl/view_file_activity/collaboration/e1d2870c7f0001014e32114f6ff8a7ab TODO
+   * @return Redirects to the associated page.
+   * @throws Exception
+   */
+  @GET
+  @Path("redirectUrl/{type}/{workspace}/{objectId}")
+  public Response redirectUrl(@Context UriInfo uriInfo,
+                              @PathParam("type") String type,
+                              @PathParam("workspace") String workspace,
+                              @PathParam("objectId") String objectId) throws Exception {
+    String targetURL = null;
+    try {
+      checkAuthenticatedRequest();
+      URL_TYPE urlType = URL_TYPE.valueOf(type);
+      switch (urlType) {
+        case view_file_activity: {
+          RepositoryService repoService = (RepositoryService) PortalContainer.getInstance()
+                  .getComponentInstanceOfType(RepositoryService.class);
+
+          ManageableRepository repository = repoService.getCurrentRepository();
+          SessionProviderService sessionProviderService = (SessionProviderService) PortalContainer.getInstance()
+                  .getComponentInstanceOfType(SessionProviderService.class);
+          SessionProvider sessionProvider = sessionProviderService.getSystemSessionProvider(null);
+          Session session = sessionProvider.getSession(workspace.substring(0, 1).toLowerCase() + workspace.substring(1), repository);
+          String path = session.getNodeByUUID(objectId).getPath();
+          if (path.contains(" ")) {
+            path = path.replace(" ","%20");
+          }
+          if (path.contains("/Groups/spaces/")) {
+            String space = path.split("/")[3];
+            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectSpaceUri(getSpaceDocuments(space) + "?path=" + workspace + path);
+          } else {
+            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectUri(DOCUMENT_APP_PREFIX + "?path=" + workspace + path);
+          }
+          break;
+        }
+      }
+     } catch (Exception e) {
+      throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    }
+  // redirect to target page
+  return Response.seeOther(URI.create(targetURL)).build();
+}
+
+  private String getSpaceDocuments(String space) {
+    return "g/:spaces:" + space + "/" +space + "/" + DOCUMENT_APP_PREFIX;
+  }
+
   /**
    * Redirects the current user to an associated page, such as user activity stream, portal homepage,
    * space homepage and user profile.

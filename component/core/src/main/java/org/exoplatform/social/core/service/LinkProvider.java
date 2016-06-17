@@ -392,20 +392,24 @@ public class LinkProvider {
   private static String getBaseUri(final String portalName, String portalOwner) {
     return "/" + getPortalName(portalName) + "/" + getPortalOwner(portalOwner);
   }
-  
+
+  private static String getSpaceBaseUri(final String portalName, String portalOwner) {
+    return "/" + getPortalName(portalName);
+  }
+
   /**
    * Gets the link of notification settings page
-   * 
+   *
    * @param remoteId
    * @return
    */
   public static String getUserNotificationSettingUri(final String remoteId) {
     return getBaseUri(null, null) + "/notifications" + ROUTE_DELIMITER + remoteId;
   }
-  
+
   /**
    * Gets the link of all spaces page
-   * 
+   *
    * @return
    */
   public static String getRedirectUri(String type) {
@@ -413,6 +417,13 @@ public class LinkProvider {
       return getBaseUri(null, null);
     }
     return getBaseUri(null, null) + "/" + type;
+  }
+
+  public static String getRedirectSpaceUri(String type) {
+    if (type.isEmpty()) {
+      return getSpaceBaseUri(null, null);
+    }
+    return getSpaceBaseUri(null, null) + "/" + type;
   }
 
   /**
