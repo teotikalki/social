@@ -330,10 +330,10 @@ public class NotificationsRestService implements ResourceContainer {
    *
    * @param type Type of the redirected page.
    * @param workspace Workspace of the stored content.
-   * @param objectId Id of the associated type that can be file Id, TODO
+   * @param objectId Id of the associated type which is a file Id,
    * @authentication
    * @request
-   * GET: localhost:8080/social/notifications/redirectUrl/view_file_activity/collaboration/e1d2870c7f0001014e32114f6ff8a7ab TODO
+   * GET: localhost:8080/social/notifications/redirectUrl/view_file_activity/collaboration/e1d2870c7f0001014e32114f6ff8a7ab
    * @return Redirects to the associated page.
    * @throws Exception
    */
@@ -361,11 +361,12 @@ public class NotificationsRestService implements ResourceContainer {
           if (path.contains(" ")) {
             path = path.replace(" ","%20");
           }
-          if (path.contains("/Groups/spaces/")) {
+          String[] splitedPath = path.split("/");
+          if (splitedPath[1].equals("Groups") && splitedPath[2].equals("spaces")) {
             String space = path.split("/")[3];
-            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectSpaceUri(getSpaceDocuments(space) + "?path=" + workspace + path);
+            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectSpaceUri(getSpaceDocuments(space) + "?path=" + workspace + path)  + "&notification=true";
           } else {
-            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectUri(DOCUMENT_APP_PREFIX + "?path=" + workspace + path);
+            targetURL = Util.getBaseUrl() + LinkProvider.getRedirectUri(DOCUMENT_APP_PREFIX + "?path=" + workspace + path)  + "&notification=true";
           }
           break;
         }

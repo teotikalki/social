@@ -71,6 +71,43 @@
                                         </tbody>
                                     </table>
                                     <br/>
+                                    <% if (!OPEN_APP.equals("none")) { %>
+                                        <p style="margin: 0 0 20px;">
+                                            <a target="_blank" style="
+                                            display: inline-block;
+                                            text-decoration: none;
+                                            font-family: 'HelveticaNeue Bold', Helvetica, Arial, sans-serif;
+                                            color: #ffffff;
+                                            text-shadow: 0 -1px 0 rgba(23, 33, 37, .25);
+                                            background-image: -moz-linear-gradient(top, #638acd, #426393);
+                                            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#638acd), to(#426393));
+                                            background-image: -webkit-linear-gradient(top, #638acd, #426393);
+                                            background-image: -o-linear-gradient(top, #638acd, #426393);
+                                            background-image: linear-gradient(to bottom, #638acd, #426393);
+                                            border-radius: 4px;
+                                            -moz-border-radius: 4px;
+                                            padding: 4px 8px;
+                                            border: 1px solid #224886;
+                                            font-weight: bold;
+                                            -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+                                            -moz-box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+                                            box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+                                            " href="$APP_LINK" title="Open in Application""">
+                                            <% if (OPEN_APP.equals("forum")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Forum")%></a>
+                                            <% } else if (OPEN_APP.equals("documents")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Documents")%></a>
+                                            <% } else if (OPEN_APP.equals("wiki")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Wiki")%></a>
+                                            <% } else if (OPEN_APP.equals("calendar")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Calendar")%></a>
+                                            <% } else if (OPEN_APP.equals("answers")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Answers")%></a>
+                                            <% } else if (OPEN_APP.equals("poll")) { %>
+                                                <%=_ctx.appRes("Notification.label.Open.Poll")%></a>
+                                            <% }%>
+                                        </p>
+                                    <% } %>
                                     <p style="margin: 0 0 20px;">
                                         <a target="_blank" style="
                                             display: inline-block;

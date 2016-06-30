@@ -322,11 +322,23 @@ public class SocialNotificationUtils {
     if (child == null || (child instanceof AbstractNotificationChildPlugin) == false) {
       child = pluginContainer.getPlugin(new PluginKey(DefaultActivityChildPlugin.ID));
     }
-    context.put("ACTIVITY", ((AbstractNotificationChildPlugin) child).makeContent(ctx));
-
+    if (!ctx.getNotificationInfo().getKey().getId().equals("ActivityCommentPlugin")) {
+      context.put("ACTIVITY", ((AbstractNotificationChildPlugin) child).makeContent(ctx));
+    } else if ((activity.getType() != null) && activity.getType().equals("ks-forum:spaces")) {
+      context.put("ACTIVITY", getPrettyActivity(((AbstractNotificationChildPlugin) child).makeContent(ctx)));
+    } else {
+      context.put("ACTIVITY", ((AbstractNotificationChildPlugin) child).makeContent(ctx));
+    }
     return TemplateUtils.processGroovy(context);
   }
-  
+
+  private static String getPrettyActivity(String activity) {
+    if (activity.contains("Open in")) {
+      return activity.split("</p>")[0] + "</p>";
+    }
+    return activity;
+  }
+
   public static List<String> mergeUsers(NotificationContext ctx, TemplateContext context, String propertyName, String activityId, String userId) {
     NotificationInfo notification = ctx.getNotificationInfo();
     List<String> users = null;
