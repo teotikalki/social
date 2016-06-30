@@ -95,16 +95,6 @@
                                             " href="$APP_LINK" title="Open in Application""">
                                             <% if (OPEN_APP.equals("forum")) { %>
                                                 <%=_ctx.appRes("Notification.label.Open.Forum")%></a>
-                                            <% } else if (OPEN_APP.equals("documents")) { %>
-                                                <%=_ctx.appRes("Notification.label.Open.Documents")%></a>
-                                            <% } else if (OPEN_APP.equals("wiki")) { %>
-                                                <%=_ctx.appRes("Notification.label.Open.Wiki")%></a>
-                                            <% } else if (OPEN_APP.equals("calendar")) { %>
-                                                <%=_ctx.appRes("Notification.label.Open.Calendar")%></a>
-                                            <% } else if (OPEN_APP.equals("answers")) { %>
-                                                <%=_ctx.appRes("Notification.label.Open.Answers")%></a>
-                                            <% } else if (OPEN_APP.equals("poll")) { %>
-                                                <%=_ctx.appRes("Notification.label.Open.Poll")%></a>
                                             <% }%>
                                         </p>
                                     <% } %>

@@ -97,10 +97,7 @@ public class MailTemplateProvider extends TemplateProvider {
       templateContext.put("USER", identity.getProfile().getFullName());
       String subject = TemplateUtils.processSubject(templateContext);
       if (activity.getType() != null) {
-        if (activity.getType().equals("ks-wiki:spaces")) {
-          templateContext.put("OPEN_APP", "wiki");
-          templateContext.put("APP_LINK", CommonsUtils.getCurrentDomain().concat(activity.getTemplateParams().get("page_url")));
-        } else if (activity.getType().equals("ks-forum:spaces") && !activity.getTitleId().equals("forum.remove-poll")) {
+        if (activity.getType().equals("ks-forum:spaces") && !activity.getTitleId().equals("forum.remove-poll")) {
           templateContext.put("OPEN_APP", "forum");
           if (activity.isComment()) {
             templateContext.put("APP_LINK", activity.getTemplateParams().get("PostLink").contains("http://") ?
@@ -109,14 +106,6 @@ public class MailTemplateProvider extends TemplateProvider {
           } else {
             templateContext.put("APP_LINK", CommonsUtils.getCurrentDomain().concat(activity.getTemplateParams().get("TopicLink")));
           }
-        } else if (activity.getType().equals("cs-calendar:spaces")) {
-          templateContext.put("OPEN_APP", "calendar");
-          templateContext.put("APP_LINK", CommonsUtils.getCurrentDomain().concat(activity.getTemplateParams().get("EventLink")));
-        } else if (activity.getType().equals("contents:spaces")) {
-          templateContext.put("OPEN_APP", "documents");
-        } else if (activity.getType().contains("answer:spaces") ) {
-          templateContext.put("OPEN_APP", "answers");
-          templateContext.put("APP_LINK", CommonsUtils.getCurrentDomain().concat(parentActivity.getTemplateParams().get("Link")));
         } else {
           templateContext.put("OPEN_APP", "none");
         }
@@ -474,26 +463,6 @@ public class MailTemplateProvider extends TemplateProvider {
       templateContext.put("SPACE", spaceIdentity.getProfile().getFullName());
       templateContext.put("SUBJECT", activity.getTitle());
       String subject = TemplateUtils.processSubject(templateContext);
-      if (activity.getType() != null) {
-        if (activity.getType().equals("ks-wiki:spaces")) {
-          templateContext.put("OPEN_APP", "wiki");
-        } else if (activity.getType().equals("ks-forum:spaces")) {
-          templateContext.put("OPEN_APP", "forum");
-        } else if (activity.getType().equals("cs-calendar:spaces")) {
-          templateContext.put("OPEN_APP", "calendar");
-        } else if (activity.getType().contains("contents:spaces")) {
-          templateContext.put("OPEN_APP", "documents");
-        } else if (activity.getType().contains("answer:spaces")) {
-          templateContext.put("OPEN_APP", "answers");
-          templateContext.put("APP_LINK", activity.getTemplateParams().get("Link"));
-        } else if (activity.getType().equals("ks-poll:spaces")) {
-          templateContext.put("OPEN_APP", "poll");
-        } else {
-          templateContext.put("OPEN_APP", "none");
-        }
-      } else {
-        templateContext.put("OPEN_APP", "none");
-      }
       Space space = Utils.getSpaceService().getSpaceByPrettyName(spaceIdentity.getRemoteId());
       templateContext.put("SPACE_URL", LinkProviderUtils.getRedirectUrl("space", space.getId()));
       templateContext.put("PROFILE_URL", LinkProviderUtils.getRedirectUrl("user", identity.getRemoteId()));
