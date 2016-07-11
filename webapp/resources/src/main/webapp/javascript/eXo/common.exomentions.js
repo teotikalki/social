@@ -177,8 +177,7 @@
   };
 
   var eXoMentions = function(settings) {
-
-    var jElmTarget, elmInputBox, elmInputWrapper, elmAutocompleteList, elmWrapperBox, elmActiveAutoCompleteItem;
+    var jElmTarget, elmInputWrapper, elmInputBox, elmAutocompleteList, elmWrapperBox, elmActiveAutoCompleteItem;
     var valueBeforMention = '';
     var mentionsCollection = [];
     var autocompleteItemCollection = {};
@@ -261,52 +260,11 @@
       mentionsCollection = _.compact(mentionsCollection);
     }
 
-    function addMention(mention) {
-
-      var currentMessage = getInputBoxFullValue();
-
-      // Using a regex to figure out positions
-      var strReg = settings.triggerChar + currentDataQuery;
-      if(currentMessage.indexOf(strReg) === 0) {
-        strReg = "\\"+strReg;
-      } else if(currentMessage.indexOf('>'+strReg) > 0) {
-        strReg = "\\>"+strReg;
-      } else {
-        strReg = "\\ "+strReg;
-      }
-      var regex = new RegExp(strReg, "gi");
-      regex.exec(currentMessage);
-      
-      var startCaretPosition = regex.lastIndex - currentDataQuery.length - 1;
-      var currentCaretPosition = regex.lastIndex;
-
-      var start = currentMessage.substr(0, startCaretPosition);
-      var end = currentMessage.substr(currentCaretPosition, currentMessage.length);
-      var startEndIndex = (start + mention.value).length + 1;
-
-      mentionsCollection.push(mention);
-
-      // Cleaning before inserting the value, otherwise auto-complete would be
-      // triggered with "old" inputbuffer
-      resetBuffer();
-      currentDataQuery = '';
-      hideAutoComplete();
-
-      // Mentions & syntax message
-      var point = '<span class="none point"></span>';
-      var updatedMessageText = utils.removeLastBr(start + addItemMention(mention.value) + point + end);
-
-      elmInputBox.val(updatedMessageText);
-      point = elmInputBox.find('span.point')
-      addElmCaret(point);
-      point.remove();
-      initClickMention();
-      setCaretPosition(elmInputBox);
-    }
-
-
-    function addItemMention(value) {
+    function addItemMention(value) {    	
       var val = '<span contenteditable="false">' + value + '<i class="uiIconClose uiIconLightGray"' + ((utils.isFirefox) ? 'contenteditable="true"' : '') + '>x</i></span>';
+      if (settings.mentionItem) {
+    	  val = settings.mentionItem(value);
+      }
       return insertCursorText(val, -1, false);
     }
 
@@ -443,9 +401,21 @@
 
     function onAutoCompleteItemClick(e) {
       var elmTarget = $(this);
-      var mention = autocompleteItemCollection[elmTarget.attr('data-uid')];
-      addMention(mention);
-      saveCacheData();
+      var id = elmTarget.attr('data-uid');      
+      if (settings.onAutoCompleteItemClick && !autocompleteItemCollection[id]) {
+    	  item = settings.onAutoCompleteItemClick(id);
+    	  if (item.id) {
+    		  autocompleteItemCollection[id] = _.extend({}, item, {
+    			  value : item.name
+    		  });  
+    	  }
+      }
+      var mention = autocompleteItemCollection[id];
+      if (mention) {
+    	  var instance = jElmTarget.data('commonMentions');
+    	  instance.addMention(mention);
+    	  saveCacheData();    	  
+      }
       return false;
     }
 
@@ -493,18 +463,18 @@
     function onInputBoxBlur(e) {
       hideAutoComplete(false);
       if(elmAutocompleteList.find('li').length > 0) {
-        elmInputBox.find('.cursorText').remove();
+//        elmInputBox.find('.cursorText').remove();
         var value = elmInputBox.value();
         var typed = inputBuffer.join('');
         var reBy = $.trim(typed);
         currentDataQuery = reBy.replace(settings.triggerChar, '');
         inputBuffer = reBy.split('');
-        if(value.indexOf(typed) > 0) {
-          typed = ' ' + typed;
-          reBy = ' ' + reBy;
-        }
-        value = value.replace(typed, reBy+'<div class="cursorText"></div>');
-        elmInputBox.val(value);
+//        if(value.indexOf(typed) > 0) {
+//          typed = ' ' + typed;
+//          reBy = ' ' + reBy;
+//        }
+//        value = value.replace(typed, reBy+'<div class="cursorText"></div>');
+//        elmInputBox.val(value);
       }
       saveCacheData();
       if (getInputBoxValue().length === 0) {
@@ -535,7 +505,11 @@
             }
           }
         }
-        currentDataQuery = inputBuffer.slice(triggerCharIndex + 1).join('');
+        if (settings.triggerChar == '') {
+        	currentDataQuery = inputBuffer.join('');	
+        } else {
+        	currentDataQuery = inputBuffer.slice(triggerCharIndex + 1).join('');
+        }
         // fix bug firefox auto added <br> last text.
         currentDataQuery = utils.removeLastBr(currentDataQuery);
         inputBuffer = String(settings.triggerChar+currentDataQuery).split('');
@@ -846,14 +820,18 @@
       e.stopPropagation();
     }
 
-    function addMessageMenu(parent, msg) {
-      $('<li class="msg"></li>')
-          .html('<em>'+msg+'</em>')
-          .appendTo(parent)
-          .on('click mousedown', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-          });
+    function addMessageMenu(parent, msg, allowAdd) {
+      if (settings.addMessageMenu) {
+    	  settings.addMessageMenu.apply(this, arguments);
+      } else {
+    	  $('<li class="msg"></li>')
+    	  .html('<em>'+msg+'</em>')
+    	  .appendTo(parent)
+    	  .on('click mousedown', function(e) {
+    		  e.stopPropagation();
+    		  e.preventDefault();
+    	  });    	  
+      }    	
     }
 
     function showDropdown() {
@@ -866,71 +844,6 @@
       return elmAutocompleteList.hide();
     }
 
-    function populateDropdown(query, results) {
-      showDropdown();
-      elmAutocompleteList.empty();
-      var elmDropDownList = $("<ul>").appendTo(elmAutocompleteList).hide();
-      var isShow = true;
-      //
-      if(query === '' && !settings.firstShowAll) {
-        addMessageMenu(elmDropDownList, settings.messages.helpSearch);
-      }
-
-      //
-      if(query != '' && results === 'searching') {
-        addMessageMenu(elmDropDownList, (settings.messages.searching + ' <strong>' + query + '</strong>.'));
-      }
-
-      //
-      if ((results === null || results === undefined || results.length === 0) && query != '') {
-        if(inputBuffer[inputBuffer.length - 1] != ' ') {
-          addMessageMenu(elmDropDownList, (settings.messages.foundNoMatch + ' <strong>' + query + '</strong>.'));
-        } else {
-          resetBuffer();
-          hideDropdown();
-        }
-      }
-      
-      if (results && results.length > 0 && results != 'searching' && (query != '' || settings.firstShowAll)) {
-        _.each(results, function(item, index) {
-          var itemUid = _.uniqueId('mention_');
-
-          autocompleteItemCollection[itemUid] = _.extend({}, item, {
-            value : item.name
-          });
-
-          var elmListItem = $(settings.templates.autocompleteListItem({
-            'id' : utils.htmlEncode(item.id),
-            'display' : utils.htmlEncode(item.name),
-            'type' : utils.htmlEncode(item.type),
-            'content' : (utils.highlightTerm(utils.htmlEncode(item.name), query) + ' (' + item.id.replace('@', '') + ')')
-          })).attr('data-uid', itemUid);
-
-          if (index === 0 && settings.selectFirst) {
-            selectAutoCompleteElement(elmListItem);
-          }
-
-          if (settings.showAvatars) {
-            var elmIcon;
-
-            if (item.avatar) {
-              elmIcon = $(settings.templates.autocompleteListItemAvatar({
-                avatar : item.avatar
-              }));
-            } else {
-              elmIcon = $(settings.templates.autocompleteListItemIcon({
-                icon : item.icon
-              }));
-            }
-            elmIcon.prependTo(elmListItem);
-          }
-          elmListItem = elmListItem.appendTo(elmDropDownList);
-        });
-      }
-      
-      elmDropDownList.show();
-    }
-
     function resetInput() {
       elmInputBox.val('');
       mentionsCollection = [];
@@ -938,13 +851,14 @@
     }
 
     function doSearch(query) {
+      var instance = jElmTarget.data('commonMentions');
       if ((typeof query === 'undefined' || $.trim(query) === '') && !settings.firstShowAll) {
-        populateDropdown('', null);
+    	  instance.populateDropdown('', null);
       } else if (query.length >= settings.minChars) {
         if (settings.cacheResult.hasUse) {
           var data = getCaseSearch(query);
           if (data) {
-            populateDropdown(query, data);
+        	  instance.populateDropdown(query, data);
           } else {
             search(query);
           }
@@ -956,9 +870,10 @@
     }
 
     function search(query) {
-      populateDropdown(query, 'searching');
+      var instance = jElmTarget.data('commonMentions');
+      instance.populateDropdown(query, 'searching');
       settings.onDataRequest.call(this, 'search', query, function(responseData) {
-        populateDropdown(query, responseData);
+    	  instance.populateDropdown(query, responseData);
         saveCaseSearch(query, responseData);
       });
     }
@@ -1046,19 +961,22 @@
         displayInput.appendTo(target);
       }
       displayInput.val = function(v) {
-        if (v === null || typeof v === "undefined") {
-          var temp = $(this).clone();
-          temp.find('span').find('i').remove();
-          temp.find('.cursorText').remove();
-          return utils.getSimpleValue(temp.html());
-        } else {
-          if (typeof v === 'object') {
-            $(this).html('').append(v);
-          } else {
-            $(this).html(v);
-          }
-
-        }
+    	if (settings.val) {
+    		return settings.val.apply(this, arguments);
+    	} else {
+    		if (v === null || typeof v === "undefined") {
+    			var temp = $(this).clone();
+    			temp.find('span').find('i').remove();
+    			temp.find('.cursorText').remove();
+    			return utils.getSimpleValue(temp.html());
+    		} else {
+    			if (typeof v === 'object') {
+    				$(this).html('').append(v);
+    			} else {
+    				$(this).html(v);
+    			}
+    		}    		
+    	}
       };
       displayInput.value = function() {
         var temp = $(this).clone();
@@ -1189,6 +1107,9 @@
           'visibility' : 'hidden',
           'display' : 'none'
         });
+        if (!jElmTarget.hasClass("mentionTarget")) {
+        	jElmTarget.addClass("mentionTarget");        	
+        }
         //
         jElmTarget.val('');
 
@@ -1307,6 +1228,121 @@
           }
         }
 
+      },
+      
+      populateDropdown : function(query, results) {
+          showDropdown();
+          elmAutocompleteList.empty();
+          var elmDropDownList = $("<ul>").appendTo(elmAutocompleteList).hide();
+          var isShow = true;
+          //
+          if(query === '' && !settings.firstShowAll) {
+            addMessageMenu(elmDropDownList, settings.messages.helpSearch);
+          }
+
+          //
+          if(query != '' && results === 'searching') {
+            addMessageMenu(elmDropDownList, (settings.messages.searching + ' <strong>' + query + '</strong>.'));
+          }
+
+          //
+          if ((results === null || results === undefined || results.length === 0) && query != '') {
+            if(inputBuffer[inputBuffer.length - 1] != ' ') {
+              addMessageMenu(elmDropDownList, (settings.messages.foundNoMatch + ' <strong>' + query + '</strong>.'));
+            } else {
+              resetBuffer();
+              hideDropdown();
+            }
+          }
+          
+          if (settings.allowAdd) {
+        	  addMessageMenu(elmDropDownList, query, true);
+          }
+          
+          if (results && results.length > 0 && results != 'searching' && (query != '' || settings.firstShowAll)) {
+            _.each(results, function(item, index) {
+              var itemUid = _.uniqueId('mention_');
+
+              autocompleteItemCollection[itemUid] = _.extend({}, item, {
+                value : item.name
+              });
+
+              var elmListItem = $(settings.templates.autocompleteListItem({
+                'id' : utils.htmlEncode(item.id),
+                'display' : utils.htmlEncode(item.name),
+                'type' : utils.htmlEncode(item.type),
+                'content' : (utils.highlightTerm(utils.htmlEncode(item.name), query) + ' (' + item.id.replace('@', '') + ')')
+              })).attr('data-uid', itemUid);
+
+              if (index === 0 && settings.selectFirst) {
+                selectAutoCompleteElement(elmListItem);
+              }
+
+              if (settings.showAvatars) {
+                var elmIcon;
+
+                if (item.avatar) {
+                  elmIcon = $(settings.templates.autocompleteListItemAvatar({
+                    avatar : item.avatar
+                  }));
+                } else {
+                  elmIcon = $(settings.templates.autocompleteListItemIcon({
+                    icon : item.icon
+                  }));
+                }
+                elmIcon.prependTo(elmListItem);
+              }
+              elmListItem = elmListItem.appendTo(elmDropDownList);
+            });
+          }
+          
+          elmDropDownList.show();
+      },
+      
+      addMention : function(mention) {
+    	  if (settings.addMention) {
+    		  settings.addMention.apply(this, arguments);
+    		  return;
+    	  }
+          var currentMessage = getInputBoxFullValue();
+          // Using a regex to figure out positions
+          var strReg = settings.triggerChar + currentDataQuery;
+          var test = new RegExp("\\</span\\>\\s*"+strReg);
+          if(currentMessage.indexOf(strReg) === 0) {
+            strReg = "\\"+strReg;
+          } else if(test.test(currentMessage)) {
+            strReg = "\\</span\\>\\s*"+strReg;
+          } else {
+            strReg = "\\ "+strReg;
+          }
+          var regex = new RegExp(strReg, "gi");
+          regex.exec(currentMessage);
+          
+          var startCaretPosition = regex.lastIndex - currentDataQuery.length - settings.triggerChar.length;
+          var currentCaretPosition = regex.lastIndex;
+
+          var start = currentMessage.substr(0, startCaretPosition);
+          var end = currentMessage.substr(currentCaretPosition, currentMessage.length);
+          var startEndIndex = (start + mention.value).length + settings.triggerChar.length;
+
+          mentionsCollection.push(mention);
+
+          // Cleaning before inserting the value, otherwise auto-complete would be
+          // triggered with "old" inputbuffer
+          resetBuffer();
+          currentDataQuery = '';
+          hideAutoComplete();
+
+          // Mentions & syntax message
+          var point = '<span class="none point"></span>';
+          var updatedMessageText = utils.removeLastBr(start + addItemMention(mention.value) + point + end);
+
+          elmInputBox.val(updatedMessageText);
+          point = elmInputBox.find('span.point')
+          addElmCaret(point);
+          point.remove();
+          initClickMention();
+          setCaretPosition(elmInputBox);
       },
 
       val : function(callback) {
